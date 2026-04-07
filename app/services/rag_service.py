@@ -82,9 +82,7 @@ class RagService:
             ranked_probe_chunks = self._hybrid_rerank(question, probe_chunks)
             best_probe_chunk = ranked_probe_chunks[0]
             category_name_score = self._compute_category_name_score(question, category)
-            category_score = (0.85 * best_probe_chunk["final_score"]) + (
-                0.15 * category_name_score
-            )
+            category_score = (0.85 * best_probe_chunk["final_score"]) + (0.15 * category_name_score)
 
             category_candidates.append(
                 {
@@ -140,14 +138,9 @@ class RagService:
 Tu es un assistant juridique specialise en recherche documentaire.
 Tu dois repondre uniquement a partir du contexte fourni.
 N'ajoute aucune information absente du contexte.
-N'infere ni pays, ni date, ni loi, ni exemple,
-ni explication generale si cela n'est pas ecrit dans le contexte.
-Si l'information n'apparait pas clairement dans le contexte,
-reponds exactement : Information non trouvee dans les sources fournies.
-Si l'information est presente, reponds en francais en 3 phrases maximum.
-Liste uniquement les cas ou conditions explicitement mentionnes dans le contexte.
-Si des articles sont visibles dans le contexte, cite leurs numeros.
-N'utilise pas de formulation repetitive.
+Si l'information n'apparait pas clairement dans le contexte, reponds exactement :
+Information non trouvee dans les sources fournies.
+
 
 Contexte:
 {context}
@@ -183,9 +176,7 @@ Reponse:
             return False
 
         context_text = " ".join(chunk["text"] for chunk in final_chunks).lower()
-        answer_tokens = [
-            token for token in re.findall(r"\w+", lowered_answer) if len(token) > 5
-        ]
+        answer_tokens = [token for token in re.findall(r"\w+", lowered_answer) if len(token) > 5]
         unsupported_tokens = [token for token in answer_tokens if token not in context_text]
 
         return len(unsupported_tokens) > 20

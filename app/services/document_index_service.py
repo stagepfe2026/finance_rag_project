@@ -33,7 +33,7 @@ class DocumentIndexService:
             if not text.strip():
                 raise ValueError("Le document est vide ou le texte n'a pas pu être extrait.")
 
-            chunks = self.chunking_service.chunk_text(text)
+            chunks = self.chunking_service.chunk_by_article(text)
 
             if not chunks:
                 raise ValueError("Aucun chunk généré à partir du document.")
