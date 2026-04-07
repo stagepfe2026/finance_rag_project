@@ -1,5 +1,7 @@
 # app/api/v1/controllers/document_controller.py
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
+from typing import Annotated
+
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 router = APIRouter()
 
@@ -7,8 +9,8 @@ router = APIRouter()
 @router.post("/index")
 async def index_document(
     request: Request,
-    file: UploadFile = File(...),
-    category: str = Form(...)
+    file: Annotated[UploadFile, File(...)],
+    category: Annotated[str, Form(...)],
 ):
     allowed_types = [".pdf", ".docx"]
 
@@ -18,22 +20,22 @@ async def index_document(
     if not any(file.filename.lower().endswith(ext) for ext in allowed_types):
         raise HTTPException(
             status_code=400,
-            detail="Seuls les fichiers PDF et DOCX sont supportés."
+            detail="Seuls les fichiers PDF et DOCX sont supportes.",
         )
 
     service = getattr(request.app.state, "document_index_service", None)
     if service is None:
         raise HTTPException(
             status_code=500,
-            detail="Service d'indexation de document non disponible."
+            detail="Service d'indexation de document non disponible.",
         )
 
     try:
         result = await service.index_document(file, category)
         return {
             "success": True,
-            "message": "Document indexé avec succès.",
-            "data": result
+            "message": "Document indexe avec succes.",
+            "data": result,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

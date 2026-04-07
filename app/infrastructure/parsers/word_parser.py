@@ -1,3 +1,4 @@
+# app/infrastructure/parsers/word_parser.py
 from docx import Document
 
 

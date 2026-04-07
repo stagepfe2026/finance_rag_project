@@ -2,21 +2,19 @@
 import os
 import tempfile
 
-from fastapi import UploadFile
-
 from app.core.config import settings
-from app.services.document_parser_service import DocumentParserService
-from app.services.chunking_service import ChunkingService
-from app.services.embedding_service import EmbeddingService
 from app.repositories.qdrant_repository import QdrantRepository
+from app.services.chunking_service import ChunkingService
+from app.services.document_parser_service import DocumentParserService
+from app.services.embedding_service import EmbeddingService
+from fastapi import UploadFile
 
 
 class DocumentIndexService:
     def __init__(self, embedding_service: EmbeddingService):
         self.parser_service = DocumentParserService()
         self.chunking_service = ChunkingService(
-            chunk_size=settings.chunk_size,
-            chunk_overlap=settings.chunk_overlap
+            chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap
         )
         self.embedding_service = embedding_service
         self.qdrant_repository = QdrantRepository()
