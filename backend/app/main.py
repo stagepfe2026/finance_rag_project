@@ -1,0 +1,65 @@
+from contextlib import asynccontextmanager
+
+from app.api.v1.controllers.document_controller import router as document_router
+from app.api.v1.controllers.rag_controller import router as rag_router
+from app.core.config import settings
+from app.core.database import close_mongo_connection, connect_to_mongo
+from app.infrastructure.embeddings.qwen_embedding_provider import QwenEmbeddingProvider
+from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
+from app.services.document_index_service import DocumentIndexService
+from app.services.embedding_service import EmbeddingService
+from app.services.generation_service import GenerationService
+from app.services.rag_service import RagService
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    connect_to_mongo()
+
+    provider = QwenEmbeddingProvider(settings.embedding_model_name)
+    embedding_service = EmbeddingService(provider)
+    document_index_service = DocumentIndexService(embedding_service)
+
+    generation_provider = OllamaGenerationProvider(
+        base_url=settings.ollama_base_url,
+        model_name=settings.generation_model_name,
+    )
+    generation_service = GenerationService(generation_provider)
+
+    rag_service = RagService(
+        embedding_service=embedding_service,
+        generation_service=generation_service,
+    )
+
+    app.state.document_index_service = document_index_service
+    app.state.rag_service = rag_service
+
+    yield
+
+    close_mongo_connection()
+
+
+app = FastAPI(
+    title="Document Indexing API",
+    version="1.0.0",
+    description="API d indexation de documents PDF DOCX vers Qdrant avec persistence MongoDB",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(document_router, prefix="/api/v1/documents", tags=["Documents"])
+app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG"])
