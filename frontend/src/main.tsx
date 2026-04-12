@@ -1,11 +1,15 @@
-﻿import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import ListDocumentPage from './admin/pages/ListDocumentPage.tsx'
-import ImportDocumentPage from './admin/pages/ImportDocumentPage.tsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
 
-createRoot(document.getElementById('root')!).render(
+import { AuthProvider } from "./auth/AuthContext";
+import "./index.css";
+import { router } from "./router";
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ImportDocumentPage />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
-)
+);

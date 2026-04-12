@@ -34,6 +34,30 @@ async function parseJson(response: Response) {
   return response.json().catch(() => null);
 }
 
+function readErrorMessage(data: unknown, fallback: string) {
+  if (typeof data === "object" && data && "detail" in data) {
+    const detail = (data as { detail?: unknown }).detail;
+    if (typeof detail === "string") {
+      return detail;
+    }
+    if (typeof detail === "object" && detail && "message" in detail) {
+      const message = (detail as { message?: unknown }).message;
+      if (typeof message === "string") {
+        return message;
+      }
+    }
+  }
+
+  if (typeof data === "object" && data && "message" in data) {
+    const message = (data as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+
+  return fallback;
+}
+
 export async function indexDocument({
   apiBaseUrl,
   file,
@@ -49,14 +73,14 @@ export async function indexDocument({
 
   const response = await fetch(`${apiBaseUrl}/api/v1/documents/index`, {
     method: "POST",
+    credentials: "include",
     body: payload,
   });
 
   const data = await parseJson(response);
 
   if (!response.ok) {
-    const message = data?.detail || data?.message || "Erreur pendant l indexation du document.";
-    throw new Error(message);
+    throw new Error(readErrorMessage(data, "Erreur pendant l indexation du document."));
   }
 
   return data;
@@ -85,14 +109,13 @@ export async function fetchDocuments({
   params.set("limit", String(limit));
 
   const query = params.toString();
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents${query ? `?${query}` : ""}`);
+  const response = await fetch(`${apiBaseUrl}/api/v1/documents${query ? `?${query}` : ""}`, {
+    credentials: "include",
+  });
   const data = (await parseJson(response)) as DocumentsListResponse | { detail?: string } | null;
 
   if (!response.ok) {
-    const message = data && "detail" in data && data.detail
-      ? data.detail
-      : "Erreur pendant le chargement des documents.";
-    throw new Error(message);
+    throw new Error(readErrorMessage(data, "Erreur pendant le chargement des documents."));
   }
 
   const listData = data as DocumentsListResponse | null;
@@ -110,14 +133,13 @@ export async function fetchDocumentPreview({
   apiBaseUrl: string;
   documentId: string;
 }): Promise<DocumentPreview> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/preview`);
+  const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/preview`, {
+    credentials: "include",
+  });
   const data = (await parseJson(response)) as DocumentPreview | { detail?: string } | null;
 
   if (!response.ok) {
-    const message = data && "detail" in data && data.detail
-      ? data.detail
-      : "Erreur pendant le chargement de l apercu du document.";
-    throw new Error(message);
+    throw new Error(readErrorMessage(data, "Erreur pendant le chargement de l apercu du document."));
   }
 
   return data as DocumentPreview;
@@ -132,14 +154,12 @@ export async function deleteDocumentFromIndex({
 }): Promise<DocumentActionResult> {
   const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/index`, {
     method: "DELETE",
+    credentials: "include",
   });
   const data = (await parseJson(response)) as DocumentActionResult | { detail?: string } | null;
 
   if (!response.ok) {
-    const message = data && "detail" in data && data.detail
-      ? data.detail
-      : "Erreur pendant la suppression de l index du document.";
-    throw new Error(message);
+    throw new Error(readErrorMessage(data, "Erreur pendant la suppression de l index du document."));
   }
 
   return data as DocumentActionResult;
@@ -154,14 +174,12 @@ export async function reindexDocument({
 }): Promise<DocumentActionResult> {
   const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/reindex`, {
     method: "POST",
+    credentials: "include",
   });
   const data = (await parseJson(response)) as DocumentActionResult | { detail?: string } | null;
 
   if (!response.ok) {
-    const message = data && "detail" in data && data.detail
-      ? data.detail
-      : "Erreur pendant la reindexation du document.";
-    throw new Error(message);
+    throw new Error(readErrorMessage(data, "Erreur pendant la reindexation du document."));
   }
 
   return data as DocumentActionResult;

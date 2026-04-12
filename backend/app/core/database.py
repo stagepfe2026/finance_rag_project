@@ -20,8 +20,15 @@ def get_database() -> Database:
 
 
 def get_documents_collection() -> Collection:
-    database = get_database()
-    return database[settings.mongodb_documents_collection]
+    return get_database()[settings.mongodb_documents_collection]
+
+
+def get_users_collection() -> Collection:
+    return get_database()[settings.mongodb_users_collection]
+
+
+def get_sessions_collection() -> Collection:
+    return get_database()[settings.mongodb_sessions_collection]
 
 
 def close_mongo_connection() -> None:

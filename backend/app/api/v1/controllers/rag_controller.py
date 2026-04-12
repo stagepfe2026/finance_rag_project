@@ -1,8 +1,9 @@
-# app/api/v1/controllers/rag_controller.py
-from app.schemas.rag_schema import AskRequest
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-router = APIRouter()
+from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
+from app.schemas.rag_schema import AskRequest
+
+router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 
 
 @router.post("/ask")
@@ -25,5 +26,5 @@ async def ask_question(request: Request, payload: AskRequest):
             "message": "Reponse generee avec succes.",
             "data": result,
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

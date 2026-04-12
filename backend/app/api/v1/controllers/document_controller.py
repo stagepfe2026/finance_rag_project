@@ -1,6 +1,10 @@
 from datetime import datetime
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse
+
+from app.api.dependencies.auth_dependencies import require_admin_user
 from app.schemas import (
     DocumentActionResponse,
     DocumentCategory,
@@ -8,10 +12,8 @@ from app.schemas import (
     DocumentPreviewOut,
     DocumentStatus,
 )
-from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_admin_user)])
 
 
 @router.get("", response_model=DocumentListResponse)
@@ -153,5 +155,5 @@ async def index_document(
             "message": "Document indexe avec succes.",
             "data": result,
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

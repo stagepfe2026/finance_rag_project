@@ -1,22 +1,31 @@
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1.controllers.auth_controller import router as auth_router
 from app.api.v1.controllers.document_controller import router as document_router
 from app.api.v1.controllers.rag_controller import router as rag_router
 from app.core.config import settings
 from app.core.database import close_mongo_connection, connect_to_mongo
 from app.infrastructure.embeddings.qwen_embedding_provider import QwenEmbeddingProvider
 from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
+from app.middlewares.auth_session_middleware import AuthSessionMiddleware
+from app.services.auth_service import AuthService
 from app.services.document_index_service import DocumentIndexService
 from app.services.embedding_service import EmbeddingService
 from app.services.generation_service import GenerationService
 from app.services.rag_service import RagService
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+
+auth_service = AuthService()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     connect_to_mongo()
+    auth_service.ensure_auth_indexes()
+    auth_service.seed_default_users()
 
     provider = QwenEmbeddingProvider(settings.embedding_model_name)
     embedding_service = EmbeddingService(provider)
@@ -35,6 +44,7 @@ async def lifespan(app: FastAPI):
 
     app.state.document_index_service = document_index_service
     app.state.rag_service = rag_service
+    app.state.auth_service = auth_service
 
     yield
 
@@ -44,7 +54,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Document Indexing API",
     version="1.0.0",
-    description="API d indexation de documents PDF DOCX vers Qdrant avec persistence MongoDB",
+    description="API d indexation de documents et d authentification pour rag_finance.",
     lifespan=lifespan,
 )
 
@@ -60,6 +70,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AuthSessionMiddleware)
 
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(document_router, prefix="/api/v1/documents", tags=["Documents"])
 app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG"])

@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 html,
 body,
@@ -11,4 +11,14 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   background: #f7f4f3;
   color: #111111;
+}
+
+.login-grid-bg {
+  background-image:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.9), transparent 18%),
+    radial-gradient(circle at 82% 76%, rgba(255, 255, 255, 0.86), transparent 20%),
+    linear-gradient(rgba(226, 232, 240, 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.35) 1px, transparent 1px);
+  background-size: auto, auto, 28px 28px, 28px 28px;
+  background-position: center, center, center, center;
 }

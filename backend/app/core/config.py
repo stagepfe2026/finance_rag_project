@@ -34,7 +34,31 @@ class Settings(BaseSettings):
     mongodb_uri: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "finance_rag"
     mongodb_documents_collection: str = "documents"
+    mongodb_users_collection: str = "users"
+    mongodb_sessions_collection: str = "auth_sessions"
     documents_storage_dir: str = "storage/documents"
+
+    auth_mode: str = "local"
+    auth_session_cookie_name: str = "rag_finance_session"
+    auth_csrf_cookie_name: str = "rag_finance_csrf"
+    auth_cookie_secure: bool = False
+    auth_cookie_samesite: str = "lax"
+    auth_cookie_domain: str | None = None
+    auth_session_idle_minutes: int = 30
+    auth_session_absolute_hours: int = 8
+    auth_access_token_minutes: int = 15
+    auth_refresh_token_hours: int = 8
+    auth_frontend_base_url: str = "http://localhost:5173"
+    auth_oidc_issuer_url: str = "http://localhost:8080/realms/rag-finance"
+    auth_oidc_client_id: str = "rag-finance-web"
+    auth_oidc_client_secret: str = "change-me"
+    auth_oidc_redirect_uri: str = "http://127.0.0.1:8000/api/v1/auth/callback"
+    auth_oidc_scope: str = "openid profile email"
+    auth_seed_default_users: bool = True
+    auth_default_admin_email: str = "admin@finance.local"
+    auth_default_admin_password: str = "Admin123!"
+    auth_default_user_email: str = "user@finance.local"
+    auth_default_user_password: str = "User123!"
 
     model_config = SettingsConfigDict(
         env_file=".env",
