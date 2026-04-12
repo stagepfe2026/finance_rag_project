@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     auth_oidc_issuer_url: str = "http://localhost:8080/realms/rag-finance"
     auth_oidc_client_id: str = "rag-finance-web"
     auth_oidc_client_secret: str = "change-me"
-    auth_oidc_redirect_uri: str = "http://127.0.0.1:8000/api/v1/auth/callback"
+    auth_oidc_redirect_uri: str = "http://localhost:8000/api/v1/auth/callback"
     auth_oidc_scope: str = "openid profile email"
     auth_seed_default_users: bool = True
     auth_default_admin_email: str = "admin@finance.local"
@@ -68,3 +68,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

@@ -3,6 +3,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 
+def _as_utc_datetime(value: Any) -> datetime:
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+    return datetime.now(timezone.utc)
+
+
 @dataclass
 class SessionModel:
     user_id: str
@@ -30,17 +38,17 @@ class SessionModel:
             user_id=str(raw.get("userId", "")),
             token_hash=str(raw.get("tokenHash", "")),
             csrf_token=str(raw.get("csrfToken", "")),
-            access_expires_at=raw.get("expiresAt") or datetime.now(timezone.utc),
-            refresh_expires_at=raw.get("refreshExpiresAt") or datetime.now(timezone.utc),
-            idle_expires_at=raw.get("idleExpiresAt") or datetime.now(timezone.utc),
-            absolute_expires_at=raw.get("absoluteExpiresAt") or datetime.now(timezone.utc),
-            created_at=raw.get("createdAt") or datetime.now(timezone.utc),
-            last_activity_at=raw.get("lastActivityAt") or datetime.now(timezone.utc),
+            access_expires_at=_as_utc_datetime(raw.get("expiresAt")),
+            refresh_expires_at=_as_utc_datetime(raw.get("refreshExpiresAt")),
+            idle_expires_at=_as_utc_datetime(raw.get("idleExpiresAt")),
+            absolute_expires_at=_as_utc_datetime(raw.get("absoluteExpiresAt")),
+            created_at=_as_utc_datetime(raw.get("createdAt")),
+            last_activity_at=_as_utc_datetime(raw.get("lastActivityAt")),
             auth_method=str(raw.get("authMethod", "local")),
             oidc_subject=raw.get("oidcSubject"),
             oidc_access_token=raw.get("oidcAccessToken"),
             oidc_refresh_token=raw.get("oidcRefreshToken"),
-            closed_at=raw.get("closedAt"),
+            closed_at=_as_utc_datetime(raw.get("closedAt")) if raw.get("closedAt") else None,
             close_reason=raw.get("closeReason"),
             closed_before_expiry=raw.get("closedBeforeExpiry"),
         )

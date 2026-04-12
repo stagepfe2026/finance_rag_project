@@ -22,7 +22,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 const emptyPreview: DocumentPreview = {
   id: "",
@@ -600,3 +600,4 @@ function handleExportExcel() {
     </div>
   );
 }
+

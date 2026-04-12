@@ -1,4 +1,4 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 export type AuthUser = {
   id: string;
@@ -143,3 +143,4 @@ export async function beginOidcLogin(): Promise<void> {
 
   window.location.assign(String((data as { authorization_url: string }).authorization_url));
 }
+

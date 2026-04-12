@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
@@ -19,7 +19,7 @@ import { indexDocument } from "../../services/documents.service";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 function formatBytes(bytes: number) {
   if (!bytes) return "0 B";
@@ -47,7 +47,7 @@ async function buildPdfPreview(file: File) {
     const context = canvas.getContext("2d");
 
     if (!context) {
-      throw new Error("Impossible de crÃ©er le canvas de prÃ©visualisation.");
+      throw new Error("Impossible de créer le canvas de prévisualisation.");
     }
 
     canvas.width = viewport.width;
@@ -57,7 +57,7 @@ async function buildPdfPreview(file: File) {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
 
     if (!blob) {
-      throw new Error("Impossible de gÃ©nÃ©rer l image de prÃ©visualisation.");
+      throw new Error("Impossible de générer l image de prévisualisation.");
     }
 
     previewItems.push({
@@ -104,7 +104,7 @@ export default function ImportDocumentPage() {
     if (file.type !== "application/pdf") {
       setPageCount(null);
       setIsGeneratingPreview(false);
-      setPreviewError("La prÃ©visualisation dÃ©taillÃ©e est disponible pour les PDF.");
+      setPreviewError("La prévisualisation détaillée est disponible pour les PDF.");
       return;
     }
 
@@ -115,7 +115,7 @@ export default function ImportDocumentPage() {
       setPageCount(preview.pageCount);
     } catch (error) {
       console.error(error);
-      setPreviewError("Impossible de gÃ©nÃ©rer la prÃ©visualisation du PDF.");
+      setPreviewError("Impossible de générer la prévisualisation du PDF.");
     } finally {
       setIsGeneratingPreview(false);
     }
@@ -201,7 +201,7 @@ export default function ImportDocumentPage() {
       pageCountLabel: pageCount
         ? `${pageCount} pages`
         : previewError
-          ? "PrÃ©visualisation limitÃ©e"
+          ? "Prévisualisation limitée"
           : "Analyse en cours",
     };
   }, [pageCount, previewError, selectedFile]);
@@ -209,13 +209,13 @@ export default function ImportDocumentPage() {
   const steps: ProgressStep[] = [
     {
       label: "Fichier choisi",
-      sub: selectedFile?.name ?? "Aucun document sÃ©lectionnÃ©",
+      sub: selectedFile?.name ?? "Aucun document sélectionné",
       status: selectedFile ? "done" : "todo",
     },
     {
       label: "Informations extraites",
       sub: selectedFile
-        ? previewError || (pageCount ? `${pageCount} pages dÃ©tectÃ©es` : isGeneratingPreview ? "Analyse du document..." : "MÃ©tadonnÃ©es prÃªtes")
+        ? previewError || (pageCount ? `${pageCount} pages détectées` : isGeneratingPreview ? "Analyse du document..." : "Métadonnées prêtes")
         : "En attente du fichier",
       status: !selectedFile ? "todo" : isGeneratingPreview ? "current" : "done",
     },
@@ -226,13 +226,13 @@ export default function ImportDocumentPage() {
         : isSubmitting
           ? "Envoi au backend et indexation en cours..."
           : isIndexed
-            ? "Indexation terminÃ©e"
+            ? "Indexation terminée"
             : "En attente du lancement",
       status: submitError ? "error" : isSubmitting ? "current" : isIndexed ? "done" : "todo",
     },
     {
-      label: "Fichier indexÃ©",
-      sub: isIndexed ? "Le document est enregistrÃ© dans MongoDB et indexÃ©." : "En attente",
+      label: "Fichier indexé",
+      sub: isIndexed ? "Le document est enregistré dans MongoDB et indexé." : "En attente",
       status: isIndexed ? "done" : "todo",
     },
   ];
@@ -296,7 +296,7 @@ export default function ImportDocumentPage() {
               <div className="col-span-12 xl:col-span-5">
                 <div className="space-y-4">
                   <PreviewPanel
-                    fileName={selectedFile?.name ?? "Aucun fichier sÃ©lectionnÃ©"}
+                    fileName={selectedFile?.name ?? "Aucun fichier sélectionné"}
                     fileTypeLabel={fileMeta?.extensionLabel ?? "FILE"}
                     pageCount={pageCount}
                     fileSizeLabel={fileMeta?.sizeLabel ?? "0 B"}
@@ -331,4 +331,5 @@ export default function ImportDocumentPage() {
     </div>
   );
 }
+
 
