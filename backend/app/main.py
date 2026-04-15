@@ -4,18 +4,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.controllers.auth_controller import router as auth_router
+from app.api.v1.controllers.chat_controller import router as chat_router
 from app.api.v1.controllers.document_controller import router as document_router
 from app.api.v1.controllers.rag_controller import router as rag_router
+from app.api.v1.controllers.reclamation_controller import router as reclamation_router
 from app.core.config import settings
 from app.core.database import close_mongo_connection, connect_to_mongo
 from app.infrastructure.embeddings.qwen_embedding_provider import QwenEmbeddingProvider
 from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
 from app.middlewares.auth_session_middleware import AuthSessionMiddleware
 from app.services.auth_service import AuthService
+from app.services.chat_service import ChatService
 from app.services.document_index_service import DocumentIndexService
 from app.services.embedding_service import EmbeddingService
 from app.services.generation_service import GenerationService
 from app.services.rag_service import RagService
+from app.services.reclamation_service import ReclamationService
 
 
 auth_service = AuthService()
@@ -41,9 +45,16 @@ async def lifespan(app: FastAPI):
         embedding_service=embedding_service,
         generation_service=generation_service,
     )
+    chat_service = ChatService(rag_service)
+    chat_service.ensure_indexes()
+
+    reclamation_service = ReclamationService()
+    reclamation_service.ensure_indexes()
 
     app.state.document_index_service = document_index_service
     app.state.rag_service = rag_service
+    app.state.chat_service = chat_service
+    app.state.reclamation_service = reclamation_service
     app.state.auth_service = auth_service
 
     yield
@@ -73,5 +84,7 @@ app.add_middleware(
 app.add_middleware(AuthSessionMiddleware)
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(document_router, prefix="/api/v1/documents", tags=["Documents"])
+app.include_router(reclamation_router, prefix="/api/v1/reclamations", tags=["Reclamations"])
 app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG"])

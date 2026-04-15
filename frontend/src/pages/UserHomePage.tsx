@@ -1,4 +1,22 @@
+import { Link } from "react-router-dom";
+
 import { useAuth } from "../auth/AuthContext";
+
+function formatDate(value: string | null | undefined) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
 
 export default function UserHomePage() {
   const { user, session, logout } = useAuth();
@@ -6,10 +24,20 @@ export default function UserHomePage() {
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Bienvenue {user?.prenom}</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Votre espace utilisateur est protege par une session serveur expiree automatiquement en cas d inactivite.
-        </p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Bienvenue {user?.prenom}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-600">
+              Votre espace utilisateur est protege par une session serveur expiree automatiquement en cas d inactivite.
+            </p>
+          </div>
+          <Link
+            to="/user/chat"
+            className="inline-flex items-center justify-center rounded-xl bg-[#cb3a32] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#b7312a]"
+          >
+            Ouvrir le chat
+          </Link>
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
@@ -26,9 +54,9 @@ export default function UserHomePage() {
         <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Expiration</h2>
           <div className="mt-4 space-y-2 text-sm text-slate-700">
-            <p><span className="font-semibold">Access token:</span> {session?.access_expires_at ?? "-"}</p>
-            <p><span className="font-semibold">Idle timeout:</span> {session?.idle_expires_at ?? "-"}</p>
-            <p><span className="font-semibold">Session max:</span> {session?.absolute_expires_at ?? "-"}</p>
+            <p><span className="font-semibold">Access token:</span> {formatDate(session?.access_expires_at)}</p>
+            <p><span className="font-semibold">Idle timeout:</span> {formatDate(session?.idle_expires_at)}</p>
+            <p><span className="font-semibold">Session max:</span> {formatDate(session?.absolute_expires_at)}</p>
           </div>
           <button
             type="button"

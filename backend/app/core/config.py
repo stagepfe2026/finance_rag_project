@@ -36,7 +36,11 @@ class Settings(BaseSettings):
     mongodb_documents_collection: str = "documents"
     mongodb_users_collection: str = "users"
     mongodb_sessions_collection: str = "auth_sessions"
+    mongodb_chat_conversations_collection: str = "chat_conversations"
+    mongodb_chat_messages_collection: str = "chat_messages"
+    mongodb_reclamations_collection: str = "reclamations"
     documents_storage_dir: str = "storage/documents"
+    reclamations_storage_dir: str = "storage/reclamations"
 
     auth_mode: str = "local"
     auth_session_cookie_name: str = "rag_finance_session"
@@ -68,4 +72,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

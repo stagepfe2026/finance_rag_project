@@ -113,6 +113,7 @@ class QdrantRepository:
                 {
                     "score": point.score,
                     "text": payload.get("text", ""),
+                    "document_id": payload.get("document_id", ""),
                     "document_name": payload.get("document_name", ""),
                     "document_type": payload.get("document_type", ""),
                     "category": payload.get("category", category),

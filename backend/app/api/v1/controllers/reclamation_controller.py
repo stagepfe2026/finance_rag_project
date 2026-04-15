@@ -1,0 +1,94 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+
+from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
+
+router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
+
+
+@router.get("")
+async def list_reclamations(request: Request, current_user: dict = Depends(require_finance_or_admin_user)):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        return {
+            "success": True,
+            "message": "Reclamations chargees avec succes.",
+            "data": service.list_reclamations(current_user),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/{reclamation_id}")
+async def get_reclamation(
+    request: Request,
+    reclamation_id: str,
+    current_user: dict = Depends(require_finance_or_admin_user),
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        return {
+            "success": True,
+            "message": "Reclamation chargee avec succes.",
+            "data": service.get_reclamation(current_user, reclamation_id),
+        }
+    except ValueError as exc:
+        if str(exc) == "RECLAMATION_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("")
+async def create_reclamation(
+    request: Request,
+    current_user: dict = Depends(require_finance_or_admin_user),
+    subject: Annotated[str, Form(...) ] = "",
+    description: Annotated[str, Form(...) ] = "",
+    problem_type: Annotated[str, Form(...) ] = "",
+    custom_problem_type: Annotated[str | None, Form()] = None,
+    priority: Annotated[str, Form(...) ] = "",
+    attachment: Annotated[UploadFile | None, File()] = None,
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        data = await service.create_reclamation(
+            current_user=current_user,
+            subject=subject,
+            description=description,
+            problem_type=problem_type,
+            custom_problem_type=custom_problem_type,
+            priority=priority,
+            attachment=attachment,
+        )
+        return {
+            "success": True,
+            "message": "Reclamation envoyee avec succes.",
+            "data": data,
+        }
+    except ValueError as exc:
+        errors = {
+            "SUBJECT_TOO_SHORT": "Le sujet doit contenir au moins 3 caracteres.",
+            "SUBJECT_TOO_LONG": "Le sujet ne doit pas depasser 160 caracteres.",
+            "DESCRIPTION_TOO_SHORT": "La description doit contenir au moins 10 caracteres.",
+            "DESCRIPTION_TOO_LONG": "La description ne doit pas depasser 3000 caracteres.",
+            "INVALID_PROBLEM_TYPE": "Type de probleme invalide.",
+            "CUSTOM_PROBLEM_TYPE_REQUIRED": "Veuillez preciser le type de probleme.",
+            "INVALID_PRIORITY": "Priorite invalide.",
+            "INVALID_ATTACHMENT_TYPE": "Format de piece jointe non supporte.",
+            "ATTACHMENT_TOO_LARGE": "La piece jointe ne doit pas depasser 5 Mo.",
+        }
+        raise HTTPException(status_code=400, detail=errors.get(str(exc), "Reclamation invalide.")) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

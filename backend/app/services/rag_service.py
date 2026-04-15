@@ -1,3 +1,5 @@
+from typing import Literal
+
 from app.core.config import settings
 from app.infrastructure.nlp.nlp_provider import NLPProvider
 from app.repositories.qdrant_repository import QdrantRepository
@@ -113,10 +115,13 @@ class RagService:
             return None
 
         best_candidate = category_candidates[0]
-        if best_candidate["category_score"] < settings.min_final_score:
-            return None
+        if best_candidate["category_score"] >= settings.min_final_score:
+            return best_candidate["category"]
 
-        return best_candidate["category"]
+        if best_candidate["probe_chunk"]["final_score"] >= settings.min_final_score:
+            return best_candidate["category"]
+
+        return None
 
     def _build_context(self, chunks: list[dict]) -> str:
         context_parts = []
@@ -128,11 +133,18 @@ class RagService:
 
         return "\n".join(context_parts)
 
-    def _build_prompt(self, question: str, context: str) -> str:
+    def _build_prompt(self, question: str, context: str, response_mode: Literal["short", "detailed"]) -> str:
+        response_instruction = (
+            "Donne une reponse courte, directe et precise en 3 a 5 lignes maximum."
+            if response_mode == "short"
+            else "Donne une reponse detaillee, structuree et pedagogique en t appuyant uniquement sur les sources fournies."
+        )
+
         return f"""
 Tu es un assistant juridique specialise en recherche documentaire.
 Tu dois repondre uniquement a partir du contexte fourni.
 N'ajoute aucune information absente du contexte.
+{response_instruction}
 Si l'information n'apparait pas clairement dans le contexte, reponds exactement :
 Information non trouvee dans les sources fournies.
 
@@ -179,7 +191,33 @@ Reponse:
 
         return len(unsupported_tokens) > 20
 
-    def ask(self, question: str) -> dict:
+    def _build_document_sources(self, chunks: list[dict]) -> list[dict]:
+        documents: dict[str, dict] = {}
+
+        for chunk in chunks:
+            document_id = str(chunk.get("document_id", "")).strip()
+            document_name = str(chunk.get("document_name", "")).strip()
+            dedupe_key = document_id or document_name
+            if not dedupe_key:
+                continue
+
+            current = documents.get(dedupe_key)
+            candidate = {
+                "document_id": document_id,
+                "category": str(chunk.get("category", "")).strip(),
+                "document_name": document_name,
+                "document_type": str(chunk.get("document_type", "")).strip(),
+                "vector_score": float(chunk.get("vector_score", 0.0)),
+                "lexical_score": float(chunk.get("lexical_score", 0.0)),
+                "final_score": float(chunk.get("final_score", 0.0)),
+            }
+
+            if current is None or candidate["final_score"] > current["final_score"]:
+                documents[dedupe_key] = candidate
+
+        return sorted(documents.values(), key=lambda item: item["final_score"], reverse=True)
+
+    def ask(self, question: str, response_mode: Literal["short", "detailed"] = "detailed") -> dict:
         normalized_question = self.nlp_service.preprocess_query(question)
         query_vector = self.embedding_service.generate_embeddings([normalized_question])[0]
 
@@ -230,7 +268,7 @@ Reponse:
 
         final_chunks = relevant_chunks[: settings.final_top_k]
         context = self._build_context(final_chunks)
-        prompt = self._build_prompt(normalized_question, context)
+        prompt = self._build_prompt(normalized_question, context, response_mode)
 
         answer = self.generation_service.generate_answer(
             prompt=prompt,
@@ -249,16 +287,5 @@ Reponse:
             "question": normalized_question,
             "detected_categories": [best_category],
             "answer": answer,
-            "sources": [
-                {
-                    "category": chunk["category"],
-                    "document_name": chunk["document_name"],
-                    "document_type": chunk["document_type"],
-                    "chunk_index": chunk["chunk_index"],
-                    "vector_score": chunk["vector_score"],
-                    "lexical_score": chunk["lexical_score"],
-                    "final_score": chunk["final_score"],
-                }
-                for chunk in final_chunks
-            ],
+            "sources": self._build_document_sources(final_chunks),
         }

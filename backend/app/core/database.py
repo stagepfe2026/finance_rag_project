@@ -31,6 +31,18 @@ def get_sessions_collection() -> Collection:
     return get_database()[settings.mongodb_sessions_collection]
 
 
+def get_chat_conversations_collection() -> Collection:
+    return get_database()[settings.mongodb_chat_conversations_collection]
+
+
+def get_chat_messages_collection() -> Collection:
+    return get_database()[settings.mongodb_chat_messages_collection]
+
+
+def get_reclamations_collection() -> Collection:
+    return get_database()[settings.mongodb_reclamations_collection]
+
+
 def close_mongo_connection() -> None:
     global _client
     if _client is not None:
