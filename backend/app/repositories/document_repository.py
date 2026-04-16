@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 
 from app.core.database import get_documents_collection
 from app.models.document_model import DocumentModel
@@ -61,6 +61,9 @@ class DocumentRepository:
         return self.get_by_id(document_id)
 
     def get_by_id(self, document_id: str) -> DocumentModel | None:
+        if not ObjectId.is_valid(document_id):
+            return None
+
         raw = self.collection.find_one({"_id": ObjectId(document_id)})
         if raw is None:
             return None
@@ -89,6 +92,61 @@ class DocumentRepository:
         query = self._build_list_query(search=search, category=category, status=status)
         return self.collection.count_documents(query)
 
+    def search_documents(
+        self,
+        *,
+        query: str | None = None,
+        title: str | None = None,
+        categories: list[str] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        favorites_only: bool = False,
+        sort_by: str = "recent",
+        skip: int = 0,
+        limit: int = 100,
+    ) -> list[DocumentModel]:
+        mongo_query = self._build_search_query(
+            query=query,
+            title=title,
+            categories=categories,
+            date_from=date_from,
+            date_to=date_to,
+            favorites_only=favorites_only,
+        )
+        sort_config = [("createdAt", -1)] if sort_by == "recent" else [("title", 1)]
+        cursor = self.collection.find(mongo_query).sort(sort_config).skip(skip).limit(limit)
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
+
+    def count_search_documents(
+        self,
+        *,
+        query: str | None = None,
+        title: str | None = None,
+        categories: list[str] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        favorites_only: bool = False,
+    ) -> int:
+        mongo_query = self._build_search_query(
+            query=query,
+            title=title,
+            categories=categories,
+            date_from=date_from,
+            date_to=date_to,
+            favorites_only=favorites_only,
+        )
+        return self.collection.count_documents(mongo_query)
+
+    def set_favorite(self, document_id: str, is_favored: bool) -> DocumentModel | None:
+        if not ObjectId.is_valid(document_id):
+            return None
+
+        self.collection.update_one(
+            {"_id": ObjectId(document_id), "deletedAt": None},
+            {"$set": {"isFavored": is_favored}},
+        )
+        return self.get_by_id(document_id)
+
     def _build_list_query(
         self,
         *,
@@ -112,3 +170,56 @@ class DocumentRepository:
             query["documentStatus"] = status
 
         return query
+
+    def _build_search_query(
+        self,
+        *,
+        query: str | None = None,
+        title: str | None = None,
+        categories: list[str] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        favorites_only: bool = False,
+    ) -> dict:
+        mongo_query: dict = {
+            "deletedAt": None,
+            "documentStatus": DocumentStatus.indexed.value,
+        }
+        filters: list[dict] = []
+
+        normalized_query = (query or "").strip()
+        if normalized_query:
+            filters.append(
+                {
+                    "$or": [
+                        {"title": {"$regex": normalized_query, "$options": "i"}},
+                        {"description": {"$regex": normalized_query, "$options": "i"}},
+                        {"content": {"$regex": normalized_query, "$options": "i"}},
+                        {"category": {"$regex": normalized_query, "$options": "i"}},
+                    ]
+                }
+            )
+
+        normalized_title = (title or "").strip()
+        if normalized_title:
+            filters.append({"title": {"$regex": normalized_title, "$options": "i"}})
+
+        normalized_categories = [item for item in categories or [] if item]
+        if normalized_categories:
+            filters.append({"category": {"$in": normalized_categories}})
+
+        if date_from or date_to:
+            date_range: dict = {}
+            if date_from:
+                date_range["$gte"] = datetime.combine(date_from, time.min, tzinfo=UTC)
+            if date_to:
+                date_range["$lte"] = datetime.combine(date_to, time.max, tzinfo=UTC)
+            filters.append({"createdAt": date_range})
+
+        if favorites_only:
+            filters.append({"isFavored": True})
+
+        if filters:
+            mongo_query["$and"] = filters
+
+        return mongo_query

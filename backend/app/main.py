@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.controllers.auth_controller import router as auth_router
 from app.api.v1.controllers.chat_controller import router as chat_router
 from app.api.v1.controllers.document_controller import router as document_router
+from app.api.v1.controllers.document_search_controller import router as document_search_router
 from app.api.v1.controllers.rag_controller import router as rag_router
 from app.api.v1.controllers.reclamation_controller import router as reclamation_router
 from app.core.config import settings
@@ -86,5 +87,6 @@ app.add_middleware(AuthSessionMiddleware)
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(document_router, prefix="/api/v1/documents", tags=["Documents"])
+app.include_router(document_search_router, prefix="/api/v1/document-search", tags=["DocumentSearch"])
 app.include_router(reclamation_router, prefix="/api/v1/reclamations", tags=["Reclamations"])
 app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG"])

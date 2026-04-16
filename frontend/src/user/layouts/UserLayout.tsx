@@ -53,6 +53,20 @@ export default function UserLayout() {
                 )}
               </NavLink>
 
+              <NavLink to="/user/documents/recherche" className={({ isActive }) => navClassName(isActive)}>
+                {({ isActive }) => (
+                  <span className="relative inline-block">
+                    Recherche documents
+                    <span
+                      className={[
+                        "absolute left-0 -bottom-1 h-[2px] w-full origin-left rounded-full bg-[#b2342c] transition-transform duration-300",
+                        isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
+                      ].join(" ")}
+                    />
+                  </span>
+                )}
+              </NavLink>
+
               <NavLink to="/user/reclamations" className={({ isActive }) => navClassName(isActive)}>
                 {({ isActive }) => (
                   <span className="relative inline-block">

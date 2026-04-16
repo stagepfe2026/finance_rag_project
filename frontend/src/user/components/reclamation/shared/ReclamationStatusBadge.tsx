@@ -1,4 +1,4 @@
-import type { ReclamationStatus } from "../../../models/reclamation";
+import type { ReclamationStatus } from "../../../../models/reclamation";
 
 const statusConfig: Record<ReclamationStatus, { label: string; className: string }> = {
   PENDING: {

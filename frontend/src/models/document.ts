@@ -35,6 +35,22 @@ export type DocumentPreview = {
   content: string;
 };
 
+export type DocumentSearchItem = {
+  id: string;
+  title: string;
+  category: DocumentCategoryValue;
+  description: string;
+  realizedAt: string | null;
+  createdAt: string;
+  isFavored: boolean;
+  snippets: string[];
+};
+
+export type DocumentSearchResponse = {
+  items: DocumentSearchItem[];
+  total: number;
+};
+
 export const documentCategoryLabels: Record<DocumentCategoryValue, string> = {
   finance: "Loi Finance",
   legal: "Juridique",

@@ -1,5 +1,6 @@
 import os
-from datetime import datetime
+import re
+from datetime import date, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,7 +9,13 @@ from app.infrastructure.nlp.nlp_provider import NLPProvider
 from app.models.document_model import DocumentModel
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.qdrant_repository import QdrantRepository
-from app.schemas import DocumentActionResponse, DocumentListResponse, DocumentPreviewOut
+from app.schemas import (
+    DocumentActionResponse,
+    DocumentListResponse,
+    DocumentPreviewOut,
+    DocumentSearchItemOut,
+    DocumentSearchResponse,
+)
 from app.services.document_parser_service import DocumentParserService
 from app.services.embedding_service import EmbeddingService
 from app.services.nlp_service import NLPService
@@ -117,6 +124,43 @@ class DocumentIndexService:
             total=total,
         )
 
+    def search_documents(
+        self,
+        *,
+        query: str | None = None,
+        title: str | None = None,
+        categories: list[str] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        favorites_only: bool = False,
+        sort_by: str = "recent",
+        skip: int = 0,
+        limit: int = 100,
+    ) -> DocumentSearchResponse:
+        documents = self.document_repository.search_documents(
+            query=query,
+            title=title,
+            categories=categories,
+            date_from=date_from,
+            date_to=date_to,
+            favorites_only=favorites_only,
+            sort_by=sort_by,
+            skip=skip,
+            limit=limit,
+        )
+        total = self.document_repository.count_search_documents(
+            query=query,
+            title=title,
+            categories=categories,
+            date_from=date_from,
+            date_to=date_to,
+            favorites_only=favorites_only,
+        )
+        return DocumentSearchResponse(
+            items=[self._to_search_item(document, query=query) for document in documents],
+            total=total,
+        )
+
     def get_document_file_response_data(self, document_id: str) -> tuple[Path, str]:
         document = self._require_document(document_id)
 
@@ -132,20 +176,13 @@ class DocumentIndexService:
     def get_document_preview(self, document_id: str) -> DocumentPreviewOut:
         document = self._require_document(document_id)
 
-        normalized_type = (document.file_type or "").lower()
-        if "word" not in normalized_type and not document.file_path.lower().endswith(".docx"):
-            raise HTTPException(
-                status_code=400,
-                detail="La previsualisation textuelle est reservee aux documents Word.",
-            )
-
         preview_content = (document.content or "").strip()
         if not preview_content:
             file_path = Path(document.file_path)
             if not file_path.exists() or not file_path.is_file():
                 raise HTTPException(status_code=404, detail="Contenu du document introuvable.")
             preview_content = self.nlp_service.preprocess_document(
-                self.parser_service.parse_document(str(file_path), ".docx")
+                self.parser_service.parse_document(str(file_path), file_path.suffix.lower())
             )
 
         if not preview_content:
@@ -153,6 +190,16 @@ class DocumentIndexService:
 
         document.content = preview_content
         return document.to_preview_schema()
+
+    def set_document_favorite(self, document_id: str, is_favored: bool) -> DocumentActionResponse:
+        document = self.document_repository.set_favorite(document_id, is_favored)
+        if document is None or document.deleted_at is not None:
+            raise HTTPException(status_code=404, detail="Document introuvable.")
+
+        return DocumentActionResponse(
+            message="Favori mis a jour avec succes.",
+            data=document.to_out_schema(),
+        )
 
     def delete_document_from_index(self, document_id: str) -> DocumentActionResponse:
         document = self._require_document(document_id)
@@ -230,3 +277,42 @@ class DocumentIndexService:
         target_path = self.storage_dir / target_name
         target_path.write_bytes(content)
         return target_path
+
+    def _to_search_item(self, document: DocumentModel, *, query: str | None) -> DocumentSearchItemOut:
+        return DocumentSearchItemOut(
+            id=document.id or "",
+            title=document.title,
+            category=document.category,
+            description=document.description,
+            realizedAt=document.realized_at,
+            createdAt=document.created_at,
+            isFavored=document.is_favored,
+            snippets=self._build_snippets(document, query=query),
+        )
+
+    def _build_snippets(self, document: DocumentModel, *, query: str | None) -> list[str]:
+        source = "\n".join(
+            part.strip() for part in [document.description or "", document.content or ""] if part and part.strip()
+        ).strip()
+        if not source:
+            return []
+
+        sentences = [item.strip() for item in re.split(r"(?<=[.!?])\s+", source) if item.strip()]
+        if not sentences:
+            return [source[:220].strip()]
+
+        query_terms = [term for term in re.split(r"\s+", (query or "").strip().lower()) if len(term) >= 2]
+        matches: list[str] = []
+
+        if query_terms:
+            for sentence in sentences:
+                lowered = sentence.lower()
+                if any(term in lowered for term in query_terms):
+                    matches.append(sentence)
+                if len(matches) == 3:
+                    break
+
+        if matches:
+            return matches
+
+        return sentences[:2]

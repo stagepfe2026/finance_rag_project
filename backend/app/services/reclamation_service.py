@@ -127,6 +127,36 @@ class ReclamationService:
             raise ValueError("RECLAMATION_NOT_FOUND")
         return self._serialize_reclamation(reclamation)
 
+    def get_reclamation_attachment_response_data(self, current_user: dict, reclamation_id: str) -> tuple[Path, str]:
+        user_id = str(current_user.get("id", "")).strip()
+        reclamation = self.repository.get_for_user(reclamation_id, user_id)
+        if reclamation is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+        if not reclamation.attachment_path:
+            raise ValueError("ATTACHMENT_NOT_FOUND")
+
+        file_path = Path(reclamation.attachment_path)
+        if not file_path.exists():
+            raise ValueError("ATTACHMENT_NOT_FOUND")
+
+        media_type = reclamation.attachment_content_type or "application/octet-stream"
+        return file_path, media_type
+
+    def delete_reclamation(self, current_user: dict, reclamation_id: str) -> None:
+        user_id = str(current_user.get("id", "")).strip()
+        reclamation = self.repository.get_for_user(reclamation_id, user_id)
+        if reclamation is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+
+        if reclamation.attachment_path:
+            attachment_path = Path(reclamation.attachment_path)
+            if attachment_path.exists():
+                attachment_path.unlink()
+
+        deleted = self.repository.delete_for_user(reclamation_id, user_id)
+        if not deleted:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+
     async def _store_attachment(self, attachment: UploadFile) -> dict:
         extension = Path(attachment.filename or "").suffix.lower()
         if extension not in self.allowed_attachment_types:
@@ -161,6 +191,7 @@ class ReclamationService:
                 "name": reclamation.attachment_name,
                 "size": reclamation.attachment_size,
                 "contentType": reclamation.attachment_content_type,
+                "url": f"/api/v1/reclamations/{reclamation.id}/attachment" if reclamation.id else None,
             }
 
         return {

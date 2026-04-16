@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 
-import type { Reclamation, ReclamationStatus } from "../../../models/reclamation";
-import ReclamationStatusBadge from "./ReclamationStatusBadge";
+import type { Reclamation, ReclamationStatus } from "../../../../models/reclamation";
+import ReclamationStatusBadge from "../shared/ReclamationStatusBadge";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("fr-FR", {

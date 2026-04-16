@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import type { CreateReclamationInput, ReclamationPriority, ReclamationProblemType } from "../../models/reclamation";
 import { createReclamation } from "../../services/reclamation.service";
-import ReclamationForm from "../components/reclamation/ReclamationForm";
+import ReclamationForm from "../components/reclamation/create/ReclamationForm";
 
 type FormValues = {
   subject: string;
@@ -127,8 +127,8 @@ export default function ReclamationCreatePage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-81px)] px-4 py-6 md:px-6" style={pageBackground}>
-      <div className="mx-auto w-full max-w-6xl">
+    <div className="min-h-[calc(100vh-81px)] " style={pageBackground}>
+      <div className=" w-full ">
         <ReclamationForm
           values={values}
           errors={errors}

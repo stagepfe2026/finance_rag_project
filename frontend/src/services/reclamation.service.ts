@@ -83,3 +83,19 @@ export async function createReclamation(input: CreateReclamationInput): Promise<
 
   return (data as ApiEnvelope<Reclamation>).data;
 }
+
+export async function deleteReclamation(reclamationId: string): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (response.status === 204) {
+    return;
+  }
+
+  const data = await parseJson(response);
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de supprimer la reclamation."));
+  }
+}

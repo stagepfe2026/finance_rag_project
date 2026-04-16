@@ -1,9 +1,13 @@
-import { Eye, Plus, RefreshCw, Search, Trash2, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
 
-import type { Reclamation, ReclamationStatus } from "../../../models/reclamation";
-import ReclamationStatusBadge from "./ReclamationStatusBadge";
+import type { Reclamation } from "../../../models/reclamation";
+import ReclamationStatusBadge from "./shared/ReclamationStatusBadge";
 
-function formatDate(value: string) {
+function formatDate(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
     month: "2-digit",
@@ -13,210 +17,136 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-type ReclamationTableProps = {
-  reclamations: Reclamation[];
-  search: string;
-  statusFilter: ReclamationStatus | "ALL";
-  page: number;
-  totalPages: number;
-  totalResults: number;
-  selectedId: string | null;
-  isLoading: boolean;
-  onSearchChange: (value: string) => void;
-  onStatusChange: (value: ReclamationStatus | "ALL") => void;
-  onPageChange: (page: number) => void;
-  onSelect: (reclamation: Reclamation) => void;
-  onRefresh: () => void;
-  onCreate: () => void;
+function getProblemLabel(reclamation: Reclamation) {
+  return reclamation.problemType === "AUTRE"
+    ? reclamation.customProblemType || "Autre"
+    : reclamation.problemType;
+}
+
+function isImageAttachment(reclamation: Reclamation) {
+  return Boolean(reclamation.attachment?.contentType?.startsWith("image/") && reclamation.attachment?.url);
+}
+
+type Props = {
+  reclamation: Reclamation;
+  onClose: () => void;
 };
 
-export default function ReclamationTable({
-  reclamations,
-  search,
-  statusFilter,
-  page,
-  totalPages,
-  totalResults,
-  selectedId,
-  isLoading,
-  onSearchChange,
-  onStatusChange,
-  onPageChange,
-  onSelect,
-  onRefresh,
-  onCreate,
-}: ReclamationTableProps) {
-  const start = totalResults === 0 ? 0 : (page - 1) * 6 + 1;
-  const end = Math.min(page * 6, totalResults);
+export default function ReclamationDetailsPanel({ reclamation, onClose }: Props) {
+  const attachment = reclamation.attachment;
+  const imagePreview = isImageAttachment(reclamation);
 
   return (
-    <section className="min-h-[680px] border border-[#efe4e1] bg-white">
-      <div className="px-5 pt-5 pb-3">
-        <h1 className="text-[17px] font-semibold leading-none text-[#cf3d4c]">
-          Mes Réclamations
-        </h1>
-        <p className="mt-3 text-[13px] text-slate-500">
-          Consultez votre liste de réclamations et suivez l'évolution de vos demandes.
-        </p>
+    <aside className="sticky top-0 p-5">
+      <div className="flex items-start justify-between gap-3 border-b border-[#f1e6e3] pb-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400">
+            Detail reclamation
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-slate-800">
+            {reclamation.subject}
+          </h2>
+          <p className="mt-2 text-xs text-slate-500">
+            Ticket: {reclamation.ticketNumber}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#eadfdb] bg-[#faf7f6] text-slate-500 transition hover:text-[#cf3d4c]"
+          title="Fermer"
+        >
+          <X size={16} />
+        </button>
       </div>
 
-      <div className="border-t border-[#f3e9e6] px-5 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex h-11 w-[240px] items-center gap-2 rounded-md border border-[#eadfdb] bg-white px-3">
-              <Search size={15} className="text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Rechercher par mot clé ou ticket ..."
-                className="w-full bg-transparent text-[13px] text-slate-700 outline-none placeholder:text-slate-400"
+      <div className="mt-5 space-y-5">
+        <div className="rounded-xl border border-[#f1e6e3] bg-[#fcf8f7] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-slate-700">Statut</span>
+            <ReclamationStatusBadge status={reclamation.status} />
+          </div>
+
+          <div className="mt-4 grid gap-3 text-sm text-slate-600">
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Type</p>
+              <p className="mt-1">{getProblemLabel(reclamation)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Priorite</p>
+              <p className="mt-1">{reclamation.priority}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Creation</p>
+              <p className="mt-1">{formatDate(reclamation.createdAt)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Mise a jour</p>
+              <p className="mt-1">{formatDate(reclamation.updatedAt)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Description</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+            {reclamation.description}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Piece jointe</p>
+          {!attachment ? (
+            <p className="mt-2 text-sm text-slate-700">Aucune piece jointe</p>
+          ) : imagePreview ? (
+            <div className="mt-3 overflow-hidden rounded-xl border border-[#eadfdb] bg-[#fcf8f7] p-2">
+              <img
+                src={attachment.url ?? undefined}
+                alt={attachment.name}
+                className="max-h-[320px] w-full rounded-lg object-contain bg-white"
               />
-            </div>
-
-            <div className="flex h-11 items-center gap-2 rounded-md border border-[#eadfdb] bg-white px-3 text-[13px] text-slate-700">
-              <span className="font-medium">Filtrer par statut :</span>
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  onStatusChange(event.target.value as ReclamationStatus | "ALL")
-                }
-                className="bg-transparent text-[13px] text-slate-500 outline-none"
-              >
-                <option value="ALL">Tous</option>
-                <option value="PENDING">En attente</option>
-                <option value="RESOLVED">Résolu</option>
-                <option value="FAILED">Échoué</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-[13px] text-slate-500">
-              {start}–{end} sur {totalResults}
-            </span>
-
-            <button
-              type="button"
-              onClick={onCreate}
-              className="inline-flex h-11 items-center gap-2 rounded-md bg-[#cf3d4c] px-4 text-[13px] font-medium text-white transition hover:bg-[#b73645]"
-            >
-              <Plus size={15} />
-              Nouvelle réclamation
-            </button>
-
-            <button
-              type="button"
-              onClick={onRefresh}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-white text-slate-400 transition hover:text-[#cf3d4c]"
-            >
-              <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t border-[#f3e9e6]">
-        <div className="grid grid-cols-[2.2fr_1fr_1.25fr_1.25fr_0.8fr] gap-4 px-5 py-4 text-[13px] font-medium text-slate-700">
-          <span>Sujet</span>
-          <span>Statut</span>
-          <span>Date de création</span>
-          <span>Dernière mise à jour</span>
-          <span className="text-center">Actions</span>
-        </div>
-
-        <div className="border-t border-[#f3e9e6]" />
-
-        {reclamations.length === 0 ? (
-          <div className="px-5 py-12 text-center text-sm text-slate-500">
-            {isLoading ? "Chargement des réclamations..." : "Aucune réclamation trouvée."}
-          </div>
-        ) : (
-          <div>
-            {reclamations.map((reclamation) => {
-              const active = selectedId === reclamation._id;
-
-              return (
-                <div
-                  key={reclamation._id}
-                  className={[
-                    "grid grid-cols-[2.2fr_1fr_1.25fr_1.25fr_0.8fr] gap-4 border-t border-[#f5ece9] px-5 py-4 text-[13px] transition",
-                    active ? "bg-[#fff9fa]" : "bg-white",
-                  ].join(" ")}
+              <div className="mt-3 flex items-center justify-between gap-3 px-1">
+                <p className="min-w-0 truncate text-sm text-slate-700">{attachment.name}</p>
+                <a
+                  href={attachment.url ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-sm font-medium text-[#cf3d4c] hover:underline"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px] font-medium text-slate-700">
-                      {reclamation.subject}
-                    </p>
-                  </div>
+                  Ouvrir
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2 rounded-xl border border-[#eadfdb] bg-[#fcf8f7] px-4 py-3 text-sm text-slate-700">
+              <p>{attachment.name}</p>
+              {attachment.url ? (
+                <a
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block font-medium text-[#cf3d4c] hover:underline"
+                >
+                  Ouvrir la piece jointe
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
 
-                  <div>
-                    <ReclamationStatusBadge status={reclamation.status} />
-                  </div>
-
-                  <div className="text-[13px] text-slate-600">
-                    {formatDate(reclamation.createdAt)}
-                  </div>
-
-                  <div className="text-[13px] text-slate-600">
-                    {formatDate(reclamation.updatedAt)}
-                  </div>
-
-                  <div className="flex items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onSelect(reclamation)}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#eadfdb] bg-[#fbf8f7] text-slate-500 transition hover:text-[#cf3d4c]"
-                      title="Consulter"
-                    >
-                      <Eye size={15} />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#eadfdb] bg-[#fbf8f7] text-slate-500 transition hover:text-rose-600"
-                      title="Supprimer"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-[#f3e9e6] px-5 py-4">
-        <span className="text-[13px] text-slate-500">
-          {start}–{end} sur {totalResults} résultats
-        </span>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page <= 1}
-            className="rounded-md border border-[#eadfdb] bg-[#faf7f6] px-4 py-2 text-[13px] text-slate-500 transition hover:border-[#d9c8c2] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Précédent
-          </button>
-
-          <span className="rounded-md bg-[#cf3d4c] px-4 py-2 text-[13px] font-medium text-white">
-            {page}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages}
-            className="inline-flex items-center gap-2 rounded-md border border-[#eadfdb] bg-[#faf7f6] px-4 py-2 text-[13px] text-slate-500 transition hover:border-[#d9c8c2] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Suivant
-            <ChevronRight size={14} />
-          </button>
+        <div>
+          <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Reponse admin</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+            {reclamation.adminReply || "Aucune reponse pour le moment."}
+          </p>
+          {reclamation.adminReplyAt ? (
+            <p className="mt-2 text-xs text-slate-500">
+              Repondu le {formatDate(reclamation.adminReplyAt)}
+            </p>
+          ) : null}
         </div>
       </div>
-    </section>
+    </aside>
   );
 }

@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { Reclamation, ReclamationStatus } from "../../models/reclamation";
-import { fetchReclamations } from "../../services/reclamation.service";
-import ReclamationDetailsPanel from "../components/reclamation/ReclamationDetailsPanel";
-import ReclamationsRecentesCard from "../components/reclamation/ReclamationsRecentesCard";
-import ReclamationTable from "../components/reclamation/ReclamationTable";
+import { deleteReclamation, fetchReclamations } from "../../services/reclamation.service";
+import ReclamationDesk from "../components/reclamation/ReclamationDesk";
 
-const PAGE_SIZE = 6;
+const pageSize = 6;
 
 export default function ReclamationPage() {
   const navigate = useNavigate();
@@ -19,12 +17,13 @@ export default function ReclamationPage() {
   const [page, setPage] = useState(1);
   const [pageError, setPageError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Reclamation | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function loadReclamations() {
     try {
       setIsLoading(true);
       setPageError("");
-
       const data = await fetchReclamations();
       setReclamations(data);
 
@@ -38,7 +37,7 @@ export default function ReclamationPage() {
       setPageError(
         error instanceof Error
           ? error.message
-          : "Erreur pendant le chargement des réclamations.",
+          : "Erreur pendant le chargement des reclamations.",
       );
     } finally {
       setIsLoading(false);
@@ -65,11 +64,11 @@ export default function ReclamationPage() {
     });
   }, [reclamations, search, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredReclamations.length / pageSize));
+
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredReclamations.length / PAGE_SIZE));
 
   useEffect(() => {
     if (page > totalPages) {
@@ -78,54 +77,77 @@ export default function ReclamationPage() {
   }, [page, totalPages]);
 
   const paginatedReclamations = useMemo(() => {
-    const startIndex = (page - 1) * PAGE_SIZE;
-    return filteredReclamations.slice(startIndex, startIndex + PAGE_SIZE);
+    const startIndex = (page - 1) * pageSize;
+    return filteredReclamations.slice(startIndex, startIndex + pageSize);
   }, [filteredReclamations, page]);
 
+  function handleConsult(reclamation: Reclamation) {
+    setSelectedReclamation(reclamation);
+  }
+
+  function handleAskDelete(reclamation: Reclamation) {
+    setDeleteTarget(reclamation);
+  }
+
+  function handleCloseDeleteModal() {
+    if (isDeleting) {
+      return;
+    }
+    setDeleteTarget(null);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      setPageError("");
+      await deleteReclamation(deleteTarget._id);
+
+      setReclamations((current) =>
+        current.filter((reclamation) => reclamation._id !== deleteTarget._id),
+      );
+      setSelectedReclamation((current) =>
+        current?._id === deleteTarget._id ? null : current,
+      );
+      setDeleteTarget(null);
+    } catch (error) {
+      setPageError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de supprimer la reclamation.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-[#fcf8f7] ">
-      <div className="w-full">
-        {pageError ? (
-          <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {pageError}
-          </div>
-        ) : null}
-
-        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_330px]">
-          <div className="min-w-0">
-            <ReclamationTable
-              reclamations={paginatedReclamations}
-              search={search}
-              statusFilter={statusFilter}
-              page={page}
-              totalPages={totalPages}
-              totalResults={filteredReclamations.length}
-              selectedId={selectedReclamation?._id ?? null}
-              isLoading={isLoading}
-              onSearchChange={setSearch}
-              onStatusChange={setStatusFilter}
-              onPageChange={setPage}
-              onSelect={setSelectedReclamation}
-              onRefresh={() => void loadReclamations()}
-              onCreate={() => navigate("/user/reclamations/nouvelle")}
-            />
-          </div>
-
-          <div className="hidden border-l border-[#efe4e1] bg-white xl:block">
-            {selectedReclamation ? (
-              <ReclamationDetailsPanel
-                reclamation={selectedReclamation}
-                onClose={() => setSelectedReclamation(null)}
-              />
-            ) : (
-              <ReclamationsRecentesCard
-                reclamations={reclamations}
-                onSelect={setSelectedReclamation}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <ReclamationDesk
+      reclamations={paginatedReclamations}
+      allReclamations={reclamations}
+      selectedReclamation={selectedReclamation}
+      search={search}
+      statusFilter={statusFilter}
+      page={page}
+      totalPages={totalPages}
+      totalResults={filteredReclamations.length}
+      isLoading={isLoading}
+      pageError={pageError}
+      onSearchChange={setSearch}
+      onStatusChange={setStatusFilter}
+      onPageChange={setPage}
+      onSelect={handleConsult}
+      onDelete={handleAskDelete}
+      onRefresh={() => void loadReclamations()}
+      onCreate={() => navigate("/user/reclamations/nouvelle")}
+      onCloseDetails={() => setSelectedReclamation(null)}
+      deleteTarget={deleteTarget}
+      isDeleting={isDeleting}
+      onCloseDeleteModal={handleCloseDeleteModal}
+      onConfirmDelete={() => void handleConfirmDelete()}
+    />
   );
 }

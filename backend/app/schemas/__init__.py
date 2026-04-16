@@ -6,6 +6,8 @@ from app.schemas.document_schema import (
     DocumentListResponse,
     DocumentOut,
     DocumentPreviewOut,
+    DocumentSearchItemOut,
+    DocumentSearchResponse,
     DocumentStatus,
 )
 from app.schemas.rag_schema import AskRequest
@@ -29,6 +31,8 @@ __all__ = [
     "DocumentListResponse",
     "DocumentOut",
     "DocumentPreviewOut",
+    "DocumentSearchItemOut",
+    "DocumentSearchResponse",
     "DocumentStatus",
     "LoginRequest",
     "OidcLoginStartOut",

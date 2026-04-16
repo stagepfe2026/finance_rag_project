@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
+from fastapi.responses import FileResponse
 
 from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
 
@@ -39,6 +40,55 @@ async def get_reclamation(
             "message": "Reclamation chargee avec succes.",
             "data": service.get_reclamation(current_user, reclamation_id),
         }
+    except ValueError as exc:
+        if str(exc) == "RECLAMATION_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/{reclamation_id}/attachment")
+async def get_reclamation_attachment(
+    request: Request,
+    reclamation_id: str,
+    current_user: dict = Depends(require_finance_or_admin_user),
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        file_path, media_type = service.get_reclamation_attachment_response_data(current_user, reclamation_id)
+        return FileResponse(
+            path=file_path,
+            media_type=media_type,
+            filename=file_path.name,
+            headers={"Content-Disposition": f'inline; filename="{file_path.name}"'},
+        )
+    except ValueError as exc:
+        if str(exc) == "RECLAMATION_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        if str(exc) == "ATTACHMENT_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Piece jointe introuvable.") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.delete("/{reclamation_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_reclamation(
+    request: Request,
+    reclamation_id: str,
+    current_user: dict = Depends(require_finance_or_admin_user),
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        service.delete_reclamation(current_user, reclamation_id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except ValueError as exc:
         if str(exc) == "RECLAMATION_NOT_FOUND":
             raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc

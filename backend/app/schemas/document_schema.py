@@ -51,6 +51,22 @@ class DocumentPreviewOut(BaseModel):
     content: str
 
 
+class DocumentSearchItemOut(BaseModel):
+    id: str
+    title: str
+    category: DocumentCategory
+    description: str = ""
+    realizedAt: datetime | None = None
+    createdAt: datetime
+    isFavored: bool = False
+    snippets: list[str] = Field(default_factory=list)
+
+
+class DocumentSearchResponse(BaseModel):
+    items: list[DocumentSearchItemOut]
+    total: int
+
+
 class DocumentActionResponse(BaseModel):
     success: bool = True
     message: str

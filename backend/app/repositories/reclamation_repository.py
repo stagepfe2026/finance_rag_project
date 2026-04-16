@@ -50,3 +50,10 @@ class ReclamationRepository:
         )
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id})
         return ReclamationModel.from_mongo(raw) if raw else None
+
+    def delete_for_user(self, reclamation_id: str, user_id: str) -> bool:
+        if not ObjectId.is_valid(reclamation_id):
+            return False
+
+        result = self.collection.delete_one({"_id": ObjectId(reclamation_id), "userId": user_id})
+        return result.deleted_count > 0

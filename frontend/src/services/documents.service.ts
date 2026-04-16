@@ -3,6 +3,7 @@ import type {
   DocumentCategoryValue,
   DocumentItem,
   DocumentPreview,
+  DocumentSearchResponse,
   DocumentsListResponse,
   DocumentStatusValue,
 } from "../models/document";
@@ -20,6 +21,19 @@ type FetchDocumentsInput = {
   search?: string;
   category?: DocumentCategoryValue | "all";
   status?: DocumentStatusValue | "all";
+  skip?: number;
+  limit?: number;
+};
+
+type SearchDocumentsInput = {
+  apiBaseUrl: string;
+  query?: string;
+  title?: string;
+  categories?: DocumentCategoryValue[];
+  dateFrom?: string;
+  dateTo?: string;
+  favoritesOnly?: boolean;
+  sortBy?: "recent" | "title";
   skip?: number;
   limit?: number;
 };
@@ -124,6 +138,97 @@ export async function fetchDocuments({
     items: Array.isArray(listData?.items) ? (listData.items as DocumentItem[]) : [],
     total: typeof listData?.total === "number" ? listData.total : 0,
   };
+}
+
+export async function searchDocuments({
+  apiBaseUrl,
+  query,
+  title,
+  categories = [],
+  dateFrom,
+  dateTo,
+  favoritesOnly = false,
+  sortBy = "recent",
+  skip = 0,
+  limit = 50,
+}: SearchDocumentsInput): Promise<DocumentSearchResponse> {
+  const params = new URLSearchParams();
+
+  if (query?.trim()) {
+    params.set("query", query.trim());
+  }
+  if (title?.trim()) {
+    params.set("title", title.trim());
+  }
+  categories.forEach((category) => params.append("categories", category));
+  if (dateFrom) {
+    params.set("date_from", dateFrom);
+  }
+  if (dateTo) {
+    params.set("date_to", dateTo);
+  }
+  if (favoritesOnly) {
+    params.set("favorites_only", "true");
+  }
+  params.set("sort_by", sortBy);
+  params.set("skip", String(skip));
+  params.set("limit", String(limit));
+
+  const response = await fetch(`${apiBaseUrl}/api/v1/document-search?${params.toString()}`, {
+    credentials: "include",
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Erreur pendant la recherche des documents."));
+  }
+
+  const payload = data as DocumentSearchResponse | null;
+  return {
+    items: Array.isArray(payload?.items) ? payload.items : [],
+    total: typeof payload?.total === "number" ? payload.total : 0,
+  };
+}
+
+export async function fetchUserDocumentPreview({
+  apiBaseUrl,
+  documentId,
+}: {
+  apiBaseUrl: string;
+  documentId: string;
+}): Promise<DocumentPreview> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/document-search/${documentId}/preview`, {
+    credentials: "include",
+  });
+  const data = (await parseJson(response)) as DocumentPreview | { detail?: string } | null;
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Erreur pendant le chargement de l apercu du document."));
+  }
+
+  return data as DocumentPreview;
+}
+
+export async function setDocumentFavorite({
+  apiBaseUrl,
+  documentId,
+  isFavored,
+}: {
+  apiBaseUrl: string;
+  documentId: string;
+  isFavored: boolean;
+}): Promise<DocumentActionResult> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/document-search/${documentId}/favorite`, {
+    method: isFavored ? "POST" : "DELETE",
+    credentials: "include",
+  });
+  const data = (await parseJson(response)) as DocumentActionResult | { detail?: string } | null;
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Erreur pendant la mise a jour du favori."));
+  }
+
+  return data as DocumentActionResult;
 }
 
 export async function fetchDocumentPreview({

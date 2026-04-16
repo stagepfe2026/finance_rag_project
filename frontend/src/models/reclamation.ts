@@ -11,6 +11,7 @@ export type ReclamationAttachment = {
   name: string;
   size: number | null;
   contentType: string | null;
+  url: string | null;
 };
 
 export type ReclamationActivity = {
