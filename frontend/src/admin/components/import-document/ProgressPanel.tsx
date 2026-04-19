@@ -13,7 +13,7 @@ export default function ProgressPanel({ steps }: ProgressPanelProps) {
         </h2>
       </div>
 
-      <div className="px-4 py-1">
+      <div className="x-4 py-1">
         <div className="space-y-1">
           {steps.map((step, index) => {
             const tone =

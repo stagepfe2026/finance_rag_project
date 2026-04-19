@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../../auth/AuthContext";
 
 const menuItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/admin/documents/import" },
+  { label: "Dashboard", icon: LayoutDashboard, to: "/admin/documents/dashboardq" },
   { label: "Documents", icon: FileText, to: "/admin/documents/list" },
   { label: "Import Document", icon: Upload, to: "/admin/documents/import" },
 ];
@@ -19,7 +19,7 @@ export default function AdminSidebar() {
           <span className="text-[18px] font-bold">A</span>
         </div>
         <div>
-          <h1 className="text-[12px] font-semibold leading-none text-[#111111]">Ministère</h1>
+          <h1 className="text-[12px] font-semibold leading-none text-[#111111]">MinistÃ¨re</h1>
           <p className="mt-1 text-[10px] text-[#86807e]">Administration</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function AdminSidebar() {
         <button
           type="button"
           onClick={() => void logout()}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-[#e5d9d7] bg-white px-3 py-2 text-[11px] font-semibold text-[#5b5755] transition hover:border-[#cf2027] hover:text-[#cf2027]"
+          className="mt-4 flex w-full items-center justify-center gap-2 cursor-pointer rounded-lg border border-[#e5d9d7] bg-white px-3 py-2 text-[11px] font-semibold text-[#5b5755] transition hover:border-[#cf2027] hover:text-[#cf2027]"
         >
           <LogOut size={13} />
           Deconnexion

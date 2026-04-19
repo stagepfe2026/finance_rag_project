@@ -145,7 +145,7 @@ export default function LoginPage() {
             boxShadow: "0 10px 28px rgba(198,40,40,0.22)",
           }}
         >
-          MF
+          CIMF
         </div>
 
         <h1 className="mt-5 text-[18px] font-medium leading-none text-[#303030]">Republique Tunisienne</h1>
@@ -153,8 +153,8 @@ export default function LoginPage() {
         <div className="mt-6 h-px w-[92px] bg-[#e1dddd]" />
 
         <div className="mt-9 w-full max-w-[372px]">
-          <h2 className="mb-[32px] text-center text-[17px] font-semibold text-[#242424]">
-            rag_finance - PFE Ministere
+          <h2 className="mb-[32px] text-center text-2xl font-semibold text-[#242424]">
+            Connexion
           </h2>
 
           <form className="space-y-[12px]" onSubmit={onSubmit}>
@@ -246,7 +246,7 @@ export default function LoginPage() {
 
         <div className="mt-[30px] flex flex-col items-center text-center">
           <div className="mb-4 h-px w-[372px] bg-[#e7e2e1]" />
-          <p className="text-[12px] text-[#7b7f87]">© Ministere des Finances | Tous droits reserves</p>
+          <p className="text-[12px] text-[#7b7f87]">Ministere des Finances | Tous droits reserves</p>
           <p className="mt-2 text-[12px] text-[#8e939b]">Acces reserve aux utilisateurs autorises</p>
         </div>
       </div>

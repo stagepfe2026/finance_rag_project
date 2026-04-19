@@ -69,28 +69,7 @@ export default function DocumentForm({
           />
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-[#ebe5e4] bg-[#fcfbfb] px-3.5 py-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#cf2027] text-[9px] font-semibold text-white">
-            {fileMeta?.extensionLabel ?? "FILE"}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-medium text-[#111111]">
-              {fileMeta?.name ?? "Aucun fichier sélectionné"}
-            </p>
-            <p className="text-[10px] text-[#8c8583]">
-              {fileMeta ? `${fileMeta.extensionLabel} • ${fileMeta.pageCountLabel} • ${fileMeta.sizeLabel}` : "Sélectionnez un PDF ou un DOCX"}
-            </p>
-          </div>
-          {fileMeta ? (
-            <button
-              type="button"
-              onClick={onClearFile}
-              className="text-lg text-[#b2abaa] transition hover:text-gray-700"
-            >
-              ×
-            </button>
-          ) : null}
-        </div>
+       
       </div>
     </div>
   );
