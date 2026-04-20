@@ -38,8 +38,17 @@ class QdrantRepository:
         self,
         category: str,
         document_id: str,
+        document_title: str,
         document_name: str,
         document_type: str,
+        legal_status: str,
+        date_publication: str | None,
+        date_entree_vigueur: str | None,
+        version: str,
+        relation_type: str,
+        related_document_id: str | None,
+        related_document_title: str | None,
+        realized_at: str | None,
         chunks: list[str],
         embeddings: list[list[float]],
     ) -> int:
@@ -54,8 +63,17 @@ class QdrantRepository:
                     vector=vector,
                     payload={
                         "document_id": document_id,
+                        "document_title": document_title,
                         "document_name": document_name,
                         "document_type": document_type,
+                        "legal_status": legal_status,
+                        "date_publication": date_publication,
+                        "date_entree_vigueur": date_entree_vigueur,
+                        "version": version,
+                        "relation_type": relation_type,
+                        "related_document_id": related_document_id,
+                        "related_document_title": related_document_title,
+                        "realized_at": realized_at,
                         "category": category,
                         "chunk_index": idx,
                         "text": chunk,
@@ -92,16 +110,29 @@ class QdrantRepository:
         category: str,
         query_vector: list[float],
         limit: int,
+        document_id: str | None = None,
     ) -> list[dict]:
         collection_name = self._normalize_collection_name(category)
 
         if not self.collection_exists(collection_name):
             return []
 
+        query_filter = None
+        if document_id:
+            query_filter = Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id",
+                        match=MatchValue(value=document_id),
+                    )
+                ]
+            )
+
         response = self.client.query_points(
             collection_name=collection_name,
             query=query_vector,
             limit=limit,
+            query_filter=query_filter,
         )
 
         points = response.points if hasattr(response, "points") else []
@@ -114,8 +145,17 @@ class QdrantRepository:
                     "score": point.score,
                     "text": payload.get("text", ""),
                     "document_id": payload.get("document_id", ""),
+                    "document_title": payload.get("document_title", ""),
                     "document_name": payload.get("document_name", ""),
                     "document_type": payload.get("document_type", ""),
+                    "legal_status": payload.get("legal_status", "inconnu"),
+                    "date_publication": payload.get("date_publication"),
+                    "date_entree_vigueur": payload.get("date_entree_vigueur"),
+                    "version": payload.get("version", ""),
+                    "relation_type": payload.get("relation_type", "none"),
+                    "related_document_id": payload.get("related_document_id"),
+                    "related_document_title": payload.get("related_document_title", ""),
+                    "realized_at": payload.get("realized_at"),
                     "category": payload.get("category", category),
                     "chunk_index": payload.get("chunk_index", -1),
                 }
@@ -123,9 +163,24 @@ class QdrantRepository:
 
         return chunks
 
+    def search_chunks_for_document(
+        self,
+        *,
+        category: str,
+        document_id: str,
+        query_vector: list[float],
+        limit: int,
+    ) -> list[dict]:
+        return self.search_chunks(
+            category=category,
+            query_vector=query_vector,
+            limit=limit,
+            document_id=document_id,
+        )
+
     def search_chunks_by_category(
         self,
-        categories: str,
+        categories: list[str],
         query_vector: list[float],
         limit_per_category: int,
     ) -> list[dict]:
@@ -139,3 +194,55 @@ class QdrantRepository:
             all_results.extend(category_results)
 
         return all_results
+
+    def get_document_chunks(
+        self,
+        *,
+        category: str,
+        document_id: str,
+        limit: int = 2,
+    ) -> list[dict]:
+        collection_name = self._normalize_collection_name(category)
+        if not self.collection_exists(collection_name):
+            return []
+
+        records, _ = self.client.scroll(
+            collection_name=collection_name,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id",
+                        match=MatchValue(value=document_id),
+                    )
+                ]
+            ),
+            limit=limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+
+        chunks: list[dict] = []
+        for record in records:
+            payload = record.payload or {}
+            chunks.append(
+                {
+                    "score": 0.0,
+                    "text": payload.get("text", ""),
+                    "document_id": payload.get("document_id", ""),
+                    "document_title": payload.get("document_title", ""),
+                    "document_name": payload.get("document_name", ""),
+                    "document_type": payload.get("document_type", ""),
+                    "legal_status": payload.get("legal_status", "inconnu"),
+                    "date_publication": payload.get("date_publication"),
+                    "date_entree_vigueur": payload.get("date_entree_vigueur"),
+                    "version": payload.get("version", ""),
+                    "relation_type": payload.get("relation_type", "none"),
+                    "related_document_id": payload.get("related_document_id"),
+                    "related_document_title": payload.get("related_document_title", ""),
+                    "realized_at": payload.get("realized_at"),
+                    "category": payload.get("category", category),
+                    "chunk_index": payload.get("chunk_index", -1),
+                }
+            )
+
+        return chunks

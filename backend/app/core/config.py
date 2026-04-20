@@ -4,25 +4,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    qdrant_collection_name: str = "ministere_docs"
-    embedding_model_name: str = "Qwen/Qwen3-Embedding-0.6B"
+    embedding_model_name: str = "mxbai-embed-large:latest"
 
     chunk_size: int = 120
     chunk_overlap: int = 20
 
-    retrivel_top_k: int = 6
-    max_context_chunks: int = 3
     ollama_base_url: str = "http://localhost:11434"
     generation_model_name: str = "llama3:latest"
 
     category_probe_top_k: int = 2
-    retrieval_top_k_per_category: int = 4
-    final_top_k: int = 3
-    max_categories: int = 1
+    retrieval_top_k_per_category: int = 6
+    final_top_k: int = 4
 
-    min_vector_score: float = 0.55
-    min_lexical_score: float = 0.20
-    min_final_score: float = 0.58
+    min_vector_score: float = 0.50
+    min_lexical_score: float = 0.12
+    min_final_score: float = 0.50
 
     temperature: float = 0.05
     top_p: float = 0.3
@@ -42,7 +38,6 @@ class Settings(BaseSettings):
     documents_storage_dir: str = "storage/documents"
     reclamations_storage_dir: str = "storage/reclamations"
 
-    auth_mode: str = "local"
     auth_session_cookie_name: str = "rag_finance_session"
     auth_csrf_cookie_name: str = "rag_finance_csrf"
     auth_cookie_secure: bool = False
@@ -58,11 +53,11 @@ class Settings(BaseSettings):
     auth_oidc_client_secret: str = "change-me"
     auth_oidc_redirect_uri: str = "http://localhost:8000/api/v1/auth/callback"
     auth_oidc_scope: str = "openid profile email"
-    auth_seed_default_users: bool = True
-    auth_default_admin_email: str = "admin@finance.local"
-    auth_default_admin_password: str = "Admin123!"
-    auth_default_user_email: str = "user@finance.local"
-    auth_default_user_password: str = "User123!"
+    auth_seed_default_users: bool = False
+    # auth_default_admin_email: str = "admin@finance.local"
+    # auth_default_admin_password: str = "Admin123!"
+    # auth_default_user_email: str = "user@finance.local"
+    # auth_default_user_password: str = "User123!"
 
     model_config = SettingsConfigDict(
         env_file=".env",

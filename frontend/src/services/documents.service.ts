@@ -2,6 +2,9 @@ import type { CategoryValue } from "../models/import-document";
 import type {
   DocumentCategoryValue,
   DocumentItem,
+  LegalDocumentTypeValue,
+  LegalRelationTypeValue,
+  LegalStatusValue,
   DocumentPreview,
   DocumentSearchResponse,
   DocumentsListResponse,
@@ -14,6 +17,13 @@ type IndexDocumentInput = {
   category: CategoryValue;
   title: string;
   description: string;
+  legalStatus?: LegalStatusValue;
+  documentType?: LegalDocumentTypeValue;
+  datePublication?: string;
+  dateEntreeVigueur?: string;
+  version?: string;
+  relationType?: LegalRelationTypeValue;
+  relatedDocumentId?: string;
 };
 
 type FetchDocumentsInput = {
@@ -78,12 +88,40 @@ export async function indexDocument({
   category,
   title,
   description,
+  legalStatus,
+  documentType,
+  datePublication,
+  dateEntreeVigueur,
+  version,
+  relationType,
+  relatedDocumentId,
 }: IndexDocumentInput) {
   const payload = new FormData();
   payload.append("file", file);
   payload.append("category", category);
   payload.append("title", title);
   payload.append("description", description);
+  if (legalStatus) {
+    payload.append("legal_status", legalStatus);
+  }
+  if (documentType) {
+    payload.append("document_type", documentType);
+  }
+  if (datePublication) {
+    payload.append("date_publication", datePublication);
+  }
+  if (dateEntreeVigueur) {
+    payload.append("date_entree_vigueur", dateEntreeVigueur);
+  }
+  if (version?.trim()) {
+    payload.append("version", version.trim());
+  }
+  if (relationType) {
+    payload.append("relation_type", relationType);
+  }
+  if (relatedDocumentId?.trim()) {
+    payload.append("related_document_id", relatedDocumentId.trim());
+  }
 
   const response = await fetch(`${apiBaseUrl}/api/v1/documents/index`, {
     method: "POST",

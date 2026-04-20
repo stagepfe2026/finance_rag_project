@@ -2,7 +2,16 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from app.schemas import DocumentCategory, DocumentOut, DocumentPreviewOut, DocumentStatus
+from app.schemas import (
+    DocumentCategory,
+    DocumentOut,
+    DocumentPreviewOut,
+    DocumentSearchItemOut,
+    DocumentStatus,
+    LegalDocumentType,
+    LegalRelationType,
+    LegalStatus,
+)
 
 
 @dataclass
@@ -11,7 +20,14 @@ class DocumentModel:
     category: str
     description: str
     document_status: str
+    legal_status: str
+    document_type: str
     realized_at: datetime | None
+    date_publication: datetime | None
+    date_entree_vigueur: datetime | None
+    version: str
+    relation_type: str
+    related_document_id: str | None
     file_path: str
     file_size: int
     file_type: str
@@ -31,7 +47,14 @@ class DocumentModel:
         title: str,
         category: str,
         description: str,
+        legal_status: str,
+        document_type: str,
         realized_at: datetime | None = None,
+        date_publication: datetime | None = None,
+        date_entree_vigueur: datetime | None = None,
+        version: str = "",
+        relation_type: str = LegalRelationType.none.value,
+        related_document_id: str | None = None,
         file_path: str,
         file_size: int,
         file_type: str,
@@ -42,7 +65,14 @@ class DocumentModel:
             category=category,
             description=description.strip(),
             document_status=DocumentStatus.processing.value,
+            legal_status=legal_status,
+            document_type=document_type,
             realized_at=realized_at,
+            date_publication=date_publication,
+            date_entree_vigueur=date_entree_vigueur,
+            version=version.strip(),
+            relation_type=relation_type,
+            related_document_id=related_document_id,
             file_path=file_path,
             file_size=file_size,
             file_type=file_type,
@@ -59,7 +89,18 @@ class DocumentModel:
             category=str(raw.get("category", "other")),
             description=str(raw.get("description", "")),
             document_status=str(raw.get("documentStatus", DocumentStatus.processing.value)),
+            legal_status=str(raw.get("legalStatus", LegalStatus.inconnu.value)),
+            document_type=str(raw.get("documentType", LegalDocumentType.autre.value)),
             realized_at=raw.get("realizedAt"),
+            date_publication=raw.get("datePublication"),
+            date_entree_vigueur=raw.get("dateEntreeVigueur"),
+            version=str(raw.get("version", "")),
+            relation_type=str(raw.get("relationType", LegalRelationType.none.value)),
+            related_document_id=(
+                str(raw.get("relatedDocumentId"))
+                if raw.get("relatedDocumentId") is not None
+                else None
+            ),
             file_path=str(raw.get("filePath", "")),
             file_size=int(raw.get("fileSize", 0)),
             file_type=str(raw.get("fileType", "application/octet-stream")),
@@ -78,7 +119,14 @@ class DocumentModel:
             "category": self.category,
             "description": self.description,
             "documentStatus": self.document_status,
+            "legalStatus": self.legal_status,
+            "documentType": self.document_type,
             "realizedAt": self.realized_at,
+            "datePublication": self.date_publication,
+            "dateEntreeVigueur": self.date_entree_vigueur,
+            "version": self.version,
+            "relationType": self.relation_type,
+            "relatedDocumentId": self.related_document_id,
             "filePath": self.file_path,
             "fileSize": self.file_size,
             "fileType": self.file_type,
@@ -98,7 +146,14 @@ class DocumentModel:
             category=DocumentCategory(self.category),
             description=self.description,
             documentStatus=DocumentStatus(self.document_status),
+            legalStatus=LegalStatus(self.legal_status),
+            documentType=LegalDocumentType(self.document_type),
             realizedAt=self.realized_at,
+            datePublication=self.date_publication,
+            dateEntreeVigueur=self.date_entree_vigueur,
+            version=self.version,
+            relationType=LegalRelationType(self.relation_type),
+            relatedDocumentId=self.related_document_id,
             filePath=self.file_path,
             fileSize=self.file_size,
             fileType=self.file_type,
@@ -116,7 +171,33 @@ class DocumentModel:
             title=self.title,
             category=DocumentCategory(self.category),
             description=self.description,
+            legalStatus=LegalStatus(self.legal_status),
+            documentType=LegalDocumentType(self.document_type),
+            datePublication=self.date_publication,
+            dateEntreeVigueur=self.date_entree_vigueur,
+            version=self.version,
+            relationType=LegalRelationType(self.relation_type),
+            relatedDocumentId=self.related_document_id,
             fileType=self.file_type,
             createdAt=self.created_at,
             content=self.content or "",
+        )
+
+    def to_search_item_schema(self, snippets: list[str]) -> DocumentSearchItemOut:
+        return DocumentSearchItemOut(
+            id=self.id or "",
+            title=self.title,
+            category=DocumentCategory(self.category),
+            description=self.description,
+            realizedAt=self.realized_at,
+            legalStatus=LegalStatus(self.legal_status),
+            documentType=LegalDocumentType(self.document_type),
+            datePublication=self.date_publication,
+            dateEntreeVigueur=self.date_entree_vigueur,
+            version=self.version,
+            relationType=LegalRelationType(self.relation_type),
+            relatedDocumentId=self.related_document_id,
+            createdAt=self.created_at,
+            isFavored=self.is_favored,
+            snippets=snippets,
         )

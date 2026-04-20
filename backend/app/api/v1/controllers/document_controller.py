@@ -11,6 +11,9 @@ from app.schemas import (
     DocumentListResponse,
     DocumentPreviewOut,
     DocumentStatus,
+    LegalDocumentType,
+    LegalRelationType,
+    LegalStatus,
 )
 
 router = APIRouter(dependencies=[Depends(require_admin_user)])
@@ -106,6 +109,13 @@ async def index_document(
     title: Annotated[str, Form(...)],
     description: Annotated[str, Form()] = "",
     realized_at: Annotated[str | None, Form()] = None,
+    legal_status: Annotated[str | None, Form()] = None,
+    document_type: Annotated[str | None, Form()] = None,
+    date_publication: Annotated[str | None, Form()] = None,
+    date_entree_vigueur: Annotated[str | None, Form()] = None,
+    version: Annotated[str | None, Form()] = None,
+    relation_type: Annotated[str | None, Form()] = None,
+    related_document_id: Annotated[str | None, Form()] = None,
 ):
     allowed_types = [".pdf", ".docx"]
 
@@ -126,6 +136,8 @@ async def index_document(
         )
 
     parsed_realized_at = None
+    parsed_date_publication = None
+    parsed_date_entree_vigueur = None
     if realized_at:
         try:
             parsed_realized_at = datetime.fromisoformat(realized_at)
@@ -134,6 +146,42 @@ async def index_document(
                 status_code=400,
                 detail="realized_at doit etre une date ISO 8601 valide.",
             ) from exc
+
+    if date_publication:
+        try:
+            parsed_date_publication = datetime.fromisoformat(date_publication)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="date_publication doit etre une date ISO 8601 valide.",
+            ) from exc
+
+    if date_entree_vigueur:
+        try:
+            parsed_date_entree_vigueur = datetime.fromisoformat(date_entree_vigueur)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="date_entree_vigueur doit etre une date ISO 8601 valide.",
+            ) from exc
+
+    if legal_status and legal_status not in {item.value for item in LegalStatus}:
+        raise HTTPException(
+            status_code=400,
+            detail="legal_status doit etre une valeur valide.",
+        )
+
+    if document_type and document_type not in {item.value for item in LegalDocumentType}:
+        raise HTTPException(
+            status_code=400,
+            detail="document_type doit etre une valeur valide.",
+        )
+
+    if relation_type and relation_type not in {item.value for item in LegalRelationType}:
+        raise HTTPException(
+            status_code=400,
+            detail="relation_type doit etre une valeur valide.",
+        )
 
     service = getattr(request.app.state, "document_index_service", None)
     if service is None:
@@ -149,6 +197,13 @@ async def index_document(
             title=title,
             description=description,
             realized_at=parsed_realized_at,
+            legal_status=legal_status,
+            document_type=document_type,
+            date_publication=parsed_date_publication,
+            date_entree_vigueur=parsed_date_entree_vigueur,
+            version=version,
+            relation_type=relation_type,
+            related_document_id=related_document_id,
         )
         return {
             "success": True,

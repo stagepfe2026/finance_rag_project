@@ -25,7 +25,7 @@ export default function UserLayout() {
             />
 
             <nav className="flex items-center gap-6">
-              <NavLink to="/user/accueil" className={({ isActive }) => navClassName(isActive)}>
+              <NavLink to="/user/" className={({ isActive }) => navClassName(isActive)}>
                 {({ isActive }) => (
                   <span className="relative inline-block">
                     Accueil

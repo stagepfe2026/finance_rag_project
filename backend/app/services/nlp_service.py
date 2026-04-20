@@ -29,7 +29,11 @@ class NLPService:
         cleaned_text = self.preprocess_document(text)
         article_chunks = self.provider.chunk_by_article(cleaned_text)
         if article_chunks:
-            return article_chunks
+            normalized_chunks: list[str] = []
+            for chunk in article_chunks:
+                split_chunks = self.chunking_service.chunk_text(chunk)
+                normalized_chunks.extend(split_chunks or [chunk])
+            return normalized_chunks
 
         return self.chunking_service.chunk_text(cleaned_text)
 

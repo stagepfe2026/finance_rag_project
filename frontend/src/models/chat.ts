@@ -16,6 +16,14 @@ export type ChatSource = {
   category: string;
   document_name: string;
   document_type: string;
+  legal_status: string;
+  date_publication?: string | null;
+  date_entree_vigueur?: string | null;
+  version: string;
+  relation_type: string;
+  related_document_id?: string | null;
+  related_document_title?: string;
+  chunk_index?: number;
   vector_score: number;
   lexical_score: number;
   final_score: number;

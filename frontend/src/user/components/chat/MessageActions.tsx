@@ -3,6 +3,7 @@ import { ChevronDown, Copy, Download, ThumbsUp} from "lucide-react";
 
 import type { ChatSource } from "../../../models/chat";
 import { downloadChatSource } from "../../../services/chat.service";
+import { legalStatusLabels, legalRelationTypeLabels } from "../../../models/document";
 
 type MessageActionsProps = {
   content: string;
@@ -70,6 +71,37 @@ export default function MessageActions({
     }
   }
 
+  function formatDate(value?: string | null) {
+    if (!value) {
+      return "";
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return "";
+    }
+
+    return new Intl.DateTimeFormat("fr-FR", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    }).format(parsed);
+  }
+
+  function getLegalStatusLabel(value: string) {
+    if (value in legalStatusLabels) {
+      return legalStatusLabels[value as keyof typeof legalStatusLabels];
+    }
+    return value;
+  }
+
+  function getRelationLabel(value: string) {
+    if (value in legalRelationTypeLabels) {
+      return legalRelationTypeLabels[value as keyof typeof legalRelationTypeLabels];
+    }
+    return value;
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -102,8 +134,19 @@ export default function MessageActions({
                           {source.document_name}
                         </p>
                         <p className="text-[11px] text-[#8b7d79]">
-                          {source.category}
+                          {source.document_type || source.category}
+                          {source.version ? ` · v${source.version}` : ""}
                         </p>
+                        <p className="text-[11px] text-[#8b7d79]">
+                          {getLegalStatusLabel(source.legal_status)}
+                          {source.date_publication ? ` · publié le ${formatDate(source.date_publication)}` : ""}
+                        </p>
+                        {source.relation_type && source.relation_type !== "none" ? (
+                          <p className="text-[11px] text-[#8b7d79]">
+                            {getRelationLabel(source.relation_type)}
+                            {source.related_document_title ? ` ${source.related_document_title}` : ""}
+                          </p>
+                        ) : null}
                       </div>
                       <button
                         type="button"

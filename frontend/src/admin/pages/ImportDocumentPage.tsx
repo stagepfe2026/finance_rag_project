@@ -10,12 +10,19 @@ import PreviewPanel from "../components/import-document/PreviwPanel";
 import AdminSidebar from "../components/layout/AdminSidebar";
 import {
   categoryOptions,
+  legalDocumentTypeOptions,
+  legalRelationTypeOptions,
+  legalStatusOptions,
   type CategoryValue,
   type FileMeta,
+  type LegalDocumentTypeValue,
+  type LegalRelationTypeValue,
+  type LegalStatusValue,
   type PreviewItem,
   type ProgressStep,
 } from "../../models/import-document";
-import { indexDocument } from "../../services/documents.service";
+import { fetchDocuments, indexDocument } from "../../services/documents.service";
+import type { DocumentItem } from "../../models/document";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -77,6 +84,15 @@ export default function ImportDocumentPage() {
   const [category, setCategory] = useState<CategoryValue>("finance");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [legalStatus, setLegalStatus] = useState<LegalStatusValue>("en_vigueur");
+  const [documentType, setDocumentType] = useState<LegalDocumentTypeValue>("autre");
+  const [datePublication, setDatePublication] = useState("");
+  const [dateEntreeVigueur, setDateEntreeVigueur] = useState("");
+  const [version, setVersion] = useState("");
+  const [relationType, setRelationType] = useState<LegalRelationTypeValue>("none");
+  const [relatedDocumentId, setRelatedDocumentId] = useState("");
+  const [relationSearch, setRelationSearch] = useState("");
+  const [availableDocuments, setAvailableDocuments] = useState<DocumentItem[]>([]);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [previewError, setPreviewError] = useState<string>("");
@@ -90,6 +106,30 @@ export default function ImportDocumentPage() {
   useEffect(() => {
     return () => {
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAvailableDocuments() {
+      try {
+        const response = await fetchDocuments({
+          apiBaseUrl,
+          limit: 100,
+        });
+        if (!cancelled) {
+          setAvailableDocuments(response.items);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    void loadAvailableDocuments();
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -126,10 +166,18 @@ export default function ImportDocumentPage() {
     setIsIndexed(false);
     setSelectedFile(file);
     setDescription("");
+    setRelationType("none");
+    setRelatedDocumentId("");
+    setRelationSearch("");
 
     if (!file) {
       setTitle("");
       setTitleTouched(false);
+      setLegalStatus("en_vigueur");
+      setDocumentType("autre");
+      setDatePublication("");
+      setDateEntreeVigueur("");
+      setVersion("");
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       previewUrlsRef.current = [];
       setPreviewItems([]);
@@ -156,12 +204,24 @@ export default function ImportDocumentPage() {
     setIsIndexed(false);
 
     try {
+      if (relationType !== "none" && !relatedDocumentId) {
+        setSubmitError("Selectionnez le document concerne par la relation juridique.");
+        return;
+      }
+
       await indexDocument({
         apiBaseUrl,
         file: selectedFile,
         category,
         title,
         description,
+        legalStatus,
+        documentType,
+        datePublication: datePublication || undefined,
+        dateEntreeVigueur: dateEntreeVigueur || undefined,
+        version,
+        relationType,
+        relatedDocumentId: relationType === "none" ? undefined : relatedDocumentId,
       });
       setIsIndexed(true);
     } catch (error) {
@@ -177,6 +237,14 @@ export default function ImportDocumentPage() {
     setCategory("finance");
     setTitle("");
     setDescription("");
+    setLegalStatus("en_vigueur");
+    setDocumentType("autre");
+    setDatePublication("");
+    setDateEntreeVigueur("");
+    setVersion("");
+    setRelationType("none");
+    setRelatedDocumentId("");
+    setRelationSearch("");
     setPreviewItems([]);
     setPageCount(null);
     setPreviewError("");
@@ -237,6 +305,22 @@ export default function ImportDocumentPage() {
     },
   ];
 
+  const relatedDocumentOptions = useMemo(() => {
+    const normalizedSearch = relationSearch.trim().toLowerCase();
+    return availableDocuments
+      .filter((document) =>
+        !normalizedSearch
+          ? true
+          : document.title.toLowerCase().includes(normalizedSearch) ||
+            document.description.toLowerCase().includes(normalizedSearch),
+      )
+      .slice(0, 80)
+      .map((document) => ({
+        id: document.id,
+        title: `${document.title} (${document.createdAt.slice(0, 10)})`,
+      }));
+  }, [availableDocuments, relationSearch]);
+
   return (
     <div className="min-h-screen bg-[#f7f4f3] text-[#111111]">
       <div className="flex min-h-screen">
@@ -281,6 +365,18 @@ export default function ImportDocumentPage() {
                     categoryOptions={categoryOptions}
                     title={title}
                     description={description}
+                    legalStatus={legalStatus}
+                    legalStatusOptions={legalStatusOptions}
+                    documentType={documentType}
+                    documentTypeOptions={legalDocumentTypeOptions}
+                    datePublication={datePublication}
+                    dateEntreeVigueur={dateEntreeVigueur}
+                    version={version}
+                    relationType={relationType}
+                    relationTypeOptions={legalRelationTypeOptions}
+                    relatedDocumentId={relatedDocumentId}
+                    relatedDocumentOptions={relatedDocumentOptions}
+                    relationSearch={relationSearch}
                     fileMeta={fileMeta}
                     onCategoryChange={setCategory}
                     onTitleChange={(value) => {
@@ -288,6 +384,19 @@ export default function ImportDocumentPage() {
                       setTitle(value);
                     }}
                     onDescriptionChange={setDescription}
+                    onLegalStatusChange={setLegalStatus}
+                    onDocumentTypeChange={setDocumentType}
+                    onDatePublicationChange={setDatePublication}
+                    onDateEntreeVigueurChange={setDateEntreeVigueur}
+                    onVersionChange={setVersion}
+                    onRelationTypeChange={(value) => {
+                      setRelationType(value);
+                      if (value === "none") {
+                        setRelatedDocumentId("");
+                      }
+                    }}
+                    onRelatedDocumentIdChange={setRelatedDocumentId}
+                    onRelationSearchChange={setRelationSearch}
                     onClearFile={() => handleFileSelect(null)}
                   />
                 </div>

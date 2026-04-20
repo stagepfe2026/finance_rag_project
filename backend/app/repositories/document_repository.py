@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime, time
 
 from app.core.database import get_documents_collection
 from app.models.document_model import DocumentModel
-from app.schemas import DocumentStatus
+from app.schemas import DocumentStatus, LegalRelationType, LegalStatus
 from bson import ObjectId
 
 
@@ -68,6 +68,14 @@ class DocumentRepository:
         if raw is None:
             return None
         return DocumentModel.from_mongo(raw)
+
+    def get_by_ids(self, document_ids: list[str]) -> list[DocumentModel]:
+        valid_ids = [ObjectId(document_id) for document_id in document_ids if ObjectId.is_valid(document_id)]
+        if not valid_ids:
+            return []
+
+        cursor = self.collection.find({"_id": {"$in": valid_ids}})
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
 
     def list_documents(
         self,
@@ -146,6 +154,71 @@ class DocumentRepository:
             {"$set": {"isFavored": is_favored}},
         )
         return self.get_by_id(document_id)
+
+    def update_legal_metadata(
+        self,
+        document_id: str,
+        *,
+        legal_status: str | None = None,
+        document_type: str | None = None,
+        date_publication: datetime | None = None,
+        date_entree_vigueur: datetime | None = None,
+        version: str | None = None,
+        relation_type: str | None = None,
+        related_document_id: str | None = None,
+    ) -> DocumentModel | None:
+        if not ObjectId.is_valid(document_id):
+            return None
+
+        updates: dict[str, object] = {}
+        if legal_status is not None:
+            updates["legalStatus"] = legal_status
+        if document_type is not None:
+            updates["documentType"] = document_type
+        if date_publication is not None:
+            updates["datePublication"] = date_publication
+        if date_entree_vigueur is not None:
+            updates["dateEntreeVigueur"] = date_entree_vigueur
+        if version is not None:
+            updates["version"] = version
+        if relation_type is not None:
+            updates["relationType"] = relation_type
+        if related_document_id is not None:
+            updates["relatedDocumentId"] = related_document_id
+
+        if updates:
+            self.collection.update_one({"_id": ObjectId(document_id)}, {"$set": updates})
+        return self.get_by_id(document_id)
+
+    def apply_incoming_relation(
+        self,
+        target_document_id: str,
+        relation_type: str,
+        source_document_id: str,
+    ) -> DocumentModel | None:
+        if not ObjectId.is_valid(target_document_id):
+            return None
+
+        if relation_type == LegalRelationType.remplace.value:
+            legal_status = LegalStatus.remplace.value
+        elif relation_type == LegalRelationType.abroge.value:
+            legal_status = LegalStatus.abroge.value
+        elif relation_type == LegalRelationType.modifie.value:
+            legal_status = LegalStatus.modifie.value
+        else:
+            legal_status = LegalStatus.inconnu.value
+
+        self.collection.update_one(
+            {"_id": ObjectId(target_document_id)},
+            {
+                "$set": {
+                    "legalStatus": legal_status,
+                    "relationType": relation_type,
+                    "relatedDocumentId": source_document_id,
+                }
+            },
+        )
+        return self.get_by_id(target_document_id)
 
     def _build_list_query(
         self,

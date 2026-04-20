@@ -11,7 +11,9 @@ from app.api.v1.controllers.rag_controller import router as rag_router
 from app.api.v1.controllers.reclamation_controller import router as reclamation_router
 from app.core.config import settings
 from app.core.database import close_mongo_connection, connect_to_mongo
-from app.infrastructure.embeddings.qwen_embedding_provider import QwenEmbeddingProvider
+from app.infrastructure.embeddings.ollama_embedding_provider import (
+    OllamaEmbeddingProvider,
+)
 from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
 from app.middlewares.auth_session_middleware import AuthSessionMiddleware
 from app.services.auth_service import AuthService
@@ -32,7 +34,10 @@ async def lifespan(app: FastAPI):
     auth_service.ensure_auth_indexes()
     auth_service.seed_default_users()
 
-    provider = QwenEmbeddingProvider(settings.embedding_model_name)
+    provider = OllamaEmbeddingProvider(
+        base_url=settings.ollama_base_url,
+        model_name=settings.embedding_model_name,
+    )
     embedding_service = EmbeddingService(provider)
     document_index_service = DocumentIndexService(embedding_service)
 

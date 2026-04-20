@@ -9,6 +9,9 @@ from app.schemas.document_schema import (
     DocumentSearchItemOut,
     DocumentSearchResponse,
     DocumentStatus,
+    LegalDocumentType,
+    LegalRelationType,
+    LegalStatus,
 )
 from app.schemas.rag_schema import AskRequest
 from app.schemas.reclamation_schema import (
@@ -34,6 +37,9 @@ __all__ = [
     "DocumentSearchItemOut",
     "DocumentSearchResponse",
     "DocumentStatus",
+    "LegalDocumentType",
+    "LegalRelationType",
+    "LegalStatus",
     "LoginRequest",
     "OidcLoginStartOut",
     "ReclamationActivityOut",

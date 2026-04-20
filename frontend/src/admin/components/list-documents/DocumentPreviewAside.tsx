@@ -1,5 +1,11 @@
 import { FileText, X } from "lucide-react";
-import { documentCategoryLabels, type DocumentPreview } from "../../../models/document";
+import {
+  documentCategoryLabels,
+  legalDocumentTypeLabels,
+  legalStatusLabels,
+  legalRelationTypeLabels,
+  type DocumentPreview,
+} from "../../../models/document";
 
 type DocumentPreviewAsideProps = {
   preview: DocumentPreview;
@@ -48,12 +54,32 @@ export default function DocumentPreviewAside({ preview, isLoading, error, onClos
             <p className="text-[#7a7472]">Date</p>
             <p className="mt-1 font-medium text-[#111111]">{formatDate(preview.createdAt)}</p>
           </div>
+          <div className="rounded-xl bg-[#f8f4f2] px-3 py-2">
+            <p className="text-[#7a7472]">Type juridique</p>
+            <p className="mt-1 font-medium text-[#111111]">{legalDocumentTypeLabels[preview.documentType]}</p>
+          </div>
+          <div className="rounded-xl bg-[#f8f4f2] px-3 py-2">
+            <p className="text-[#7a7472]">Statut juridique</p>
+            <p className="mt-1 font-medium text-[#111111]">{legalStatusLabels[preview.legalStatus]}</p>
+          </div>
         </div>
 
         {preview.description ? (
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7472]">Description</p>
             <p className="mt-1 text-[12px] leading-5 text-[#7a7472]">{preview.description}</p>
+          </div>
+        ) : null}
+
+        {preview.version || preview.relationType !== "none" ? (
+          <div className="rounded-xl border border-[#ede7e5] bg-[#fffdfc] px-3 py-3 text-[12px] leading-5 text-[#3f3a39]">
+            {preview.version ? <p>Version : {preview.version}</p> : null}
+            {preview.relationType !== "none" ? (
+              <p>
+                Relation : {legalRelationTypeLabels[preview.relationType]}
+                {preview.relatedDocumentId ? ` (${preview.relatedDocumentId})` : ""}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
