@@ -20,14 +20,20 @@ from app.services.document_relation_service import DocumentRelationService
 from app.services.embedding_service import EmbeddingService
 from app.services.legal_metadata_service import LegalMetadataService
 from app.services.nlp_service import NLPService
+from app.services.notification_service import NotificationService
 from fastapi import HTTPException, UploadFile
 
 
 class DocumentIndexService:
-    def __init__(self, embedding_service: EmbeddingService):
+    def __init__(
+        self,
+        embedding_service: EmbeddingService,
+        notification_service: NotificationService | None = None,
+    ):
         self.parser_service = DocumentParserService()
         self.nlp_service = NLPService(NLPProvider())
         self.embedding_service = embedding_service
+        self.notification_service = notification_service
         self.qdrant_repository = QdrantRepository()
         self.document_repository = DocumentRepository()
         self.legal_metadata_service = LegalMetadataService(self.document_repository)
@@ -123,6 +129,8 @@ class DocumentIndexService:
             )
             if stored_document is not None:
                 self.document_relation_service.apply_relation_after_index(stored_document)
+                if self.notification_service is not None:
+                    await self.notification_service.notify_document_indexed(stored_document)
 
             return {
                 "document": (

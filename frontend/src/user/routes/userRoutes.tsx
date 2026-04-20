@@ -2,7 +2,6 @@ import ChatPage from "../pages/ChatPage";
 import RechercheDocumentPage from "../pages/RechercheDocumentPage";
 import ReclamationCreatePage from "../pages/ReclamationCreatePage";
 import ReclamationPage from "../pages/ReclamationPage";
-import UserHomePage from "../../pages/UserHomePage";
 import AccueilPage from "../pages/AcceuilPage";
 
 export const userRoutes = [

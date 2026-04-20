@@ -59,3 +59,7 @@ class ReclamationOut(BaseModel):
 class ReclamationListResponse(BaseModel):
     items: list[ReclamationOut]
     total: int
+
+
+class ReclamationResolveRequest(BaseModel):
+    adminReply: str = Field(..., min_length=3, max_length=3000)

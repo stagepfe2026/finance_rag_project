@@ -1,3 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import buildingImage from "../../assets/building_cimf.png";
+import { documentCategoryLabels, type DocumentItem } from "../../models/document";
+import { fetchUserDashboard } from "../../services/dashboard.service";
+import { createNotificationsWebSocket } from "../../services/notifications.service";
 import HelpCard from "../components/acceuil/HelpCard";
 import NotificationsPanel from "../components/acceuil/NotificationsPanel";
 import QuickAccessPanel from "../components/acceuil/QuickAccessPanel";
@@ -5,25 +12,178 @@ import QuickActionsSection from "../components/acceuil/QuickActionsSection";
 import RecentDocumentsTable from "../components/acceuil/RecentDocumentsTable";
 import SearchBar from "../components/acceuil/SearchBar";
 import WelcomeBanner from "../components/acceuil/WelcomeBanner";
+import type {
+  NotificationItem,
+  QuickAccessItem,
+  QuickAction,
+  RecentDocumentItem,
+} from "../components/acceuil/types/acceuil.types";
 
-import {
-  notifications,
-  quickAccessItems,
-  quickActions,
-  recentDocuments,
-} from "../components/acceuil/data/accueil.mock";
+function formatRelativeDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
 
-import buildingImage from "../../assets/building_cimf.png";
+  const diffMs = Date.now() - date.getTime();
+  const diffHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)));
+
+  if (diffHours < 24) {
+    return `Il y a ${diffHours} h`;
+  }
+
+  const diffDays = Math.max(1, Math.round(diffHours / 24));
+  return `Il y a ${diffDays} j`;
+}
+
+function formatDocumentDate(document: DocumentItem) {
+  const value = document.indexedAt || document.createdAt;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short" }).format(date);
+}
 
 export default function AccueilPage() {
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState("Utilisateur");
+  const [recentDocuments, setRecentDocuments] = useState<RecentDocumentItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [pageError, setPageError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboard() {
+      try {
+        setPageError("");
+        const data = await fetchUserDashboard();
+        if (cancelled) {
+          return;
+        }
+
+        setUserName(data.userName);
+        setRecentDocuments(
+          data.recentDocuments.map((document) => ({
+            id: document.id,
+            title: document.title,
+            category: documentCategoryLabels[document.category],
+            date: formatDocumentDate(document),
+            link: `/user/documents/recherche?documentId=${document.id}`,
+          })),
+        );
+        setNotifications(
+          data.notifications.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            time: formatRelativeDate(item.createdAt),
+            link: item.link,
+            isRead: item.isRead,
+          })),
+        );
+      } catch (error) {
+        if (!cancelled) {
+          setPageError(error instanceof Error ? error.message : "Erreur pendant le chargement de l accueil.");
+        }
+      }
+    }
+
+    void loadDashboard();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const socket = createNotificationsWebSocket({
+      onNotification: ({ data }) => {
+        setNotifications((current) => [
+          {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            time: formatRelativeDate(data.createdAt),
+            link: data.link,
+            isRead: data.isRead,
+          },
+          ...current.filter((item) => item.id !== data.id),
+        ]);
+      },
+    });
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const quickActions = useMemo<QuickAction[]>(
+    () => [
+      {
+        id: "search-documents",
+        title: "Rechercher un document",
+        description: "Trouvez des documents par mots-cles ou filtres.",
+        href: "/user/documents/recherche",
+      },
+      {
+        id: "ask-question",
+        title: "Poser une question",
+        description: "Demarrez une nouvelle conversation dans le chat.",
+        onClick: () => navigate("/user/chat?new=1"),
+      },
+      {
+        id: "new-reclamation",
+        title: "Nouvelle reclamation",
+        description: "Signalez un probleme ou une erreur a l equipe.",
+        href: "/user/reclamations/nouvelle",
+      },
+      {
+        id: "my-reclamations",
+        title: "Mes reclamations",
+        description: "Suivez l etat de vos demandes et reponses.",
+        href: "/user/reclamations",
+      },
+    ],
+    [navigate],
+  );
+
+  const quickAccessItems = useMemo<QuickAccessItem[]>(
+    () => [
+      {
+        id: "favorites",
+        label: "Mes documents favoris",
+        link: "/user/documents/recherche?favorites=1",
+      },
+      {
+        id: "recent-documents",
+        label: "Documents recents",
+        link: "/user/documents/recherche",
+      },
+      {
+        id: "reclamations",
+        label: "Mes reclamations",
+        link: "/user/reclamations",
+      },
+    ],
+    [],
+  );
+
+  function handleSearch(value: string) {
+    navigate(`/user/documents/recherche${value ? `?query=${encodeURIComponent(value)}` : ""}`);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 px-5 py-5">
       <div className="mx-auto w-full space-y-4">
-        <WelcomeBanner userName="Ahmed Ben Ali" imageSrc={buildingImage} />
+        <WelcomeBanner userName={userName} imageSrc={buildingImage} />
+
+        {pageError ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pageError}</div> : null}
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
           <div className="space-y-4">
-            <SearchBar />
+            <SearchBar onSearch={handleSearch} />
             <QuickActionsSection actions={quickActions} />
             <RecentDocumentsTable documents={recentDocuments} />
           </div>

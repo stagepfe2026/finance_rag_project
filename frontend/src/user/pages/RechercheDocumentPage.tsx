@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import type {
   DocumentCategoryValue,
@@ -21,12 +22,13 @@ import RechercheDocumentPreviewPanel from "../components/rechercheDocument/Reche
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 export default function RechercheDocumentPage() {
-  const [query, setQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("query") ?? "");
   const [selectedCategories, setSelectedCategories] = useState<DocumentCategoryValue[]>([]);
   const [titleFilter, setTitleFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(searchParams.get("favorites") === "1");
   const [sortBy, setSortBy] = useState<"recent" | "title">("recent");
 
   const [results, setResults] = useState<DocumentSearchItem[]>([]);
@@ -81,16 +83,17 @@ export default function RechercheDocumentPage() {
 
         setResults(response.items);
         setTotal(response.total);
+
+        const requestedDocumentId = searchParams.get("documentId");
         setSelectedDocument((current) =>
-          response.items.find((item) => item.id === current?.id) ?? response.items[0] ?? null,
+          response.items.find((item) => item.id === requestedDocumentId)
+          ?? response.items.find((item) => item.id === current?.id)
+          ?? response.items[0]
+          ?? null,
         );
       } catch (error) {
         if (!cancelled) {
-          setPageError(
-            error instanceof Error
-              ? error.message
-              : "Erreur pendant la recherche des documents.",
-          );
+          setPageError(error instanceof Error ? error.message : "Erreur pendant la recherche des documents.");
           setResults([]);
           setTotal(0);
           setSelectedDocument(null);
@@ -106,7 +109,7 @@ export default function RechercheDocumentPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [filtersSignature]);
+  }, [filtersSignature, searchParams]);
 
   useEffect(() => {
     if (!selectedDocument) {
@@ -134,11 +137,7 @@ export default function RechercheDocumentPage() {
       } catch (error) {
         if (!cancelled) {
           setPreview(null);
-          setPreviewError(
-            error instanceof Error
-              ? error.message
-              : "Erreur pendant le chargement du document.",
-          );
+          setPreviewError(error instanceof Error ? error.message : "Erreur pendant le chargement du document.");
         }
       } finally {
         if (!cancelled) {
@@ -170,13 +169,9 @@ export default function RechercheDocumentPage() {
           .filter((entry) => (favoritesOnly ? entry.isFavored : true)),
       );
 
-      setSelectedDocument((current) =>
-        current?.id === item.id ? { ...current, isFavored: nextValue } : current,
-      );
+      setSelectedDocument((current) => (current?.id === item.id ? { ...current, isFavored: nextValue } : current));
     } catch (error) {
-      setPageError(
-        error instanceof Error ? error.message : "Erreur pendant la mise a jour du favori.",
-      );
+      setPageError(error instanceof Error ? error.message : "Erreur pendant la mise a jour du favori.");
     }
   }
 
@@ -209,16 +204,9 @@ export default function RechercheDocumentPage() {
         />
       }
       searchBar={
-        <RechercheDocumentSearchBar
-          query={query}
-          sortBy={sortBy}
-          onQueryChange={setQuery}
-          onSortChange={setSortBy}
-        />
+        <RechercheDocumentSearchBar query={query} sortBy={sortBy} onQueryChange={setQuery} onSortChange={setSortBy} />
       }
-      resultsHeader={
-        <RechercheDocumentResultsHeader total={total} query={query} error={pageError} />
-      }
+      resultsHeader={<RechercheDocumentResultsHeader total={total} query={query} error={pageError} />}
       results={
         <RechercheDocumentResultsList
           items={results}

@@ -1,12 +1,13 @@
-import React from "react";
+import type { ReactNode } from "react";
 
 interface SectionCardProps {
   title?: string;
-  children: React.ReactNode;
-  rightAction?: React.ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
 }
 
-export default function SectionCard({ title, action, children, className = "" }) {
+export default function SectionCard({ title, action, children, className = "" }: SectionCardProps) {
   return (
     <section className={`rounded-xl border border-slate-200 bg-white p-4 ${className}`}>
       {(title || action) && (

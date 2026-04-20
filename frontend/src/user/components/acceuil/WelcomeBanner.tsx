@@ -19,14 +19,14 @@ export default function WelcomeBanner({
         </p>
 
         <p className="mt-1 text-xs text-slate-500">
-          Accédez facilement aux documents et informations.
+          Accedez facilement aux documents et informations.
         </p>
       </div>
 
       {imageSrc ? (
         <img
           src={imageSrc}
-          alt="Bâtiment CIMF"
+          alt="Batiment CIMF"
           className="absolute -bottom-2 right-6 h-full w-auto object-contain grayscale opacity-40"
         />
       ) : null}

@@ -90,6 +90,14 @@ class DocumentRepository:
         cursor = self.collection.find(query).sort("createdAt", -1).skip(skip).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    def list_recent_indexed(self, *, limit: int = 6) -> list[DocumentModel]:
+        cursor = (
+            self.collection.find({"deletedAt": None, "documentStatus": DocumentStatus.indexed.value})
+            .sort("indexedAt", -1)
+            .limit(limit)
+        )
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
+
     def count_documents(
         self,
         *,

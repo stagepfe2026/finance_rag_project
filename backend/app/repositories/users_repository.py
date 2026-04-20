@@ -25,6 +25,14 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
+    def list_active_by_roles(self, roles: list[str]) -> list[UserModel]:
+        normalized_roles = [role for role in roles if role]
+        if not normalized_roles:
+            return []
+
+        cursor = get_users_collection().find({"role": {"$in": normalized_roles}, "deletedAt": None})
+        return [UserModel.from_mongo(raw) for raw in cursor]
+
     def update_profile(
         self,
         *,

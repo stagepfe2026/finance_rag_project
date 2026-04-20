@@ -1,64 +1,81 @@
-import React from "react";
+import type { CSSProperties } from "react";
+import { Link } from "react-router-dom";
+
 import SectionCard from "./SectionCard";
-import type { DocumentItem } from "./types/acceuil.types";
+import type { RecentDocumentItem } from "./types/acceuil.types";
 
 interface RecentDocumentsTableProps {
-  documents: DocumentItem[];
+  documents: RecentDocumentItem[];
 }
 
 const getCategoryStyle = (category: string) => {
-  const styles: Record<string, React.CSSProperties> = {
-    "LÉGISLATION": {
+  const styles: Record<string, CSSProperties> = {
+    "Loi Finance": {
       color: "#c1121f",
       border: "1px solid #f2b8bd",
       background: "#fff5f5",
     },
-    "PROCÉDURES": {
+    Juridique: {
       color: "#142850",
       border: "1px solid #c7d2fe",
       background: "#f8faff",
     },
-    "CIRCULAIRES": {
+    Conformite: {
       color: "#4b5563",
       border: "1px solid #d1d5db",
       background: "#f9fafb",
     },
-    "GUIDES": {
+    Autre: {
       color: "#111827",
       border: "1px solid #d1d5db",
       background: "#f3f4f6",
     },
   };
 
-  return styles[category] || styles["GUIDES"];
+  return styles[category] || styles.Autre;
 };
 
-export default function RecentDocumentsTable({ documents }) {
+export default function RecentDocumentsTable({ documents }: RecentDocumentsTableProps) {
   return (
     <SectionCard
-      title="Documents récemment ajoutés"
-      action={<span className="text-xs text-red-600">Voir tous</span>}
+      title="Documents recemment ajoutes"
+      action={
+        <Link to="/user/documents/recherche" className="text-xs text-red-600">
+          Voir tous
+        </Link>
+      }
     >
       <table className="w-full text-xs">
         <thead>
           <tr className="text-left text-slate-500">
             <th className="py-2">Titre</th>
-            <th>Catégorie</th>
+            <th>Categorie</th>
             <th>Date</th>
             <th></th>
           </tr>
         </thead>
 
         <tbody>
+          {documents.length === 0 ? (
+            <tr className="border-t">
+              <td colSpan={4} className="py-4 text-sm text-slate-500">
+                Aucun document indexe pour le moment.
+              </td>
+            </tr>
+          ) : null}
           {documents.map((doc) => (
             <tr key={doc.id} className="border-t">
               <td className="py-3 text-sm text-slate-900">{doc.title}</td>
-              <td className="text-xs">{doc.category}</td>
+              <td className="text-xs">
+                <span className="rounded-full px-2 py-1" style={getCategoryStyle(doc.category)}>
+                  {doc.category}
+                </span>
+              </td>
               <td className="text-xs text-slate-500">{doc.date}</td>
               <td>
-                <button className="rounded-md border px-3 py-1 text-xs">
+                <Link to={doc.link} className="rounded-md border px-3 py-1 text-xs">
                   Consulter
-                </button>
+                </Link>
               </td>
             </tr>
           ))}

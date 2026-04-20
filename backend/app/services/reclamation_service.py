@@ -8,6 +8,7 @@ from fastapi import UploadFile
 from app.core.config import settings
 from app.models.reclamation_model import ReclamationModel
 from app.repositories.reclamation_repository import ReclamationRepository
+from app.services.notification_service import NotificationService
 
 
 class ReclamationService:
@@ -28,8 +29,9 @@ class ReclamationService:
     }
     max_attachment_size = 5 * 1024 * 1024
 
-    def __init__(self) -> None:
+    def __init__(self, notification_service: NotificationService | None = None) -> None:
         self.repository = ReclamationRepository()
+        self.notification_service = notification_service
         self.storage_dir = Path(settings.reclamations_storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
@@ -156,6 +158,34 @@ class ReclamationService:
         deleted = self.repository.delete_for_user(reclamation_id, user_id)
         if not deleted:
             raise ValueError("RECLAMATION_NOT_FOUND")
+
+    async def resolve_reclamation(self, reclamation_id: str, *, admin_user: dict, admin_reply: str) -> dict:
+        normalized_reply = admin_reply.strip()
+        if len(normalized_reply) < 3:
+            raise ValueError("ADMIN_REPLY_TOO_SHORT")
+
+        reclamation = self.repository.get_by_id(reclamation_id)
+        if reclamation is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+
+        admin_name = " ".join(
+            part
+            for part in [str(admin_user.get("prenom", "")).strip(), str(admin_user.get("nom", "")).strip()]
+            if part
+        ).strip() or str(admin_user.get("email", "")).strip() or "Administrateur"
+
+        updated = self.repository.resolve(
+            reclamation_id,
+            admin_reply=normalized_reply,
+            admin_reply_by=admin_name,
+        )
+        if updated is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+
+        if self.notification_service is not None:
+            await self.notification_service.notify_reclamation_resolved(updated, admin_name)
+
+        return self._serialize_reclamation(updated)
 
     async def _store_attachment(self, attachment: UploadFile) -> dict:
         extension = Path(attachment.filename or "").suffix.lower()

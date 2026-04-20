@@ -1,19 +1,22 @@
 export interface QuickAction {
-  id: number;
+  id: string;
   title: string;
   description: string;
-  link: string;
+  href?: string;
+  onClick?: () => void;
 }
 
 export interface NotificationItem {
-  id: number;
+  id: string;
   title: string;
   description: string;
   time: string;
+  link?: string | null;
+  isRead?: boolean;
 }
 
-export interface DocumentItem {
-  id: number;
+export interface RecentDocumentItem {
+  id: string;
   title: string;
   category: string;
   date: string;
@@ -21,7 +24,7 @@ export interface DocumentItem {
 }
 
 export interface QuickAccessItem {
-  id: number;
+  id: string;
   label: string;
   link: string;
 }

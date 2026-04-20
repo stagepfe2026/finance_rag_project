@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     mongodb_chat_conversations_collection: str = "chat_conversations"
     mongodb_chat_messages_collection: str = "chat_messages"
     mongodb_reclamations_collection: str = "reclamations"
+    mongodb_notifications_collection: str = "notifications"
     documents_storage_dir: str = "storage/documents"
     reclamations_storage_dir: str = "storage/reclamations"
 

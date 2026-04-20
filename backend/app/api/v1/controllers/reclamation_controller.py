@@ -3,7 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import FileResponse
 
-from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
+from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
+from app.schemas import ReclamationResolveRequest
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 
@@ -140,5 +141,35 @@ async def create_reclamation(
             "ATTACHMENT_TOO_LARGE": "La piece jointe ne doit pas depasser 5 Mo.",
         }
         raise HTTPException(status_code=400, detail=errors.get(str(exc), "Reclamation invalide.")) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/{reclamation_id}/resolve")
+async def resolve_reclamation(
+    request: Request,
+    reclamation_id: str,
+    payload: ReclamationResolveRequest,
+    current_user: dict = Depends(require_admin_user),
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        data = await service.resolve_reclamation(
+            reclamation_id,
+            admin_user=current_user,
+            admin_reply=payload.adminReply,
+        )
+        return {
+            "success": True,
+            "message": "Reclamation resolue avec succes.",
+            "data": data,
+        }
+    except ValueError as exc:
+        if str(exc) == "RECLAMATION_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

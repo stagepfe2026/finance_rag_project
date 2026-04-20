@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import type { ChatMessage, Conversation, ResponseMode } from "../../models/chat";
 import {
@@ -68,6 +69,9 @@ type ConversationModalState = {
 };
 
 export default function ChatLayout() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialActionHandledRef = useRef(false);
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -125,9 +129,7 @@ export default function ChatLayout() {
         }
       } catch (error) {
         if (!cancelled) {
-          setPageError(
-            error instanceof Error ? error.message : "Erreur pendant le chargement des conversations.",
-          );
+          setPageError(error instanceof Error ? error.message : "Erreur pendant le chargement des conversations.");
         }
       } finally {
         if (!cancelled) {
@@ -141,6 +143,43 @@ export default function ChatLayout() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (isLoadingConversations || initialActionHandledRef.current) {
+      return;
+    }
+
+    const requestedConversationId = searchParams.get("conversationId");
+    const wantsNewConversation = searchParams.get("new") === "1";
+
+    if (requestedConversationId && conversations.some((item) => item._id === requestedConversationId)) {
+      setSelectedConversationId(requestedConversationId);
+      initialActionHandledRef.current = true;
+      return;
+    }
+
+    if (!wantsNewConversation) {
+      initialActionHandledRef.current = true;
+      return;
+    }
+
+    initialActionHandledRef.current = true;
+
+    void (async () => {
+      try {
+        const conversation = await createConversation();
+        setConversations((current) => upsertConversation(current, conversation));
+        setSelectedConversationId(conversation._id);
+        setMessages([]);
+        setSearchParams({ conversationId: conversation._id }, { replace: true });
+        showSnackbar("Conversation creee avec succes.", "success");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Impossible de creer une conversation.";
+        setPageError(message);
+        showSnackbar(message, "error");
+      }
+    })();
+  }, [conversations, isLoadingConversations, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!selectedConversationId) {
@@ -183,9 +222,7 @@ export default function ChatLayout() {
       return conversations;
     }
 
-    return conversations.filter((conversation) =>
-      conversation.summary.toLowerCase().includes(keyword),
-    );
+    return conversations.filter((conversation) => conversation.summary.toLowerCase().includes(keyword));
   }, [conversations, search]);
 
   const activeConversations = filteredConversations.filter((conversation) => !conversation.isArchived);
@@ -199,6 +236,7 @@ export default function ChatLayout() {
       setConversations((current) => upsertConversation(current, conversation));
       setSelectedConversationId(conversation._id);
       setMessages([]);
+      setSearchParams({ conversationId: conversation._id }, { replace: true });
       showSnackbar("Conversation creee avec succes.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Impossible de creer une conversation.";
@@ -207,11 +245,11 @@ export default function ChatLayout() {
     }
   }
 
-  async function handleRenameConversation(conversation: Conversation) {
+  function handleRenameConversation(conversation: Conversation) {
     openConversationModal("rename", conversation);
   }
 
-  async function handleArchiveConversation(conversation: Conversation) {
+  function handleArchiveConversation(conversation: Conversation) {
     openConversationModal("archive", conversation);
   }
 
@@ -221,6 +259,7 @@ export default function ChatLayout() {
       const updated = await restoreConversation(conversation._id);
       setConversations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
       setSelectedConversationId(updated._id);
+      setSearchParams({ conversationId: updated._id }, { replace: true });
       showSnackbar("Conversation restauree avec succes.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Impossible de restaurer la conversation.";
@@ -229,7 +268,7 @@ export default function ChatLayout() {
     }
   }
 
-  async function handleDeleteConversation(conversation: Conversation) {
+  function handleDeleteConversation(conversation: Conversation) {
     openConversationModal("delete", conversation);
   }
 
@@ -260,7 +299,11 @@ export default function ChatLayout() {
         setConversations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
         if (selectedConversationId === conversation._id) {
           const nextConversations = conversations.map((item) => (item._id === updated._id ? updated : item));
-          setSelectedConversationId(getNextSelectedConversationId(nextConversations, updated._id, selectedConversationId));
+          const nextSelectedId = getNextSelectedConversationId(nextConversations, updated._id, selectedConversationId);
+          setSelectedConversationId(nextSelectedId);
+          if (nextSelectedId) {
+            setSearchParams({ conversationId: nextSelectedId }, { replace: true });
+          }
         }
         showSnackbar("Conversation archivee avec succes.", "success");
       }
@@ -268,10 +311,14 @@ export default function ChatLayout() {
       if (mode === "delete") {
         await deleteConversation(conversation._id);
         const remaining = conversations.filter((item) => item._id !== conversation._id);
+        const nextSelectedId = getNextSelectedConversationId(remaining, conversation._id, selectedConversationId);
         setConversations(remaining);
-        setSelectedConversationId(getNextSelectedConversationId(remaining, conversation._id, selectedConversationId));
+        setSelectedConversationId(nextSelectedId);
         if (selectedConversationId === conversation._id) {
           setMessages([]);
+        }
+        if (nextSelectedId) {
+          setSearchParams({ conversationId: nextSelectedId }, { replace: true });
         }
         showSnackbar("Conversation supprimee avec succes.", "success");
       }
@@ -322,6 +369,7 @@ export default function ChatLayout() {
 
       setConversations((current) => upsertConversation(current, result.conversation));
       setSelectedConversationId(result.conversation._id);
+      setSearchParams({ conversationId: result.conversation._id }, { replace: true });
       setMessages((current) => {
         const withoutTemps = current.filter(
           (message) => message._id !== tempUserMessage._id && message._id !== tempAssistantMessage._id,
@@ -360,7 +408,12 @@ export default function ChatLayout() {
             search={search}
             isLoading={isLoadingConversations}
             onSearchChange={setSearch}
-            onSelectConversation={setSelectedConversationId}
+            onSelectConversation={(conversationId) => {
+              setSelectedConversationId(conversationId);
+              if (conversationId) {
+                setSearchParams({ conversationId }, { replace: true });
+              }
+            }}
             onCreateConversation={handleCreateConversation}
             onRenameConversation={handleRenameConversation}
             onArchiveConversation={handleArchiveConversation}
