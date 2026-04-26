@@ -1,4 +1,4 @@
-import { ExternalLink, Heart } from "lucide-react";
+import { ExternalLink, Heart, X } from "lucide-react";
 
 import {
   documentCategoryLabels,
@@ -12,9 +12,11 @@ type Props = {
   item: DocumentSearchItem | null;
   preview: DocumentPreview | null;
   query: string;
+  hasActiveSearch: boolean;
   isLoading: boolean;
   error: string;
   apiBaseUrl: string;
+  onClose: () => void;
   onToggleFavorite: (item: DocumentSearchItem) => void;
 };
 
@@ -40,24 +42,29 @@ export default function RechercheDocumentPreviewPanel({
   item,
   preview,
   query,
+  hasActiveSearch,
   isLoading,
   error,
   apiBaseUrl,
+  onClose,
   onToggleFavorite,
 }: Props) {
+  if (!hasActiveSearch) {
+    return null;
+  }
+
   if (!item) {
-    return (
-      <aside className="rounded-2xl border border-[#efe3e1] bg-white p-5 text-[13px] text-[#7d6c68] shadow-sm">
-        Sélectionnez un document pour afficher son contenu.
-      </aside>
-    );
+    return null;
   }
 
   return (
-    <aside className="rounded-2xl border border-[#efe3e1] bg-white p-5 shadow-sm">
+    <aside className="flex h-full min-h-0 flex-col rounded-[22px] border border-[#efe3e1] bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[18px] font-semibold leading-7 text-[#221f1e]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#a1827c]">
+            Detail document
+          </p>
+          <h2 className="mt-2 text-[17px] font-semibold leading-7 text-[#221f1e]">
             {item.title}
           </h2>
 
@@ -69,32 +76,58 @@ export default function RechercheDocumentPreviewPanel({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onToggleFavorite(item)}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#ead9d6] text-[#b2342c] transition hover:bg-[#fbf3f2]"
-          title={item.isFavored ? "Retirer des favoris" : "Ajouter aux favoris"}
-        >
-          <Heart size={16} className={item.isFavored ? "fill-current" : ""} />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onToggleFavorite(item)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ead9d6] text-[#b2342c] transition hover:bg-[#fbf3f2]"
+            title={item.isFavored ? "Retirer des favoris" : "Ajouter aux favoris"}
+          >
+            <Heart size={16} className={item.isFavored ? "fill-current" : ""} />
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ead9d6] text-[#8d807c] transition hover:bg-[#faf6f5] hover:text-[#b2342c]"
+            title="Fermer le detail"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
-      <RechercheDocumentPreviewCard
-        preview={preview}
-        query={query}
-        isLoading={isLoading}
-        error={error}
-      />
+      <div className="mt-3 grid grid-cols-2 gap-2 text-[12px]">
+        <div className="rounded-[16px] bg-[#faf6f5] px-3 py-2.5">
+          <p className="text-[#8d807c]">Categorie</p>
+          <p className="mt-1 font-medium text-[#2e2928]">{documentCategoryLabels[item.category]}</p>
+        </div>
+        <div className="rounded-[16px] bg-[#faf6f5] px-3 py-2.5">
+          <p className="text-[#8d807c]">Date realisation</p>
+          <p className="mt-1 font-medium text-[#2e2928]">{formatDate(item.realizedAt || item.createdAt)}</p>
+        </div>
+      </div>
 
-      <a
-        href={`${apiBaseUrl}/api/v1/document-search/${item.id}/file`}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#b2342c] px-4 py-2.5 text-[13px] font-medium text-white transition hover:bg-[#8f2923]"
-      >
-        Voir le document complet
-        <ExternalLink size={14} />
-      </a>
+      <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+        <RechercheDocumentPreviewCard
+          preview={preview}
+          query={query}
+          isLoading={isLoading}
+          error={error}
+        />
+      </div>
+
+      <div className="mt-3 border-t border-[#f1e7e5] pt-3">
+        <a
+          href={`${apiBaseUrl}/api/v1/document-search/${item.id}/file`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-[16px] bg-[#b2342c] px-4 py-3 text-[13px] font-medium text-white transition hover:bg-[#8f2923]"
+        >
+          Consulter le document
+          <ExternalLink size={14} />
+        </a>
+      </div>
     </aside>
   );
 }

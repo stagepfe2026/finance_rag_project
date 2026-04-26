@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+import logging
 from typing import Any, Literal
 
 from app.models.chat_model import ChatMessageModel, ConversationModel
@@ -10,6 +11,7 @@ class ChatService:
     def __init__(self, rag_service: RagService) -> None:
         self.rag_service = rag_service
         self.chat_repo = ChatRepository()
+        self.logger = logging.getLogger(__name__)
 
     def ensure_indexes(self) -> None:
         self.chat_repo.ensure_indexes()
@@ -143,6 +145,7 @@ class ChatService:
         try:
             return self.rag_service.ask(question=question, response_mode=response_mode)
         except Exception:
+            self.logger.exception("Chat assistant request failed during RAG processing.")
             return {
                 "question": question,
                 "detected_categories": [],

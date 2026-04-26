@@ -13,11 +13,11 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-// Dot color per status — matches image 3
 const dotColor: Record<ReclamationStatus, string> = {
-  PENDING: "bg-rose-500",
-  RESOLVED: "bg-sky-400",
-  FAILED: "bg-amber-400",
+  PENDING: "bg-amber-500",
+  IN_PROGRESS: "bg-sky-500",
+  RESOLVED: "bg-emerald-500",
+  FAILED: "bg-rose-500",
 };
 
 type ReclamationsRecentesCardProps = {
@@ -33,12 +33,24 @@ export default function ReclamationsRecentesCard({
   const total = reclamations.length;
 
   return (
-    <aside className="h-full bg-white p-5">
-      <h2 className="text-[15px] font-bold text-slate-800">Réclamations Récentes</h2>
+    <aside className="sticky top-4 rounded-[24px] border border-[#e8d9d6] bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#b28a84]">
+            Reclamations
+          </p>
+          <h2 className="mt-2 text-[18px] font-bold text-[#671a12]">
+            Recentes
+          </h2>
+        </div>
+        <span className="rounded-full bg-[#f8efed] px-3 py-1 text-[12px] font-medium text-[#8f4c44]">
+          {total}
+        </span>
+      </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-5 space-y-4">
         {recentItems.length === 0 ? (
-          <p className="text-sm text-slate-500">Aucune réclamation disponible.</p>
+          <p className="text-sm text-slate-500">Aucune reclamation disponible.</p>
         ) : null}
 
         {recentItems.map((reclamation) => (
@@ -46,9 +58,8 @@ export default function ReclamationsRecentesCard({
             key={reclamation._id}
             type="button"
             onClick={() => onSelect(reclamation)}
-            className="flex w-full items-start gap-3 text-left transition hover:opacity-80"
+            className="flex w-full items-start gap-3 rounded-2xl border border-[#f0e5e2] bg-[#fffdfd] px-3 py-3 text-left transition hover:border-[#d8b5b0] hover:bg-[#fcf8f7]"
           >
-            {/* Colored dot */}
             <span
               className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dotColor[reclamation.status]}`}
             />
@@ -68,10 +79,9 @@ export default function ReclamationsRecentesCard({
         ))}
       </div>
 
-      {/* Footer */}
       <div className="mt-5 flex items-center justify-between border-t border-[#f0e8e5] pt-4">
         <span className="text-[12px] text-slate-500">
-          1–{recentItems.length} sur {total} résultats
+          1-{recentItems.length} sur {total} resultats
         </span>
         <button
           type="button"

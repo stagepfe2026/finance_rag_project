@@ -97,6 +97,10 @@ class SessionsRepository:
         collection.create_index("closedAt")
         collection.create_index("expiresAt")
 
+    def list_recent(self, *, limit: int = 250) -> list[SessionModel]:
+        cursor = get_sessions_collection().find({}).sort("createdAt", -1).limit(limit)
+        return [SessionModel.from_mongo(raw) for raw in cursor]
+
     @staticmethod
     def _parse_id(session_id: str) -> ObjectId | None:
         try:

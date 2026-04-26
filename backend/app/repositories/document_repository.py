@@ -98,6 +98,10 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    def list_recent_documents(self, *, limit: int = 8) -> list[DocumentModel]:
+        cursor = self.collection.find({"deletedAt": None}).sort("createdAt", -1).limit(limit)
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
+
     def count_documents(
         self,
         *,
@@ -117,6 +121,7 @@ class DocumentRepository:
         date_from: date | None = None,
         date_to: date | None = None,
         favorites_only: bool = False,
+        current_user_id: str | None = None,
         sort_by: str = "recent",
         skip: int = 0,
         limit: int = 100,
@@ -128,6 +133,7 @@ class DocumentRepository:
             date_from=date_from,
             date_to=date_to,
             favorites_only=favorites_only,
+            current_user_id=current_user_id,
         )
         sort_config = [("createdAt", -1)] if sort_by == "recent" else [("title", 1)]
         cursor = self.collection.find(mongo_query).sort(sort_config).skip(skip).limit(limit)
@@ -142,6 +148,7 @@ class DocumentRepository:
         date_from: date | None = None,
         date_to: date | None = None,
         favorites_only: bool = False,
+        current_user_id: str | None = None,
     ) -> int:
         mongo_query = self._build_search_query(
             query=query,
@@ -150,16 +157,18 @@ class DocumentRepository:
             date_from=date_from,
             date_to=date_to,
             favorites_only=favorites_only,
+            current_user_id=current_user_id,
         )
         return self.collection.count_documents(mongo_query)
 
-    def set_favorite(self, document_id: str, is_favored: bool) -> DocumentModel | None:
+    def set_favorite(self, document_id: str, user_id: str, is_favored: bool) -> DocumentModel | None:
         if not ObjectId.is_valid(document_id):
             return None
 
+        update_operator = {"$addToSet": {"favoriteUserIds": user_id}} if is_favored else {"$pull": {"favoriteUserIds": user_id}}
         self.collection.update_one(
             {"_id": ObjectId(document_id), "deletedAt": None},
-            {"$set": {"isFavored": is_favored}},
+            update_operator,
         )
         return self.get_by_id(document_id)
 
@@ -261,6 +270,7 @@ class DocumentRepository:
         date_from: date | None = None,
         date_to: date | None = None,
         favorites_only: bool = False,
+        current_user_id: str | None = None,
     ) -> dict:
         mongo_query: dict = {
             "deletedAt": None,
@@ -298,7 +308,10 @@ class DocumentRepository:
             filters.append({"createdAt": date_range})
 
         if favorites_only:
-            filters.append({"isFavored": True})
+            if current_user_id:
+                filters.append({"favoriteUserIds": current_user_id})
+            else:
+                filters.append({"_id": {"$exists": False}})
 
         if filters:
             mongo_query["$and"] = filters

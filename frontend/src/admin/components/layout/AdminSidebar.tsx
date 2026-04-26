@@ -1,19 +1,21 @@
-import { FileText, LayoutDashboard, LogOut, Upload } from "lucide-react";
+import { ClipboardList, FileText, LayoutDashboard, LogOut, MessageSquareWarning, Upload } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../../../auth/AuthContext";
 
 const menuItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/admin/documents/dashboardq" },
+  { label: "Dashboard", icon: LayoutDashboard, to: "/admin/dashboard" },
+  { label: "Audit", icon: ClipboardList, to: "/admin/audit" },
   { label: "Documents", icon: FileText, to: "/admin/documents/list" },
   { label: "Import Document", icon: Upload, to: "/admin/documents/import" },
+  { label: "Reclamations", icon: MessageSquareWarning, to: "/admin/reclamations" },
 ];
 
 export default function AdminSidebar() {
   const { logout, user } = useAuth();
 
   return (
-    <aside className="flex h-screen w-[210px] shrink-0 flex-col border-r border-[#ede7e5] bg-[#fbf8f7]">
+    <aside className="sticky top-0 flex h-screen w-[210px] shrink-0 flex-col border-r border-[#ede7e5] bg-[#fbf8f7]">
       <div className="flex items-center gap-2.5 border-b border-[#ede7e5] px-4 py-5">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#c81e1e] text-white shadow-sm">
           <span className="text-[18px] font-bold">A</span>

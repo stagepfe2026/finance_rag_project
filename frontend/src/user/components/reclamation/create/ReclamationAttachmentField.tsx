@@ -1,4 +1,5 @@
 import { Paperclip } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 type Props = {
   file: File | null;
@@ -13,10 +14,27 @@ export default function ReclamationAttachmentField({
   onChange,
   className,
 }: Props) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const isImage = useMemo(() => Boolean(file?.type.startsWith("image/")), [file]);
+
+  useEffect(() => {
+    if (!file || !isImage) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file, isImage]);
+
   return (
     <div>
       <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-        Pièce jointe
+        Piece jointe
       </label>
 
       <label className={`${className} flex cursor-pointer items-center gap-2`}>
@@ -33,6 +51,12 @@ export default function ReclamationAttachmentField({
       </label>
 
       {error ? <p className="mt-1 text-xs text-rose-600">{error}</p> : null}
+
+      {previewUrl ? (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-[#eadfdb] bg-[#fcf8f7] p-2">
+          <img src={previewUrl} alt={file?.name ?? "Apercu"} className="max-h-52 w-full rounded-xl object-cover" />
+        </div>
+      ) : null}
     </div>
   );
 }

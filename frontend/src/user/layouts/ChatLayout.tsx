@@ -13,6 +13,7 @@ import {
   restoreConversation,
 } from "../../services/chat.service";
 import ChatMain from "../components/chat/ChatMain";
+import ArchivedConversationsModal from "../components/chat/ArchivedConversationsModal";
 import ConversationActionModal from "../components/chat/ConversationActionModal";
 import ChatSidebar from "../components/chat/ChatSidebar";
 import Snackbar from "../components/chat/Snackbar";
@@ -87,6 +88,8 @@ export default function ChatLayout() {
     conversation: null,
     busy: false,
   });
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [restoringConversationId, setRestoringConversationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!snackbar.open) {
@@ -226,7 +229,7 @@ export default function ChatLayout() {
   }, [conversations, search]);
 
   const activeConversations = filteredConversations.filter((conversation) => !conversation.isArchived);
-  const archivedConversations = filteredConversations.filter((conversation) => conversation.isArchived);
+  const archivedConversations = conversations.filter((conversation) => conversation.isArchived);
   const selectedConversation = conversations.find((item) => item._id === selectedConversationId) ?? null;
 
   async function handleCreateConversation() {
@@ -255,6 +258,7 @@ export default function ChatLayout() {
 
   async function handleRestoreConversation(conversation: Conversation) {
     try {
+      setRestoringConversationId(conversation._id);
       setPageError("");
       const updated = await restoreConversation(conversation._id);
       setConversations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
@@ -265,6 +269,8 @@ export default function ChatLayout() {
       const message = error instanceof Error ? error.message : "Impossible de restaurer la conversation.";
       setPageError(message);
       showSnackbar(message, "error");
+    } finally {
+      setRestoringConversationId(null);
     }
   }
 
@@ -403,10 +409,10 @@ export default function ChatLayout() {
         <div className="grid h-full w-full grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
           <ChatSidebar
             activeConversations={activeConversations}
-            archivedConversations={archivedConversations}
             selectedConversationId={selectedConversationId}
             search={search}
             isLoading={isLoadingConversations}
+            archivedCount={archivedConversations.length}
             onSearchChange={setSearch}
             onSelectConversation={(conversationId) => {
               setSelectedConversationId(conversationId);
@@ -414,6 +420,7 @@ export default function ChatLayout() {
                 setSearchParams({ conversationId }, { replace: true });
               }
             }}
+            onOpenArchiveModal={() => setIsArchiveModalOpen(true)}
             onCreateConversation={handleCreateConversation}
             onRenameConversation={handleRenameConversation}
             onArchiveConversation={handleArchiveConversation}
@@ -442,6 +449,13 @@ export default function ChatLayout() {
         busy={conversationModal.busy}
         onClose={closeConversationModal}
         onConfirm={handleConversationModalConfirm}
+      />
+      <ArchivedConversationsModal
+        open={isArchiveModalOpen}
+        conversations={archivedConversations}
+        busyConversationId={restoringConversationId}
+        onClose={() => setIsArchiveModalOpen(false)}
+        onRestore={handleRestoreConversation}
       />
       <Snackbar open={snackbar.open} message={snackbar.message} tone={snackbar.tone} />
     </>

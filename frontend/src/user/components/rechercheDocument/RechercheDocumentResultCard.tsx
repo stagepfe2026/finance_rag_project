@@ -38,8 +38,9 @@ export default function RechercheDocumentResultCard({
 }: Props) {
   return (
     <article
+      onClick={() => onSelect(item)}
       className={[
-        "rounded-2xl border bg-white p-4 shadow-sm transition",
+        "cursor-pointer rounded-[18px] border bg-white p-3.5 shadow-sm transition",
         isSelected
           ? "border-[#d76a62] shadow-[0_8px_24px_rgba(178,52,44,0.08)]"
           : "border-[#efe3e1] hover:border-[#d8b5b0]",
@@ -51,7 +52,7 @@ export default function RechercheDocumentResultCard({
           onClick={() => onSelect(item)}
           className="min-w-0 flex-1 text-left"
         >
-          <h3 className="text-[16px] font-semibold leading-6 text-[#221f1e]">
+          <h3 className="text-[15px] font-semibold leading-6 text-[#221f1e]">
             <RechercheDocumentHighlightText text={item.title} query={query} />
           </h3>
 
@@ -65,7 +66,10 @@ export default function RechercheDocumentResultCard({
 
         <button
           type="button"
-          onClick={() => onToggleFavorite(item)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleFavorite(item);
+          }}
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#ead9d6] text-[#b2342c] transition hover:bg-[#fbf3f2]"
           title={item.isFavored ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
@@ -73,7 +77,7 @@ export default function RechercheDocumentResultCard({
         </button>
       </div>
 
-      <div className="mt-3 space-y-2 text-[13px] leading-6 text-[#49403e]">
+      <div className="mt-2.5 space-y-1.5 text-[12.5px] leading-6 text-[#49403e]">
         {item.snippets.length > 0 ? (
           item.snippets.slice(0, 2).map((snippet: string, index: number) => (
             <p key={`${item.id}-${index}`} className="line-clamp-4">

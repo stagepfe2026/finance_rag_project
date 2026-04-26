@@ -32,7 +32,7 @@ export default function ReclamationFormFields({
   onChange,
 }: Props) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
         <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
           Sujet de la reclamation <span className="text-[#cf3d4c]">*</span>
@@ -61,7 +61,7 @@ export default function ReclamationFormFields({
         ) : null}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
             Type de probleme <span className="text-[#cf3d4c]">*</span>
@@ -99,14 +99,7 @@ export default function ReclamationFormFields({
           ) : null}
         </div>
 
-        <div className="space-y-4">
-          <ReclamationAttachmentField
-            file={values.attachment}
-            error={errors.attachment}
-            onChange={(file) => onChange("attachment", file)}
-            className={fieldClassName(Boolean(errors.attachment))}
-          />
-
+        <div>
           <ReclamationPriorityField
             value={values.priority}
             error={errors.priority}
@@ -114,6 +107,15 @@ export default function ReclamationFormFields({
             className={fieldClassName(Boolean(errors.priority))}
           />
         </div>
+      </div>
+
+      <div>
+        <ReclamationAttachmentField
+          file={values.attachment}
+          error={errors.attachment}
+          onChange={(file) => onChange("attachment", file)}
+          className={fieldClassName(Boolean(errors.attachment))}
+        />
       </div>
     </div>
   );

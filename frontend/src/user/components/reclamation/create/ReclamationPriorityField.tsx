@@ -16,7 +16,7 @@ export default function ReclamationPriorityField({
   return (
     <div>
       <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-        Priorité <span className="text-[#cf3d4c]">*</span>
+        Priorite <span className="text-[#cf3d4c]">*</span>
       </label>
 
       <select
@@ -24,10 +24,11 @@ export default function ReclamationPriorityField({
         onChange={(e) => onChange(e.target.value)}
         className={className}
       >
-        <option value="">Sélectionnez une priorité</option>
+        <option value="">Selectionnez une priorite</option>
         <option value="LOW">Basse</option>
         <option value="NORMAL">Normale</option>
         <option value="HIGH">Haute</option>
+        <option value="URGENT">Urgente</option>
       </select>
 
       {error ? <p className="mt-1 text-xs text-rose-600">{error}</p> : null}

@@ -99,3 +99,5 @@ def seed_users() -> None:
 
 if __name__ == "__main__":
     seed_users()
+
+

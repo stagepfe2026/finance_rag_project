@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
 
 import httpx
-
 from app.core.config import settings
 from app.core.security import (
     generate_csrf_token,
@@ -154,7 +153,7 @@ class AuthService:
         }
 
     def refresh_session(self, current_session: SessionModel) -> SessionModel:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if current_session.refresh_expires_at <= now or current_session.absolute_expires_at <= now:
             self.sessions_repo.close_session(
                 current_session.id or "",
@@ -181,6 +180,36 @@ class AuthService:
         current_session.idle_expires_at = new_idle_expiry
         current_session.last_activity_at = now
         return current_session
+
+    def update_profile(self, *, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            user = self.users_repo.update_profile(
+                user_id=user_id,
+                nom=str(payload.get("nom", "")),
+                prenom=str(payload.get("prenom", "")),
+                email=str(payload.get("email", "")),
+                telephone=str(payload.get("telephone", "")),
+                adresse=str(payload.get("adresse", "")),
+                date_naissance=str(payload.get("dateNaissance", "")),
+                direction=str(payload.get("direction", "")),
+                service=str(payload.get("service", "")),
+                poste=str(payload.get("poste", "")),
+                matricule=str(payload.get("matricule", "")),
+                bureau=str(payload.get("bureau", "")),
+                responsable=str(payload.get("responsable", "")),
+                membre_depuis=str(payload.get("membreDepuis", "")),
+                langue_preferee=str(payload.get("languePreferee", "fr")),
+                theme_prefere=str(payload.get("themePrefere", "light")),
+                notifications_email=bool(payload.get("notificationsEmail", True)),
+                notifications_sms=bool(payload.get("notificationsSms", False)),
+                two_factor_enabled=bool(payload.get("twoFactorEnabled", False)),
+            )
+        except ValueError:
+            raise
+
+        if not user:
+            raise ValueError("USER_NOT_FOUND")
+        return user.to_public_dict()
 
     async def logout(self, current_session: SessionModel | None) -> str | None:
         if not current_session:
@@ -220,7 +249,7 @@ class AuthService:
         oidc_access_token: str | None = None,
         oidc_refresh_token: str | None = None,
     ) -> dict[str, Any]:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         absolute_expires_at = now + timedelta(hours=settings.auth_session_absolute_hours)
         refresh_expires_at = min(
             now + timedelta(hours=settings.auth_refresh_token_hours),
@@ -303,4 +332,21 @@ class AuthService:
             "prenom": str(user.get("prenom", "")),
             "email": str(user.get("email", "")),
             "role": str(user.get("role", "")),
+            "telephone": str(user.get("telephone", "")),
+            "profileImageUrl": str(user.get("profileImageUrl", "")),
+            "adresse": str(user.get("adresse", "")),
+            "dateNaissance": str(user.get("dateNaissance", "")),
+            "direction": str(user.get("direction", "")),
+            "service": str(user.get("service", "")),
+            "poste": str(user.get("poste", "")),
+            "matricule": str(user.get("matricule", "")),
+            "bureau": str(user.get("bureau", "")),
+            "responsable": str(user.get("responsable", "")),
+            "membreDepuis": str(user.get("membreDepuis", "")),
+            "languePreferee": str(user.get("languePreferee", "fr")),
+            "themePrefere": str(user.get("themePrefere", "light")),
+            "notificationsEmail": bool(user.get("notificationsEmail", True)),
+            "notificationsSms": bool(user.get("notificationsSms", False)),
+            "twoFactorEnabled": bool(user.get("twoFactorEnabled", False)),
+            "passwordUpdatedAt": str(user.get("passwordUpdatedAt", "")),
         }

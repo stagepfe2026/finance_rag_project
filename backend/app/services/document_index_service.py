@@ -40,6 +40,8 @@ class DocumentIndexService:
         self.document_relation_service = DocumentRelationService(self.document_repository)
         self.storage_dir = Path(settings.documents_storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self.backend_dir = Path(__file__).resolve().parents[2]
+        self.project_root = Path(__file__).resolve().parents[3]
 
     async def index_document(
         self,
@@ -152,6 +154,7 @@ class DocumentIndexService:
         search: str | None = None,
         category: str | None = None,
         status: str | None = None,
+        current_user_id: str | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> DocumentListResponse:
@@ -168,7 +171,12 @@ class DocumentIndexService:
             status=status,
         )
         return DocumentListResponse(
-            items=[document.to_out_schema() for document in documents],
+            items=[
+                document.to_out_schema(
+                    is_favored=bool(current_user_id and current_user_id in document.favorite_user_ids)
+                )
+                for document in documents
+            ],
             total=total,
         )
 
@@ -181,6 +189,7 @@ class DocumentIndexService:
         date_from: date | None = None,
         date_to: date | None = None,
         favorites_only: bool = False,
+        current_user_id: str | None = None,
         sort_by: str = "recent",
         skip: int = 0,
         limit: int = 100,
@@ -192,6 +201,7 @@ class DocumentIndexService:
             date_from=date_from,
             date_to=date_to,
             favorites_only=favorites_only,
+            current_user_id=current_user_id,
             sort_by=sort_by,
             skip=skip,
             limit=limit,
@@ -203,17 +213,25 @@ class DocumentIndexService:
             date_from=date_from,
             date_to=date_to,
             favorites_only=favorites_only,
+            current_user_id=current_user_id,
         )
         return DocumentSearchResponse(
-            items=[self._to_search_item(document, query=query) for document in documents],
+            items=[
+                self._to_search_item(
+                    document,
+                    query=query,
+                    current_user_id=current_user_id,
+                )
+                for document in documents
+            ],
             total=total,
         )
 
     def get_document_file_response_data(self, document_id: str) -> tuple[Path, str]:
         document = self._require_document(document_id)
 
-        file_path = Path(document.file_path)
-        if not file_path.exists() or not file_path.is_file():
+        file_path = self._resolve_existing_file_path(document.file_path)
+        if file_path is None:
             raise HTTPException(
                 status_code=404,
                 detail="Fichier du document introuvable. Les anciens documents indexes avant cette mise a jour peuvent ne pas etre consultables.",
@@ -226,8 +244,8 @@ class DocumentIndexService:
 
         preview_content = (document.content or "").strip()
         if not preview_content:
-            file_path = Path(document.file_path)
-            if not file_path.exists() or not file_path.is_file():
+            file_path = self._resolve_existing_file_path(document.file_path)
+            if file_path is None:
                 raise HTTPException(status_code=404, detail="Contenu du document introuvable.")
             preview_content = self.nlp_service.preprocess_document(
                 self.parser_service.parse_document(str(file_path), file_path.suffix.lower())
@@ -239,14 +257,25 @@ class DocumentIndexService:
         document.content = preview_content
         return document.to_preview_schema()
 
-    def set_document_favorite(self, document_id: str, is_favored: bool) -> DocumentActionResponse:
-        document = self.document_repository.set_favorite(document_id, is_favored)
+    def set_document_favorite(
+        self,
+        document_id: str,
+        is_favored: bool,
+        *,
+        current_user_id: str,
+    ) -> DocumentActionResponse:
+        if not current_user_id.strip():
+            raise HTTPException(status_code=401, detail="Authentification requise.")
+
+        document = self.document_repository.set_favorite(document_id, current_user_id, is_favored)
         if document is None or document.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Document introuvable.")
 
         return DocumentActionResponse(
             message="Favori mis a jour avec succes.",
-            data=document.to_out_schema(),
+            data=document.to_out_schema(
+                is_favored=current_user_id in document.favorite_user_ids,
+            ),
         )
 
     def delete_document_from_index(self, document_id: str) -> DocumentActionResponse:
@@ -263,8 +292,8 @@ class DocumentIndexService:
 
     def reindex_document(self, document_id: str) -> DocumentActionResponse:
         document = self._require_document(document_id)
-        file_path = Path(document.file_path)
-        if not file_path.exists() or not file_path.is_file():
+        file_path = self._resolve_existing_file_path(document.file_path)
+        if file_path is None:
             raise HTTPException(
                 status_code=404, detail="Fichier du document introuvable pour la reindexation."
             )
@@ -347,9 +376,59 @@ class DocumentIndexService:
         target_path.write_bytes(content)
         return target_path
 
-    def _to_search_item(self, document: DocumentModel, *, query: str | None):
+    def _resolve_existing_file_path(self, stored_file_path: str) -> Path | None:
+        normalized_value = (stored_file_path or "").strip()
+        if not normalized_value:
+            return None
+
+        normalized_path = Path(normalized_value.replace("\\", "/"))
+        candidate_paths: list[Path] = []
+
+        if normalized_path.is_absolute():
+            candidate_paths.append(normalized_path)
+        else:
+            candidate_paths.extend(
+                [
+                    normalized_path,
+                    self.backend_dir / normalized_path,
+                    self.project_root / normalized_path,
+                ]
+            )
+
+        storage_candidates = [
+            self.storage_dir,
+            self.backend_dir / settings.documents_storage_dir,
+            self.project_root / settings.documents_storage_dir,
+            self.backend_dir / "storage" / "documents",
+        ]
+
+        file_name = normalized_path.name
+        if file_name:
+            candidate_paths.extend(base / file_name for base in storage_candidates)
+
+        seen: set[str] = set()
+        for candidate in candidate_paths:
+            resolved = candidate.expanduser()
+            key = str(resolved)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            if resolved.exists() and resolved.is_file():
+                return resolved
+
+        return None
+
+    def _to_search_item(
+        self,
+        document: DocumentModel,
+        *,
+        query: str | None,
+        current_user_id: str | None,
+    ):
         return document.to_search_item_schema(
             snippets=self._build_snippets(document, query=query),
+            is_favored=bool(current_user_id and current_user_id in document.favorite_user_ids),
         )
 
     def _build_snippets(self, document: DocumentModel, *, query: str | None) -> list[str]:

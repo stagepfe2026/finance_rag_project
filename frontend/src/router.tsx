@@ -3,6 +3,7 @@ import AdminLayout from "./admin/layouts/AdminLayout";
 import { adminRoutes } from "./admin/routes/adminRoutes";
 import { PublicOnlyRoute, RequireAuth, RoleHomeRedirect } from "./auth/guards";
 import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import UserLayout from "./user/layouts/UserLayout";
 import { userRoutes } from "./user/routes/userRoutes";
 
@@ -39,5 +40,9 @@ export const router = createBrowserRouter([
         children: userRoutes,
       },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);

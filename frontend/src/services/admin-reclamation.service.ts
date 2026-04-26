@@ -24,14 +24,31 @@ function readErrorMessage(data: unknown, fallback: string) {
   return fallback;
 }
 
-export async function resolveReclamationAsAdmin(reclamationId: string, adminReply: string): Promise<Reclamation> {
+export async function fetchAdminReclamations(): Promise<Reclamation[]> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations`, {
+    credentials: "include",
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de charger les reclamations."));
+  }
+
+  return (data as { data?: { items?: Reclamation[] } }).data?.items ?? [];
+}
+
+export async function resolveReclamationAsAdmin(
+  reclamationId: string,
+  adminReply: string,
+  status: "PENDING" | "IN_PROGRESS" | "RESOLVED",
+): Promise<Reclamation> {
   const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}/resolve`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ adminReply }),
+    body: JSON.stringify({ adminReply, status }),
   });
   const data = await parseJson(response);
 

@@ -27,6 +27,7 @@ async def search_documents(
     if service is None:
         raise HTTPException(status_code=500, detail="Service d indexation de document non disponible.")
 
+    current_user = getattr(request.state, "current_user", None) or {}
     return service.search_documents(
         query=query,
         title=title,
@@ -34,6 +35,7 @@ async def search_documents(
         date_from=date_from,
         date_to=date_to,
         favorites_only=favorites_only,
+        current_user_id=current_user.get("id"),
         sort_by=sort_by,
         skip=skip,
         limit=limit,
@@ -70,7 +72,12 @@ async def add_document_to_favorites(request: Request, document_id: str):
     if service is None:
         raise HTTPException(status_code=500, detail="Service d indexation de document non disponible.")
 
-    return service.set_document_favorite(document_id, True)
+    current_user = getattr(request.state, "current_user", None) or {}
+    return service.set_document_favorite(
+        document_id,
+        True,
+        current_user_id=str(current_user.get("id", "")),
+    )
 
 
 @router.delete("/{document_id}/favorite", response_model=DocumentActionResponse)
@@ -79,4 +86,9 @@ async def remove_document_from_favorites(request: Request, document_id: str):
     if service is None:
         raise HTTPException(status_code=500, detail="Service d indexation de document non disponible.")
 
-    return service.set_document_favorite(document_id, False)
+    current_user = getattr(request.state, "current_user", None) or {}
+    return service.set_document_favorite(
+        document_id,
+        False,
+        current_user_id=str(current_user.get("id", "")),
+    )

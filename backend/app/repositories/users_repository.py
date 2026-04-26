@@ -33,6 +33,10 @@ class UsersRepository:
         cursor = get_users_collection().find({"role": {"$in": normalized_roles}, "deletedAt": None})
         return [UserModel.from_mongo(raw) for raw in cursor]
 
+    def list_all_active(self) -> list[UserModel]:
+        cursor = get_users_collection().find({"deletedAt": None})
+        return [UserModel.from_mongo(raw) for raw in cursor]
+
     def update_profile(
         self,
         *,

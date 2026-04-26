@@ -11,7 +11,7 @@ export default function ReclamationRowActions({ onView, onDelete }: Props) {
       <button
         type="button"
         onClick={onView}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#e8ddd9] bg-[#faf7f6] text-slate-500 transition hover:text-[#cf3d4c]"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#ece4e1] bg-white text-[#8b817d] transition hover:border-[#d8cbc7] hover:text-[#7b312b]"
         title="Consulter"
       >
         <Eye size={14} />
@@ -20,7 +20,7 @@ export default function ReclamationRowActions({ onView, onDelete }: Props) {
       <button
         type="button"
         onClick={onDelete}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#e8ddd9] bg-[#faf7f6] text-slate-500 transition hover:text-rose-600"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#ece4e1] bg-white text-[#8b817d] transition hover:border-[#f0caca] hover:text-rose-600"
         title="Supprimer"
       >
         <Trash2 size={14} />

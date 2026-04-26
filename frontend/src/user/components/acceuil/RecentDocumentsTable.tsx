@@ -37,14 +37,7 @@ const getCategoryStyle = (category: string) => {
 
 export default function RecentDocumentsTable({ documents }: RecentDocumentsTableProps) {
   return (
-    <SectionCard
-      title="Documents recemment ajoutes"
-      action={
-        <Link to="/user/documents/recherche" className="text-xs text-red-600">
-          Voir tous
-        </Link>
-      }
-    >
+    <SectionCard title="Documents recemment ajoutes">
       <table className="w-full text-xs">
         <thead>
           <tr className="text-left text-slate-500">

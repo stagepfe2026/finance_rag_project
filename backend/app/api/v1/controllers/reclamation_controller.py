@@ -161,15 +161,20 @@ async def resolve_reclamation(
             reclamation_id,
             admin_user=current_user,
             admin_reply=payload.adminReply,
+            status=payload.status.value if hasattr(payload.status, "value") else str(payload.status),
         )
         return {
             "success": True,
-            "message": "Reclamation resolue avec succes.",
+            "message": "Reclamation mise a jour avec succes.",
             "data": data,
         }
     except ValueError as exc:
         if str(exc) == "RECLAMATION_NOT_FOUND":
             raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        if str(exc) == "INVALID_ADMIN_STATUS":
+            raise HTTPException(status_code=400, detail="Statut admin invalide.") from exc
+        if str(exc) == "RECLAMATION_ALREADY_RESOLVED_BY_ADMIN":
+            raise HTTPException(status_code=400, detail="Cette reclamation a deja ete traitee par un administrateur.") from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

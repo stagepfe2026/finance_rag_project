@@ -11,6 +11,13 @@ def _as_utc_datetime(value: Any) -> datetime:
     return datetime.now(UTC)
 
 
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    return cleaned or None
+
+
 @dataclass
 class ReclamationModel:
     user_id: str
@@ -29,9 +36,13 @@ class ReclamationModel:
     admin_reply: str | None
     admin_reply_at: datetime | None
     admin_reply_by: str | None
+    last_updated_by_admin_at: datetime | None
+    last_updated_by_admin_name: str | None
     is_reply_read_by_user: bool
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None
+    deleted_by_user_id: str | None
     activity_log: list[dict[str, Any]]
     id: str | None = None
 
@@ -45,23 +56,25 @@ class ReclamationModel:
             subject=str(raw.get("subject", "")),
             description=str(raw.get("description", "")),
             problem_type=str(raw.get("problemType", "")),
-            custom_problem_type=(
-                str(raw.get("customProblemType", "")).strip() or None
-                if raw.get("customProblemType") is not None
-                else None
-            ),
+            custom_problem_type=_optional_str(raw.get("customProblemType")),
             priority=str(raw.get("priority", "NORMAL")),
             status=str(raw.get("status", "PENDING")),
-            attachment_name=str(raw.get("attachmentName", "")).strip() or None,
-            attachment_path=str(raw.get("attachmentPath", "")).strip() or None,
+            attachment_name=_optional_str(raw.get("attachmentName")),
+            attachment_path=_optional_str(raw.get("attachmentPath")),
             attachment_size=int(raw.get("attachmentSize")) if raw.get("attachmentSize") is not None else None,
-            attachment_content_type=str(raw.get("attachmentContentType", "")).strip() or None,
-            admin_reply=str(raw.get("adminReply", "")).strip() or None,
+            attachment_content_type=_optional_str(raw.get("attachmentContentType")),
+            admin_reply=_optional_str(raw.get("adminReply")),
             admin_reply_at=_as_utc_datetime(raw.get("adminReplyAt")) if raw.get("adminReplyAt") else None,
-            admin_reply_by=str(raw.get("adminReplyBy", "")).strip() or None,
+            admin_reply_by=_optional_str(raw.get("adminReplyBy")),
+            last_updated_by_admin_at=(
+                _as_utc_datetime(raw.get("lastUpdatedByAdminAt")) if raw.get("lastUpdatedByAdminAt") else None
+            ),
+            last_updated_by_admin_name=_optional_str(raw.get("lastUpdatedByAdminName")),
             is_reply_read_by_user=bool(raw.get("isReplyReadByUser", True)),
             created_at=_as_utc_datetime(raw.get("createdAt")),
             updated_at=_as_utc_datetime(raw.get("updatedAt")),
+            deleted_at=_as_utc_datetime(raw.get("deletedAt")) if raw.get("deletedAt") else None,
+            deleted_by_user_id=_optional_str(raw.get("deletedByUserId")),
             activity_log=[item for item in raw.get("activityLog", []) if isinstance(item, dict)],
         )
 
@@ -83,8 +96,12 @@ class ReclamationModel:
             "adminReply": self.admin_reply,
             "adminReplyAt": self.admin_reply_at,
             "adminReplyBy": self.admin_reply_by,
+            "lastUpdatedByAdminAt": self.last_updated_by_admin_at,
+            "lastUpdatedByAdminName": self.last_updated_by_admin_name,
             "isReplyReadByUser": self.is_reply_read_by_user,
             "createdAt": self.created_at,
             "updatedAt": self.updated_at,
+            "deletedAt": self.deleted_at,
+            "deletedByUserId": self.deleted_by_user_id,
             "activityLog": self.activity_log,
         }

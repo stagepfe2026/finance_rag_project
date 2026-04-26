@@ -20,7 +20,7 @@ export default function ReclamationPagination({
   return (
     <div className="flex items-center justify-between border-t border-[#f0e8e5] px-6 py-4">
       <span className="text-[13px] text-slate-500">
-        {start}–{end} sur {totalResults} résultats
+        {start}-{end} sur {totalResults} resultats
       </span>
 
       <div className="flex items-center gap-2">
@@ -28,12 +28,12 @@ export default function ReclamationPagination({
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="rounded-md border border-[#e2d8d5] bg-[#faf7f6] px-4 py-1.5 text-[13px] text-slate-600 transition hover:border-[#cfc0bb] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-[10px] border border-[#e2d8d5] bg-[#faf7f6] px-4 py-1.5 text-[13px] text-slate-600 transition hover:border-[#cfc0bb] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Précédent
+          Precedent
         </button>
 
-        <span className="rounded-md bg-[#cf3d4c] px-3.5 py-1.5 text-[13px] font-semibold text-white">
+        <span className="rounded-[10px] bg-[#ef4b44] px-3.5 py-1.5 text-[13px] font-semibold text-white">
           {page}
         </span>
 
@@ -41,7 +41,7 @@ export default function ReclamationPagination({
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="inline-flex items-center gap-1.5 rounded-md border border-[#e2d8d5] bg-[#faf7f6] px-4 py-1.5 text-[13px] text-slate-600 transition hover:border-[#cfc0bb] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-[10px] border border-[#e2d8d5] bg-[#faf7f6] px-4 py-1.5 text-[13px] text-slate-600 transition hover:border-[#cfc0bb] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Suivant
           <ChevronRight size={13} />

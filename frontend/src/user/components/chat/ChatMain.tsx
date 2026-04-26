@@ -79,7 +79,7 @@ export default function ChatMain({
   }
 
   return (
-    <main className="flex h-full min-h-0 flex-col bg-[radial-gradient(circle_at_top,#ffffff_0%,#fdf9f8_55%,#faf6f5_100%)]">
+    <main className="flex h-full min-h-0 flex-col bg-[#fffdfd]">
       <div className="border-b border-[#eee7e5] px-3 py-2">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">

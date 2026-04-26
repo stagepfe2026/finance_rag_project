@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.controllers.auth_controller import router as auth_router
+from app.api.v1.controllers.audit_controller import router as audit_router
 from app.api.v1.controllers.chat_controller import router as chat_router
 from app.api.v1.controllers.dashboard_controller import router as dashboard_router
 from app.api.v1.controllers.document_controller import router as document_router
@@ -19,6 +20,7 @@ from app.infrastructure.embeddings.ollama_embedding_provider import (
 from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
 from app.middlewares.auth_session_middleware import AuthSessionMiddleware
 from app.services.auth_service import AuthService
+from app.services.audit_service import AuditService
 from app.services.chat_service import ChatService
 from app.services.document_index_service import DocumentIndexService
 from app.services.dashboard_service import DashboardService
@@ -66,12 +68,14 @@ async def lifespan(app: FastAPI):
 
     reclamation_service = ReclamationService(notification_service=notification_service)
     reclamation_service.ensure_indexes()
+    audit_service = AuditService()
     dashboard_service = DashboardService(notification_service)
 
     app.state.document_index_service = document_index_service
     app.state.rag_service = rag_service
     app.state.chat_service = chat_service
     app.state.reclamation_service = reclamation_service
+    app.state.audit_service = audit_service
     app.state.auth_service = auth_service
     app.state.notification_service = notification_service
     app.state.dashboard_service = dashboard_service
@@ -103,6 +107,7 @@ app.add_middleware(
 app.add_middleware(AuthSessionMiddleware)
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+app.include_router(audit_router, prefix="/api/v1/audit", tags=["Audit"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(dashboard_router)
 app.include_router(document_router, prefix="/api/v1/documents", tags=["Documents"])

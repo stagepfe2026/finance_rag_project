@@ -3,15 +3,19 @@ import type { ReclamationStatus } from "../../../../models/reclamation";
 const statusConfig: Record<ReclamationStatus, { label: string; className: string }> = {
   PENDING: {
     label: "En attente",
-    className: "bg-rose-50 text-rose-500 border border-rose-200",
+    className: "border border-amber-200 bg-amber-50 text-amber-700",
+  },
+  IN_PROGRESS: {
+    label: "En cours",
+    className: "border border-[#f2d8d5] bg-[#fff3f1] text-[#b45b52]",
   },
   RESOLVED: {
-    label: "Résolu",
-    className: "bg-emerald-50 text-emerald-600 border border-emerald-200",
+    label: "Traitee",
+    className: "border border-emerald-200 bg-emerald-50 text-emerald-700",
   },
   FAILED: {
-    label: "En cours",
-    className: "bg-orange-50 text-orange-500 border border-orange-200",
+    label: "A revoir",
+    className: "border border-rose-200 bg-rose-50 text-rose-700",
   },
 };
 
@@ -23,7 +27,7 @@ export default function ReclamationStatusBadge({ status }: ReclamationStatusBadg
   const config = statusConfig[status];
 
   return (
-    <span className={`inline-flex rounded-md px-2.5 py-0.5 text-[12px] font-medium ${config.className}`}>
+    <span className={`inline-flex rounded-[999px] px-2.5 py-0.5 text-[12px] font-medium ${config.className}`}>
       {config.label}
     </span>
   );

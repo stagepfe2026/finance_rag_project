@@ -7,14 +7,12 @@ import { fetchUserDashboard } from "../../services/dashboard.service";
 import { createNotificationsWebSocket } from "../../services/notifications.service";
 import HelpCard from "../components/acceuil/HelpCard";
 import NotificationsPanel from "../components/acceuil/NotificationsPanel";
-import QuickAccessPanel from "../components/acceuil/QuickAccessPanel";
 import QuickActionsSection from "../components/acceuil/QuickActionsSection";
 import RecentDocumentsTable from "../components/acceuil/RecentDocumentsTable";
 import SearchBar from "../components/acceuil/SearchBar";
 import WelcomeBanner from "../components/acceuil/WelcomeBanner";
 import type {
   NotificationItem,
-  QuickAccessItem,
   QuickAction,
   RecentDocumentItem,
 } from "../components/acceuil/types/acceuil.types";
@@ -52,6 +50,10 @@ export default function AccueilPage() {
   const [recentDocuments, setRecentDocuments] = useState<RecentDocumentItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [pageError, setPageError] = useState("");
+
+  useEffect(() => {
+    document.title = "Accueil | CIMF";
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,48 +151,30 @@ export default function AccueilPage() {
     [navigate],
   );
 
-  const quickAccessItems = useMemo<QuickAccessItem[]>(
-    () => [
-      {
-        id: "favorites",
-        label: "Mes documents favoris",
-        link: "/user/documents/recherche?favorites=1",
-      },
-      {
-        id: "recent-documents",
-        label: "Documents recents",
-        link: "/user/documents/recherche",
-      },
-      {
-        id: "reclamations",
-        label: "Mes reclamations",
-        link: "/user/reclamations",
-      },
-    ],
-    [],
-  );
-
   function handleSearch(value: string) {
     navigate(`/user/documents/recherche${value ? `?query=${encodeURIComponent(value)}` : ""}`);
   }
 
+  function handleDismissNotification(notificationId: string) {
+    setNotifications((current) => current.filter((item) => item.id !== notificationId));
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 px-5 py-5">
-      <div className="mx-auto w-full space-y-4">
+    <div className="min-h-[calc(100vh-89px)] bg-slate-50 px-5 py-5">
+      <div className="mx-auto flex min-h-[calc(100vh-129px)] w-full flex-col space-y-4">
         <WelcomeBanner userName={userName} imageSrc={buildingImage} />
 
         {pageError ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pageError}</div> : null}
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-          <div className="space-y-4">
+        <div className="grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
+          <div className="flex min-h-0 flex-col space-y-4">
             <SearchBar onSearch={handleSearch} />
             <QuickActionsSection actions={quickActions} />
             <RecentDocumentsTable documents={recentDocuments} />
           </div>
 
-          <div className="space-y-4">
-            <NotificationsPanel items={notifications} />
-            <QuickAccessPanel items={quickAccessItems} />
+          <div className="flex min-h-0 flex-col space-y-4">
+            <NotificationsPanel items={notifications} onDismiss={handleDismissNotification} />
             <HelpCard />
           </div>
         </div>

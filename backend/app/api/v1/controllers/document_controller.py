@@ -36,10 +36,12 @@ async def list_documents(
         )
 
     try:
+        current_user = getattr(request.state, "current_user", None) or {}
         return service.list_documents(
             search=search,
             category=category.value if category else None,
             status=status.value if status else None,
+            current_user_id=current_user.get("id"),
             skip=skip,
             limit=limit,
         )

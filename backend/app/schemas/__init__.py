@@ -1,6 +1,13 @@
-from app.schemas.auth_schema import AuthResponse, AuthUserOut, LoginRequest, OidcLoginStartOut, SessionInfoOut
+from app.schemas.auth_schema import (
+    AuthResponse,
+    AuthUserOut,
+    LoginRequest,
+    OidcLoginStartOut,
+    ProfileUpdateRequest,
+    SessionInfoOut,
+)
 from app.schemas.chat_schema import ChatAskRequest
-from app.schemas.dashboard_schema import UserDashboardOut
+from app.schemas.dashboard_schema import AdminDashboardOut, UserDashboardOut
 from app.schemas.document_schema import (
     DocumentActionResponse,
     DocumentCategory,
@@ -17,8 +24,8 @@ from app.schemas.document_schema import (
 from app.schemas.notification_schema import NotificationListResponse, NotificationOut
 from app.schemas.rag_schema import AskRequest
 from app.schemas.reclamation_schema import (
-    ReclamationAttachmentOut,
     ReclamationActivityOut,
+    ReclamationAttachmentOut,
     ReclamationListResponse,
     ReclamationOut,
     ReclamationPriority,
@@ -29,6 +36,7 @@ from app.schemas.reclamation_schema import (
 
 __all__ = [
     "AskRequest",
+    "AdminDashboardOut",
     "AuthResponse",
     "AuthUserOut",
     "ChatAskRequest",
@@ -47,6 +55,7 @@ __all__ = [
     "NotificationListResponse",
     "NotificationOut",
     "OidcLoginStartOut",
+    "ProfileUpdateRequest",
     "ReclamationActivityOut",
     "ReclamationAttachmentOut",
     "ReclamationListResponse",

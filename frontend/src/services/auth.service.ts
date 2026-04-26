@@ -6,6 +6,44 @@ export type AuthUser = {
   prenom: string;
   email: string;
   role: "ADMIN" | "FINANCE_USER";
+  telephone: string;
+  profileImageUrl: string;
+  adresse: string;
+  dateNaissance: string;
+  direction: string;
+  service: string;
+  poste: string;
+  matricule: string;
+  bureau: string;
+  responsable: string;
+  membreDepuis: string;
+  languePreferee: string;
+  themePrefere: string;
+  notificationsEmail: boolean;
+  notificationsSms: boolean;
+  twoFactorEnabled: boolean;
+  passwordUpdatedAt: string;
+};
+
+export type ProfileUpdatePayload = {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  adresse: string;
+  dateNaissance: string;
+  direction: string;
+  service: string;
+  poste: string;
+  matricule: string;
+  bureau: string;
+  responsable: string;
+  membreDepuis: string;
+  languePreferee: string;
+  themePrefere: string;
+  notificationsEmail: boolean;
+  notificationsSms: boolean;
+  twoFactorEnabled: boolean;
 };
 
 export type SessionInfo = {
@@ -111,6 +149,28 @@ function readCookie(name: string) {
   const escaped = name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
   const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+export async function updateProfileRequest(payload: ProfileUpdatePayload): Promise<AuthResponse> {
+  const csrfCookieName = import.meta.env.VITE_AUTH_CSRF_COOKIE_NAME ?? "rag_finance_csrf";
+  const csrfToken = readCookie(csrfCookieName);
+
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/profile`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de modifier les donnees personnelles."));
+  }
+
+  return data as AuthResponse;
 }
 
 export async function logoutRequest(): Promise<AuthResponse> {

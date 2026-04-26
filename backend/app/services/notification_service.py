@@ -79,15 +79,24 @@ class NotificationService:
         ]
         await self._store_and_emit(notifications)
 
-    async def notify_reclamation_resolved(self, reclamation: ReclamationModel, admin_name: str) -> None:
+    async def notify_reclamation_updated(self, reclamation: ReclamationModel, admin_name: str) -> None:
         if not reclamation.user_id:
             return
 
+        status_label = {
+            "PENDING": "en attente",
+            "IN_PROGRESS": "en cours",
+            "RESOLVED": "traitee",
+        }.get(reclamation.status, "mise a jour")
+
         notification = NotificationModel(
             user_id=reclamation.user_id,
-            type="reclamation_resolved",
-            title="Reclamation traitee",
-            description=f"La reclamation numero {reclamation.ticket_number} a ete repondue par {admin_name}.",
+            type="reclamation_updated",
+            title="Reclamation mise a jour",
+            description=(
+                f"La reclamation numero {reclamation.ticket_number} est {status_label} "
+                f"apres reponse de {admin_name}."
+            ),
             link="/user/reclamations",
             is_read=False,
             created_at=reclamation.updated_at,

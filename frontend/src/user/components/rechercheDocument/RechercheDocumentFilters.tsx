@@ -10,13 +10,11 @@ type Props = {
   titleFilter: string;
   dateFrom: string;
   dateTo: string;
-  favoritesOnly: boolean;
   results: DocumentSearchItem[];
   onCategoriesChange: (value: DocumentCategoryValue[]) => void;
   onTitleChange: (value: string) => void;
   onDateFromChange: (value: string) => void;
   onDateToChange: (value: string) => void;
-  onFavoritesOnlyChange: (value: boolean) => void;
   onReset: () => void;
 };
 
@@ -33,13 +31,11 @@ export default function RechercheDocumentFilters({
   titleFilter,
   dateFrom,
   dateTo,
-  favoritesOnly,
   results,
   onCategoriesChange,
   onTitleChange,
   onDateFromChange,
   onDateToChange,
-  onFavoritesOnlyChange,
   onReset,
 }: Props) {
   const categoryCounts = categoryOrder.reduce<Record<DocumentCategoryValue, number>>(
@@ -57,46 +53,38 @@ export default function RechercheDocumentFilters({
   );
 
   return (
-    <aside className="space-y-4 rounded-xl border border-[#e8d9d6] bg-white p-4 shadow-sm">
+    <aside className="flex h-full min-h-0 flex-col gap-3 rounded-[22px] border border-[#e8d9d6] bg-white p-4 shadow-sm">
       <div>
         <h2 className="text-sm font-semibold text-[#671a12]">Filtres</h2>
       </div>
 
-      <RechercheDocumentCategoryFilter
-        selectedCategories={selectedCategories}
-        categoryCounts={categoryCounts}
-        onCategoriesChange={onCategoriesChange}
-      />
-
-      <RechercheDocumentDateFilter
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        onDateFromChange={onDateFromChange}
-        onDateToChange={onDateToChange}
-      />
-
-      <RechercheDocumentNameFilter
-        titleFilter={titleFilter}
-        onTitleChange={onTitleChange}
-      />
-
-      <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#efe3e1] px-3 py-3 text-sm text-[#393332]">
-        <input
-          type="checkbox"
-          checked={favoritesOnly}
-          onChange={(event) => onFavoritesOnlyChange(event.target.checked)}
-          className=" rounded border-[#d6c4c1] accent-[#b2342c]"
+      <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1">
+        <RechercheDocumentCategoryFilter
+          selectedCategories={selectedCategories}
+          categoryCounts={categoryCounts}
+          onCategoriesChange={onCategoriesChange}
         />
-        Favoris uniquement
-      </label>
+
+        <RechercheDocumentDateFilter
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={onDateFromChange}
+          onDateToChange={onDateToChange}
+        />
+
+        <RechercheDocumentNameFilter
+          titleFilter={titleFilter}
+          onTitleChange={onTitleChange}
+        />
+      </div>
 
       <button
         type="button"
         onClick={onReset}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#ead9d6] bg-[#fbf7f6] text-sm font-medium text-[#5a4e4b] transition hover:border-[#cfa29c] hover:text-[#b2342c]"
+        className="mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#ead9d6] bg-[#fbf7f6] text-sm font-medium text-[#5a4e4b] transition hover:border-[#cfa29c] hover:text-[#b2342c]"
       >
         <RotateCcw size={14} />
-        Réinitialiser
+        Reinitialiser
       </button>
     </aside>
   );

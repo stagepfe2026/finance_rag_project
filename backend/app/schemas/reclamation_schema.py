@@ -14,10 +14,12 @@ class ReclamationPriority(str, Enum):
     low = "LOW"
     normal = "NORMAL"
     high = "HIGH"
+    urgent = "URGENT"
 
 
 class ReclamationStatus(str, Enum):
     pending = "PENDING"
+    in_progress = "IN_PROGRESS"
     resolved = "RESOLVED"
     failed = "FAILED"
 
@@ -50,9 +52,12 @@ class ReclamationOut(BaseModel):
     adminReply: str | None = None
     adminReplyAt: str | None = None
     adminReplyBy: str | None = None
+    lastUpdatedByAdminAt: str | None = None
+    lastUpdatedByAdminName: str | None = None
     isReplyReadByUser: bool
     createdAt: str
     updatedAt: str
+    deletedAt: str | None = None
     activityLog: list[ReclamationActivityOut] = Field(default_factory=list)
 
 
@@ -63,3 +68,4 @@ class ReclamationListResponse(BaseModel):
 
 class ReclamationResolveRequest(BaseModel):
     adminReply: str = Field(..., min_length=3, max_length=3000)
+    status: ReclamationStatus = ReclamationStatus.resolved

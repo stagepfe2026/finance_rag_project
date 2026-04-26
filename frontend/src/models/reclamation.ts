@@ -4,8 +4,8 @@ export type ReclamationProblemType =
   | "ERREUR_REPONSE_CHATBOT"
   | "AUTRE";
 
-export type ReclamationPriority = "LOW" | "NORMAL" | "HIGH";
-export type ReclamationStatus = "PENDING" | "RESOLVED" | "FAILED";
+export type ReclamationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+export type ReclamationStatus = "PENDING" | "IN_PROGRESS" | "RESOLVED" | "FAILED";
 
 export type ReclamationAttachment = {
   name: string;
@@ -36,9 +36,12 @@ export type Reclamation = {
   adminReply: string | null;
   adminReplyAt: string | null;
   adminReplyBy: string | null;
+  lastUpdatedByAdminAt: string | null;
+  lastUpdatedByAdminName: string | null;
   isReplyReadByUser: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
   activityLog: ReclamationActivity[];
 };
 

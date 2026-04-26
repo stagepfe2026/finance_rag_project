@@ -13,6 +13,124 @@ body {
   color: #111111;
 }
 
+body.user-dark-theme {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+body.user-dark-theme .user-theme-root {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+body.user-dark-theme .user-theme-root header {
+  background: #111c34 !important;
+  border-color: #23304a !important;
+}
+
+body.user-dark-theme .user-theme-root main,
+body.user-dark-theme .user-theme-root [class*="bg-[#f8f4f3]"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fcf8f7]"],
+body.user-dark-theme .user-theme-root [class*="bg-slate-50"] {
+  background: #0f172a !important;
+}
+
+body.user-dark-theme .user-theme-root section,
+body.user-dark-theme .user-theme-root aside,
+body.user-dark-theme .user-theme-root article,
+body.user-dark-theme .user-theme-root form,
+body.user-dark-theme .user-theme-root [class*="bg-white"] {
+  background-color: #111827 !important;
+  border-color: #243041 !important;
+  color: #e2e8f0 !important;
+}
+
+body.user-dark-theme .user-theme-root [class*="border-[#"],
+body.user-dark-theme .user-theme-root [class*="border-slate-"],
+body.user-dark-theme .user-theme-root [class*="border-rose-"],
+body.user-dark-theme .user-theme-root [class*="border-emerald-"],
+body.user-dark-theme .user-theme-root [class*="border-orange-"] {
+  border-color: #243041 !important;
+}
+
+body.user-dark-theme .user-theme-root h1,
+body.user-dark-theme .user-theme-root h2,
+body.user-dark-theme .user-theme-root h3,
+body.user-dark-theme .user-theme-root h4,
+body.user-dark-theme .user-theme-root h5,
+body.user-dark-theme .user-theme-root h6,
+body.user-dark-theme .user-theme-root p,
+body.user-dark-theme .user-theme-root label,
+body.user-dark-theme .user-theme-root span,
+body.user-dark-theme .user-theme-root div,
+body.user-dark-theme .user-theme-root th,
+body.user-dark-theme .user-theme-root td {
+  color: inherit;
+}
+
+body.user-dark-theme .user-theme-root [class*="text-slate-500"],
+body.user-dark-theme .user-theme-root [class*="text-slate-400"],
+body.user-dark-theme .user-theme-root [class*="text-[#7d"],
+body.user-dark-theme .user-theme-root [class*="text-[#8"],
+body.user-dark-theme .user-theme-root [class*="text-[#9"] {
+  color: #94a3b8 !important;
+}
+
+body.user-dark-theme .user-theme-root [class*="text-slate-700"],
+body.user-dark-theme .user-theme-root [class*="text-slate-800"],
+body.user-dark-theme .user-theme-root [class*="text-slate-900"],
+body.user-dark-theme .user-theme-root [class*="text-[#221f1e]"],
+body.user-dark-theme .user-theme-root [class*="text-[#223557]"],
+body.user-dark-theme .user-theme-root [class*="text-[#1b2f56]"] {
+  color: #e2e8f0 !important;
+}
+
+body.user-dark-theme .user-theme-root input,
+body.user-dark-theme .user-theme-root textarea,
+body.user-dark-theme .user-theme-root select {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+body.user-dark-theme .user-theme-root input::placeholder,
+body.user-dark-theme .user-theme-root textarea::placeholder {
+  color: #64748b !important;
+}
+
+body.user-dark-theme .user-theme-root button:not([class*="bg-[#1f3b6f]"]):not([class*="bg-[#cf3d4c]"]):not([class*="from-[#f1b300]"]):not([class*="from-[#23379f]"]) {
+  color: #e2e8f0;
+}
+
+body.user-dark-theme .user-theme-root [class*="bg-[#faf"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fbf"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fcf"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fff"],
+body.user-dark-theme .user-theme-root [class*="bg-slate-100"] {
+  background-color: #172036 !important;
+}
+
+body.user-dark-theme .user-theme-root [class*="shadow"] {
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35) !important;
+}
+
+body.user-dark-theme .user-theme-root table,
+body.user-dark-theme .user-theme-root tr,
+body.user-dark-theme .user-theme-root tbody,
+body.user-dark-theme .user-theme-root thead {
+  border-color: #243041 !important;
+}
+
+body.user-dark-theme .user-theme-root a {
+  color: #f8fafc;
+}
+
+body.user-dark-theme .user-theme-root .bg-rose-50,
+body.user-dark-theme .user-theme-root .bg-emerald-50,
+body.user-dark-theme .user-theme-root .bg-orange-50 {
+  background-color: #172036 !important;
+}
+
 .login-grid-bg {
   background-image:
     radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.9), transparent 18%),

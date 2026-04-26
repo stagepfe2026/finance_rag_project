@@ -1,9 +1,14 @@
+from app.core.config import settings
+from app.schemas import (
+    AuthResponse,
+    LoginRequest,
+    OidcLoginStartOut,
+    ProfileUpdateRequest,
+    SessionInfoOut,
+)
+from app.services.auth_service import AuthService
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
-
-from app.core.config import settings
-from app.schemas import AuthResponse, LoginRequest, OidcLoginStartOut, SessionInfoOut
-from app.services.auth_service import AuthService
 
 router = APIRouter()
 auth_service = AuthService()
@@ -167,6 +172,61 @@ async def refresh_session(request: Request):
         "user": auth_service._to_auth_user(current_user),
         "redirect_to": None,
         "session": auth_service.build_session_info(current_user=current_user, current_session=session),
+    }
+
+
+@router.patch("/profile", response_model=AuthResponse)
+async def update_profile(
+    payload: ProfileUpdateRequest,
+    request: Request,
+    x_csrf_token: str | None = Header(default=None),
+):
+    cookie_csrf = request.cookies.get(settings.auth_csrf_cookie_name)
+    current_session = getattr(request.state, "current_session", None)
+    current_user = getattr(request.state, "current_user", None)
+    if not current_session or not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "Session invalide ou expiree."},
+        )
+
+    if not auth_service.validate_csrf(
+        cookie_token=cookie_csrf,
+        header_token=x_csrf_token,
+        current_session=current_session,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "CSRF_INVALID", "message": "Jeton CSRF invalide."},
+        )
+
+    try:
+        updated_user = auth_service.update_profile(
+            user_id=str(current_user.get("id", "")),
+            payload=payload.model_dump(),
+        )
+    except ValueError as exc:
+        if str(exc) == "EMAIL_ALREADY_USED":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"code": "EMAIL_ALREADY_USED", "message": "Cette adresse email est deja utilisee."},
+            ) from exc
+        if str(exc) == "USER_NOT_FOUND":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"code": "USER_NOT_FOUND", "message": "Utilisateur introuvable."},
+            ) from exc
+        raise
+
+    return {
+        "success": True,
+        "message": "Donnees personnelles mises a jour.",
+        "user": auth_service._to_auth_user(updated_user),
+        "redirect_to": None,
+        "session": auth_service.build_session_info(
+            current_user=updated_user,
+            current_session=current_session,
+        ),
     }
 
 

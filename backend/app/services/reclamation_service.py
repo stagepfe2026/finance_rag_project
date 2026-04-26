@@ -18,7 +18,8 @@ class ReclamationService:
         "ERREUR_REPONSE_CHATBOT",
         "AUTRE",
     }
-    allowed_priorities = {"LOW", "NORMAL", "HIGH"}
+    allowed_priorities = {"LOW", "NORMAL", "HIGH", "URGENT"}
+    allowed_admin_statuses = {"PENDING", "IN_PROGRESS", "RESOLVED"}
     allowed_attachment_types = {
         ".pdf",
         ".png",
@@ -98,9 +99,13 @@ class ReclamationService:
             admin_reply=None,
             admin_reply_at=None,
             admin_reply_by=None,
+            last_updated_by_admin_at=None,
+            last_updated_by_admin_name=None,
             is_reply_read_by_user=True,
             created_at=now,
             updated_at=now,
+            deleted_at=None,
+            deleted_by_user_id=None,
             activity_log=[
                 {
                     "id": uuid4().hex,
@@ -115,23 +120,36 @@ class ReclamationService:
         return self._serialize_reclamation(created)
 
     def list_reclamations(self, current_user: dict) -> dict:
-        user_id = str(current_user.get("id", "")).strip()
-        reclamations = self.repository.list_for_user(user_id)
+        if current_user.get("role") == "ADMIN":
+            reclamations = self.repository.list_all()
+        else:
+            user_id = str(current_user.get("id", "")).strip()
+            reclamations = self.repository.list_for_user(user_id)
         return {
             "items": [self._serialize_reclamation(item) for item in reclamations],
             "total": len(reclamations),
         }
 
     def get_reclamation(self, current_user: dict, reclamation_id: str) -> dict:
-        user_id = str(current_user.get("id", "")).strip()
-        reclamation = self.repository.get_for_user(reclamation_id, user_id)
+        if current_user.get("role") == "ADMIN":
+            reclamation = self.repository.get_by_id(reclamation_id)
+            if reclamation is not None and reclamation.deleted_at is not None:
+                reclamation = None
+        else:
+            user_id = str(current_user.get("id", "")).strip()
+            reclamation = self.repository.get_for_user(reclamation_id, user_id)
         if reclamation is None:
             raise ValueError("RECLAMATION_NOT_FOUND")
         return self._serialize_reclamation(reclamation)
 
     def get_reclamation_attachment_response_data(self, current_user: dict, reclamation_id: str) -> tuple[Path, str]:
-        user_id = str(current_user.get("id", "")).strip()
-        reclamation = self.repository.get_for_user(reclamation_id, user_id)
+        if current_user.get("role") == "ADMIN":
+            reclamation = self.repository.get_by_id(reclamation_id)
+            if reclamation is not None and reclamation.deleted_at is not None:
+                reclamation = None
+        else:
+            user_id = str(current_user.get("id", "")).strip()
+            reclamation = self.repository.get_for_user(reclamation_id, user_id)
         if reclamation is None:
             raise ValueError("RECLAMATION_NOT_FOUND")
         if not reclamation.attachment_path:
@@ -150,23 +168,23 @@ class ReclamationService:
         if reclamation is None:
             raise ValueError("RECLAMATION_NOT_FOUND")
 
-        if reclamation.attachment_path:
-            attachment_path = Path(reclamation.attachment_path)
-            if attachment_path.exists():
-                attachment_path.unlink()
-
-        deleted = self.repository.delete_for_user(reclamation_id, user_id)
+        deleted = self.repository.soft_delete_for_user(reclamation_id, user_id)
         if not deleted:
             raise ValueError("RECLAMATION_NOT_FOUND")
 
-    async def resolve_reclamation(self, reclamation_id: str, *, admin_user: dict, admin_reply: str) -> dict:
+    async def resolve_reclamation(self, reclamation_id: str, *, admin_user: dict, admin_reply: str, status: str) -> dict:
         normalized_reply = admin_reply.strip()
+        normalized_status = status.strip().upper()
         if len(normalized_reply) < 3:
             raise ValueError("ADMIN_REPLY_TOO_SHORT")
+        if normalized_status not in self.allowed_admin_statuses:
+            raise ValueError("INVALID_ADMIN_STATUS")
 
         reclamation = self.repository.get_by_id(reclamation_id)
-        if reclamation is None:
+        if reclamation is None or reclamation.deleted_at is not None:
             raise ValueError("RECLAMATION_NOT_FOUND")
+        if reclamation.admin_reply_at is not None or (reclamation.admin_reply or "").strip():
+            raise ValueError("RECLAMATION_ALREADY_RESOLVED_BY_ADMIN")
 
         admin_name = " ".join(
             part
@@ -174,16 +192,17 @@ class ReclamationService:
             if part
         ).strip() or str(admin_user.get("email", "")).strip() or "Administrateur"
 
-        updated = self.repository.resolve(
+        updated = self.repository.respond_as_admin(
             reclamation_id,
             admin_reply=normalized_reply,
             admin_reply_by=admin_name,
+            status=normalized_status,
         )
         if updated is None:
             raise ValueError("RECLAMATION_NOT_FOUND")
 
         if self.notification_service is not None:
-            await self.notification_service.notify_reclamation_resolved(updated, admin_name)
+            await self.notification_service.notify_reclamation_updated(updated, admin_name)
 
         return self._serialize_reclamation(updated)
 
@@ -239,9 +258,14 @@ class ReclamationService:
             "adminReply": reclamation.admin_reply,
             "adminReplyAt": reclamation.admin_reply_at.isoformat() if reclamation.admin_reply_at else None,
             "adminReplyBy": reclamation.admin_reply_by,
+            "lastUpdatedByAdminAt": (
+                reclamation.last_updated_by_admin_at.isoformat() if reclamation.last_updated_by_admin_at else None
+            ),
+            "lastUpdatedByAdminName": reclamation.last_updated_by_admin_name,
             "isReplyReadByUser": reclamation.is_reply_read_by_user,
             "createdAt": reclamation.created_at.isoformat(),
             "updatedAt": reclamation.updated_at.isoformat(),
+            "deletedAt": reclamation.deleted_at.isoformat() if reclamation.deleted_at else None,
             "activityLog": [
                 {
                     "id": str(item.get("id", "")),

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
@@ -33,6 +33,7 @@ class DocumentModel:
     file_type: str
     created_at: datetime
     is_favored: bool = False
+    favorite_user_ids: list[str] = field(default_factory=list)
     deleted_at: datetime | None = None
     indexed_at: datetime | None = None
     chunks_count: int | None = None
@@ -105,7 +106,12 @@ class DocumentModel:
             file_size=int(raw.get("fileSize", 0)),
             file_type=str(raw.get("fileType", "application/octet-stream")),
             created_at=raw.get("createdAt") or datetime.now(UTC),
-            is_favored=bool(raw.get("isFavored", False)),
+            is_favored=False,
+            favorite_user_ids=[
+                str(item)
+                for item in raw.get("favoriteUserIds", [])
+                if isinstance(item, str) and item.strip()
+            ],
             deleted_at=raw.get("deletedAt"),
             indexed_at=raw.get("indexedAt"),
             chunks_count=raw.get("chunksCount"),
@@ -131,6 +137,7 @@ class DocumentModel:
             "fileSize": self.file_size,
             "fileType": self.file_type,
             "isFavored": self.is_favored,
+            "favoriteUserIds": self.favorite_user_ids,
             "createdAt": self.created_at,
             "deletedAt": self.deleted_at,
             "indexedAt": self.indexed_at,
@@ -139,7 +146,7 @@ class DocumentModel:
             "content": self.content,
         }
 
-    def to_out_schema(self) -> DocumentOut:
+    def to_out_schema(self, *, is_favored: bool | None = None) -> DocumentOut:
         return DocumentOut(
             id=self.id or "",
             title=self.title,
@@ -157,7 +164,7 @@ class DocumentModel:
             filePath=self.file_path,
             fileSize=self.file_size,
             fileType=self.file_type,
-            isFavored=self.is_favored,
+            isFavored=self.is_favored if is_favored is None else is_favored,
             createdAt=self.created_at,
             deletedAt=self.deleted_at,
             indexedAt=self.indexed_at,
@@ -183,7 +190,12 @@ class DocumentModel:
             content=self.content or "",
         )
 
-    def to_search_item_schema(self, snippets: list[str]) -> DocumentSearchItemOut:
+    def to_search_item_schema(
+        self,
+        snippets: list[str],
+        *,
+        is_favored: bool | None = None,
+    ) -> DocumentSearchItemOut:
         return DocumentSearchItemOut(
             id=self.id or "",
             title=self.title,
@@ -198,6 +210,6 @@ class DocumentModel:
             relationType=LegalRelationType(self.relation_type),
             relatedDocumentId=self.related_document_id,
             createdAt=self.created_at,
-            isFavored=self.is_favored,
+            isFavored=self.is_favored if is_favored is None else is_favored,
             snippets=snippets,
         )

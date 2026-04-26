@@ -44,8 +44,8 @@ export default function ReclamationTable({
   const end = Math.min(page * 6, totalResults);
 
   return (
-    <section className="min-h-[680px] bg-white">
-      <ReclamationPageHeader />
+    <section className="min-h-[680px] rounded-[12px] border border-[#ece4e1] bg-white shadow-sm">
+      <ReclamationPageHeader total={totalResults} />
 
       <ReclamationToolbar
         search={search}
