@@ -193,10 +193,65 @@ body.user-dark-theme .user-theme-root .bg-orange-50 {
   background-color: var(--admin-surface) !important;
 }
 
+.admin-dashboard-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1280px) {
+  .admin-theme-root.admin-sidebar-collapsed .admin-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  }
+}
+
+@media (min-width: 1700px) {
+  .admin-theme-root.admin-sidebar-expanded .admin-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  }
+}
+
+.admin-theme-root .apexcharts-canvas,
+.admin-theme-root .apexcharts-svg,
+.admin-theme-root .apexcharts-inner,
+.admin-theme-root .apexcharts-graphical {
+  max-width: 100% !important;
+}
+
+.admin-theme-root .apexcharts-canvas,
+.admin-theme-root .apexcharts-svg {
+  overflow: hidden !important;
+}
+
 .admin-theme-root .rounded-xl,
 .admin-theme-root .rounded-2xl,
 .admin-theme-root .rounded-3xl {
   border-radius: 0.5rem !important;
+}
+
+.admin-theme-root .bg-amber-50,
+.admin-theme-root .bg-sky-50,
+.admin-theme-root .bg-emerald-50,
+.admin-theme-root .bg-rose-50,
+.admin-theme-root [class*="bg-amber-"],
+.admin-theme-root [class*="bg-sky-"],
+.admin-theme-root [class*="bg-emerald-"] {
+  background-color: #f7f9fd !important;
+}
+
+.admin-theme-root [class*="border-amber-"],
+.admin-theme-root [class*="border-sky-"],
+.admin-theme-root [class*="border-emerald-"],
+.admin-theme-root [class*="border-rose-"] {
+  border-color: var(--admin-border) !important;
+}
+
+.admin-theme-root [class*="text-amber-"],
+.admin-theme-root [class*="text-sky-"],
+.admin-theme-root [class*="text-emerald-"] {
+  color: #071f3d !important;
+}
+
+.admin-theme-root [class*="text-rose-"] {
+  color: #9d0208 !important;
 }
 
 .admin-trend-line {

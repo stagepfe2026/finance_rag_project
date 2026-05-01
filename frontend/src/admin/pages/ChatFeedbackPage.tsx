@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import type { ApexOptions } from "apexcharts";
+import Chart from "react-apexcharts";
 import { ArrowRight, Calendar, FileWarning, MessageSquareWarning, RefreshCw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import AdminPageShell from "../components/layout/AdminPageShell";
-import type { ChatFeedbackDocumentStat, ChatFeedbackStats, ChatFeedbackTrendPoint } from "../../models/chat-feedback";
+import type { ChatFeedbackDocumentStat, ChatFeedbackStats } from "../../models/chat-feedback";
 import { fetchChatFeedbackStats } from "../../services/chat-feedback.service";
 import { reindexDocument } from "../../services/documents.service";
 
@@ -13,6 +15,8 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const emptyStats: ChatFeedbackStats = {
   summary: {
     reportedResponses: 0,
+    dislikesWithoutSource: 0,
+    documentSignalements: 0,
     likes: 0,
     dislikes: 0,
     satisfactionRate: 0,
@@ -30,21 +34,11 @@ const emptyStats: ChatFeedbackStats = {
   recentDislikes: [],
 };
 
-const distributionColors = ["#ef3b45", "#f08c95", "#ffb23a", "#d8d0d0", "#7cc66d"];
-
-function buildLinePoints(trend: ChatFeedbackTrendPoint[], key: "likes" | "dislikes" | "signalements", maxValue: number) {
-  if (trend.length === 0) {
-    return "";
-  }
-
-  return trend
-    .map((point, index) => {
-      const x = trend.length === 1 ? 50 : (index / (trend.length - 1)) * 100;
-      const y = 68 - (point[key] / maxValue) * 56;
-      return `${x},${y}`;
-    })
-    .join(" ");
-}
+const navyBlue = "#071f3d";
+const red = "#9d0208";
+const rose = "#f06f80";
+const mutedRose = "#d995a0";
+const distributionColors = [navyBlue, red, rose, "#8d7f83", mutedRose];
 
 function buildDistributionGradient(items: ChatFeedbackStats["distribution"]) {
   if (items.length === 0) {
@@ -87,14 +81,13 @@ function StatCard({
   label: string;
   value: string | number;
   helper: string;
-  tone?: "navy" | "red" | "orange" | "blue" | "green";
+  tone?: "navy" | "red" | "rose" | "blue";
 }) {
   const toneClasses = {
-    navy: "bg-[#eef4ff] text-[#273043]",
+    navy: "bg-[#eef4ff] text-[#071f3d]",
     red: "bg-[#fff0f1] text-[#9d0208]",
-    orange: "bg-[#fff3e8] text-[#f97316]",
-    blue: "bg-[#eef4ff] text-[#2458cf]",
-    green: "bg-[#effbea] text-[#52b94e]",
+    rose: "bg-[#fff0f2] text-[#9d0208]",
+    blue: "bg-[#eef4ff] text-[#071f3d]",
   };
   const valueClassName =
     typeof value === "string" && value.length > 16
@@ -108,7 +101,7 @@ function StatCard({
         <div className="min-w-0">
           <p className="text-[11px] font-medium text-[#5f6680]">{label}</p>
           <p className={valueClassName}>{value}</p>
-          <p className="mt-1 truncate text-[11px] font-semibold text-[#3560c9]">{helper}</p>
+          <p className="mt-1 truncate text-[11px] font-semibold text-[#071f3d]">{helper}</p>
         </div>
       </div>
     </article>
@@ -142,8 +135,8 @@ function DocumentRow({
           {document.signalements}
         </span>
       </td>
-      <td className="px-4 py-3 text-center text-[12px] font-semibold text-[#52b94e]">{document.likes}</td>
-      <td className="px-4 py-3 text-center text-[12px] font-semibold text-[#f97316]">{document.dislikes}</td>
+      <td className="px-4 py-3 text-center text-[12px] font-semibold text-[#071f3d]">{document.likes}</td>
+      <td className="px-4 py-3 text-center text-[12px] font-semibold text-[#9d0208]">{document.dislikes}</td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="w-9 text-right text-[11px] font-semibold text-[#273043]">{document.reportRate}%</span>
@@ -176,6 +169,7 @@ export default function ChatFeedbackPage() {
   const [error, setError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [busyDocumentId, setBusyDocumentId] = useState<string | null>(null);
+  const [selectedDistributionName, setSelectedDistributionName] = useState("");
 
   useEffect(() => {
     document.title = "Avis chat | CIMF";
@@ -188,6 +182,12 @@ export default function ChatFeedbackPage() {
       setError("");
       const data = await fetchChatFeedbackStats();
       setStats(data);
+      setSelectedDistributionName((current) => {
+        if (current && data.distribution.some((item) => item.documentName === current)) {
+          return current;
+        }
+        return data.distribution[0]?.documentName ?? "";
+      });
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Impossible de charger les avis chat.");
     } finally {
@@ -213,16 +213,109 @@ export default function ChatFeedbackPage() {
     }
   }
 
-  const maxTrendValue = useMemo(
-    () => Math.max(1, ...stats.trend.flatMap((point) => [point.likes, point.dislikes, point.signalements])),
+  const trendSeries = useMemo(
+    () => [
+      { name: "Likes", data: stats.trend.map((point) => point.likes) },
+      { name: "Dislikes", data: stats.trend.map((point) => point.dislikes) },
+      { name: "Signalements document", data: stats.trend.map((point) => point.signalements) },
+    ],
     [stats.trend],
   );
-  const likesPoints = buildLinePoints(stats.trend, "likes", maxTrendValue);
-  const dislikesPoints = buildLinePoints(stats.trend, "dislikes", maxTrendValue);
-  const signalementsPoints = buildLinePoints(stats.trend, "signalements", maxTrendValue);
+  const trendCategories = useMemo(() => stats.trend.map((point) => point.label), [stats.trend]);
+  const trendChartOptions = useMemo<ApexOptions>(
+    () => ({
+      chart: {
+        id: "admin-chat-feedback-trend",
+        type: "area",
+        height: 260,
+        parentHeightOffset: 0,
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        redrawOnParentResize: true,
+        redrawOnWindowResize: true,
+        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+      },
+      colors: [navyBlue, rose, red],
+      dataLabels: { enabled: false },
+      stroke: { curve: "smooth", width: 2.8, lineCap: "round" },
+      fill: {
+        type: "gradient",
+        gradient: {
+          shade: "light",
+          type: "vertical",
+          opacityFrom: 0.5,
+          opacityTo: 0.06,
+          stops: [0, 70, 100],
+        },
+      },
+      markers: {
+        size: 4,
+        colors: ["#ffffff"],
+        strokeColors: [navyBlue, rose, red],
+        strokeWidth: 2,
+        hover: { size: 6 },
+      },
+      grid: {
+        borderColor: "#e5ecf5",
+        strokeDashArray: 4,
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } },
+        padding: { top: 2, right: 14, bottom: 0, left: 8 },
+      },
+      legend: {
+        show: true,
+        position: "top",
+        horizontalAlign: "right",
+        fontSize: "12px",
+        fontWeight: 700,
+        labels: { colors: navyBlue },
+        markers: { size: 8, shape: "circle", strokeWidth: 0 },
+      },
+      xaxis: {
+        categories: trendCategories,
+        axisBorder: { show: true, color: "#9aa6b8" },
+        axisTicks: { show: false },
+        tooltip: { enabled: false },
+        labels: {
+          rotate: 0,
+          hideOverlappingLabels: true,
+          style: { colors: "#6c7894", fontSize: "11px", fontWeight: 700 },
+        },
+      },
+      yaxis: {
+        min: 0,
+        forceNiceScale: true,
+        tickAmount: 4,
+        labels: {
+          style: { colors: "#8a96ad", fontSize: "11px", fontWeight: 700 },
+        },
+      },
+      tooltip: { shared: true, intersect: false, marker: { show: true } },
+      responsive: [
+        {
+          breakpoint: 640,
+          options: {
+            chart: { height: 230 },
+            legend: { horizontalAlign: "left" },
+            markers: { size: 3 },
+          },
+        },
+      ],
+    }),
+    [trendCategories],
+  );
   const totalQuality = Math.max(1, stats.quality.likes + stats.quality.dislikes);
   const likePct = Math.round((stats.quality.likes / totalQuality) * 100);
   const dislikePct = Math.round((stats.quality.dislikes / totalQuality) * 100);
+  const selectedDistributionItem = useMemo(
+    () => stats.distribution.find((item) => item.documentName === selectedDistributionName) ?? stats.distribution[0] ?? null,
+    [selectedDistributionName, stats.distribution],
+  );
+  const selectedDistributionDocument = useMemo(
+    () => stats.documents.find((item) => item.documentName === selectedDistributionItem?.documentName) ?? null,
+    [selectedDistributionItem, stats.documents],
+  );
+  const distributionTotal = stats.summary.documentSignalements ?? stats.distribution.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <AdminPageShell>
@@ -270,14 +363,14 @@ export default function ChatFeedbackPage() {
                 label="Likes"
                 value={stats.summary.likes}
                 helper="Reponses utiles"
-                tone="green"
+                tone="navy"
               />
               <StatCard
                 icon={<ThumbsDown size={21} />}
                 label="Dislikes"
                 value={stats.summary.dislikes}
-                helper="A ameliorer"
-                tone="orange"
+                helper={`${stats.summary.dislikesWithoutSource ?? 0} sans source`}
+                tone="rose"
               />
               <StatCard
                 icon={<FileWarning size={21} />}
@@ -288,75 +381,70 @@ export default function ChatFeedbackPage() {
               />
             </div>
 
-            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_380px]">
-              <section className="rounded-lg border border-[#e8edf7] bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-sm font-bold text-[#273043]">Evolution des interactions</h2>
-                  <div className="flex items-center gap-4 text-[11px] font-medium text-[#5f6680]">
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#52b94e]" />Likes</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#ff7a00]" />Dislikes</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#9d0208]" />Signalements</span>
-                  </div>
+            <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+              <section className="min-w-0 rounded-lg border border-[#e8edf7] bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-sm font-bold text-[#071f3d]">Evolution des interactions</h2>
+                  <span className="rounded-lg border border-[#d8def0] bg-[#eef4ff] px-3 py-1.5 text-[11px] font-bold text-[#071f3d]">
+                    Area chart
+                  </span>
                 </div>
-                <div className="mt-5 h-[210px]">
-                  <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="h-full w-full overflow-visible">
-                    {[12, 26, 40, 54, 68].map((y) => (
-                      <line key={y} x1="0" x2="100" y1={y} y2={y} stroke="#e8edf7" strokeDasharray="2 2" />
-                    ))}
-                    <polyline fill="none" stroke="#52b94e" strokeWidth="1.7" points={likesPoints} />
-                    <polyline fill="none" stroke="#ff7a00" strokeWidth="1.7" points={dislikesPoints} />
-                    <polyline fill="none" stroke="#9d0208" strokeWidth="1.7" points={signalementsPoints} />
-                    {stats.trend.map((point, index) => {
-                      const x = stats.trend.length === 1 ? 50 : (index / (stats.trend.length - 1)) * 100;
-                      return (
-                        <text key={point.date} x={x} y="79" textAnchor="middle" className="fill-[#7b849f] text-[3px]">
-                          {point.label}
-                        </text>
-                      );
-                    })}
-                  </svg>
+                <div className="mt-4 min-w-0 rounded-lg border border-[#e8edf7] bg-[#fcfdff] px-2 pb-2 pt-3">
+                  {isLoading ? (
+                    <div className="flex h-[260px] items-center justify-center text-sm text-[#5f6680]">Chargement...</div>
+                  ) : stats.trend.length === 0 ? (
+                    <div className="flex h-[260px] items-center justify-center rounded-lg border border-dashed border-[#d8def0] bg-[#f7f9fc] text-sm text-[#5f6680]">
+                      Aucune donnee disponible.
+                    </div>
+                  ) : (
+                    <Chart options={trendChartOptions} series={trendSeries} type="area" height={260} width="100%" />
+                  )}
                 </div>
               </section>
 
-              <section className="rounded-lg border border-[#e8edf7] bg-white p-4 shadow-sm">
+              <section className="min-w-0 overflow-hidden rounded-lg border border-[#e8edf7] bg-white p-4 shadow-sm">
                 <h2 className="text-sm font-bold text-[#273043]">Qualite des reponses</h2>
-                <div className="mt-4 flex items-center gap-5">
+                <div className="mt-4 grid items-center gap-4 sm:grid-cols-[132px_minmax(0,1fr)]">
                   <div
-                    className="grid h-36 w-36 shrink-0 place-items-center rounded-full"
+                    className="grid h-32 w-32 shrink-0 place-items-center rounded-full"
                     style={{
-                      background: `conic-gradient(#7cc66d 0 ${likePct}%, #ff9f1a ${likePct}% ${likePct + dislikePct}%, #eef1f7 ${likePct + dislikePct}% 100%)`,
+                      background: `conic-gradient(${navyBlue} 0 ${likePct}%, ${red} ${likePct}% ${likePct + dislikePct}%, #eef1f7 ${likePct + dislikePct}% 100%)`,
                     }}
                   >
-                    <div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center">
+                    <div className="grid h-20 w-20 place-items-center rounded-full bg-white text-center shadow-inner">
                       <div>
-                        <p className="text-3xl font-bold text-[#273043]">{stats.quality.satisfactionRate}%</p>
+                        <p className="text-2xl font-bold text-[#071f3d]">{stats.quality.satisfactionRate}%</p>
                         <p className="text-[10px] font-semibold text-[#5f6680]">Satisfaction</p>
                       </div>
                     </div>
                   </div>
-                  <div className="grid flex-1 gap-3 text-[12px]">
-                    <p className="flex items-center justify-between text-[#273043]">
-                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#7cc66d]" />Likes</span>
+                  <div className="grid min-w-0 gap-2 text-[12px]">
+                    <p className="flex items-center justify-between rounded-lg border border-[#e8edf7] bg-white px-3 py-2 text-[#071f3d]">
+                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#071f3d]" />Likes</span>
                       <strong>{stats.quality.likes}</strong>
                     </p>
-                    <p className="flex items-center justify-between text-[#273043]">
-                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#ff7a00]" />Dislikes</span>
+                    <p className="flex items-center justify-between rounded-lg border border-[#e8edf7] bg-white px-3 py-2 text-[#071f3d]">
+                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#9d0208]" />Dislikes</span>
                       <strong>{stats.quality.dislikes}</strong>
                     </p>
-                    <p className="flex items-center justify-between text-[#273043]">
-                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#9d0208]" />Signalements</span>
+                    <p className="flex items-center justify-between rounded-lg border border-[#e8edf7] bg-white px-3 py-2 text-[#071f3d]">
+                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#f06f80]" />Signalements doc.</span>
                       <strong>{stats.quality.signalements}</strong>
+                    </p>
+                    <p className="flex items-center justify-between rounded-lg border border-[#e8edf7] bg-[#f7f9fc] px-3 py-2 text-[#071f3d]">
+                      <span>Dislikes sans source</span>
+                      <strong>{stats.quality.dislikesWithoutSource ?? 0}</strong>
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 rounded-lg bg-[#eef4ff] px-3 py-3 text-center text-[12px] font-semibold text-[#273043]">
+                <div className="mt-4 rounded-lg bg-[#eef4ff] px-3 py-3 text-center text-[12px] font-semibold text-[#071f3d]">
                   Taux de satisfaction = Likes / (Likes + Dislikes) x 100
                 </div>
               </section>
             </div>
 
-            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_380px]">
-              <section className="overflow-hidden rounded-lg border border-[#e8edf7] bg-white shadow-sm">
+            <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+              <section className="min-w-0 overflow-hidden rounded-lg border border-[#e8edf7] bg-white shadow-sm">
                 <div className="flex items-center justify-between gap-3 px-4 py-4">
                   <h2 className="text-sm font-bold text-[#273043]">Documents les plus signales</h2>
                   <span className="rounded-lg border border-[#e8edf7] px-2 py-1 text-[11px] font-semibold text-[#5f6680]">
@@ -396,32 +484,45 @@ export default function ChatFeedbackPage() {
                   </table>
                 </div>
                 <div className="border-t border-[#eef1f7] px-4 py-3 text-center">
-                  <Link to="/admin/documents/list" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#2458cf]">
+                  <Link to="/admin/documents/list" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#071f3d]">
                     Voir tous les documents <ArrowRight size={14} />
                   </Link>
                 </div>
               </section>
 
-              <section className="rounded-lg border border-[#e8edf7] bg-white p-4 shadow-sm">
+              <section className="min-w-0 overflow-hidden rounded-lg border border-[#e8edf7] bg-white p-4 shadow-sm">
                 <h2 className="text-sm font-bold text-[#273043]">Repartition des signalements</h2>
-                <div className="mt-5 flex items-center gap-5">
+                <p className="mt-1 text-[11px] leading-5 text-[#5f6680]">
+                  Un signalement document = dislike sur une reponse qui contient au moins une source. Un dislike sans source reste un dislike simple.
+                </p>
+                <div className="mt-5 grid items-center gap-4 sm:grid-cols-[132px_minmax(0,1fr)]">
                   <div
-                    className="grid h-36 w-36 shrink-0 place-items-center rounded-full"
+                    className="grid h-32 w-32 shrink-0 place-items-center rounded-full shadow-[0_18px_34px_rgba(7,31,61,0.08)]"
                     style={{ background: buildDistributionGradient(stats.distribution) }}
                   >
-                    <div className="grid h-20 w-20 place-items-center rounded-full bg-white text-center">
+                    <div className="grid h-20 w-20 place-items-center rounded-full bg-white text-center shadow-inner">
                       <div>
                         <p className="text-[10px] font-semibold uppercase text-[#7b849f]">Total</p>
-                        <p className="text-2xl font-bold text-[#273043]">{stats.summary.reportedResponses}</p>
+                        <p className="text-2xl font-bold text-[#071f3d]">{distributionTotal}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="grid flex-1 gap-3">
+                  <div className="grid min-w-0 gap-2">
                     {stats.distribution.length === 0 ? (
                       <p className="text-[12px] text-[#7b849f]">Aucun document signale.</p>
                     ) : (
                       stats.distribution.map((item, index) => (
-                        <p key={`${item.documentName}-${index}`} className="flex items-center justify-between gap-3 text-[12px] text-[#273043]">
+                        <button
+                          key={`${item.documentName}-${index}`}
+                          type="button"
+                          onClick={() => setSelectedDistributionName(item.documentName)}
+                          className={[
+                            "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-[12px] transition",
+                            selectedDistributionItem?.documentName === item.documentName
+                              ? "border-[#071f3d] bg-[#eef4ff] text-[#071f3d]"
+                              : "border-[#e8edf7] bg-white text-[#273043] hover:border-[#9d0208]",
+                          ].join(" ")}
+                        >
                           <span className="inline-flex min-w-0 items-center gap-2">
                             <span
                               className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -430,11 +531,43 @@ export default function ChatFeedbackPage() {
                             <span className="truncate">{item.documentName}</span>
                           </span>
                           <strong className="shrink-0">{item.count} ({item.percentage}%)</strong>
-                        </p>
+                        </button>
                       ))
                     )}
                   </div>
                 </div>
+
+                {selectedDistributionItem ? (
+                  <div className="mt-4 rounded-lg border border-[#e8edf7] bg-[#f7f9fc] p-3">
+                    <p className="text-[10px] uppercase tracking-[0.1em] text-[#6c7894]">Document selectionne</p>
+                    <p className="mt-1 truncate text-sm font-bold text-[#071f3d]">{selectedDistributionItem.documentName}</p>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                      <span className="rounded-lg bg-white px-2 py-2 text-[#071f3d]">
+                        <strong className="block text-base">{selectedDistributionDocument?.likes ?? 0}</strong>
+                        Likes
+                      </span>
+                      <span className="rounded-lg bg-white px-2 py-2 text-[#9d0208]">
+                        <strong className="block text-base">{selectedDistributionDocument?.dislikes ?? selectedDistributionItem.count}</strong>
+                        Dislikes
+                      </span>
+                      <span className="rounded-lg bg-white px-2 py-2 text-[#071f3d]">
+                        <strong className="block text-base">{selectedDistributionDocument?.reportRate ?? selectedDistributionItem.percentage}%</strong>
+                        Taux
+                      </span>
+                    </div>
+                    {selectedDistributionDocument?.documentId ? (
+                      <button
+                        type="button"
+                        disabled={busyDocumentId === selectedDistributionDocument.documentId}
+                        onClick={() => handleReindex(selectedDistributionDocument)}
+                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#d8def0] bg-white px-3 py-2 text-[11px] font-bold text-[#071f3d] transition hover:border-[#071f3d] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <RefreshCw size={13} className={busyDocumentId === selectedDistributionDocument.documentId ? "animate-spin" : ""} />
+                        Reindexer ce document
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className="mt-5 border-t border-[#eef1f7] pt-4">
                   <h3 className="text-[12px] font-bold text-[#273043]">Dernieres mauvaises reponses</h3>
@@ -443,7 +576,10 @@ export default function ChatFeedbackPage() {
                       <article key={item.messageId} className="rounded-lg bg-[#f7f9fc] px-3 py-2">
                         <p className="line-clamp-2 text-[11px] leading-5 text-[#4c587a]">{item.content}</p>
                         <p className="mt-1 text-[10px] font-semibold text-[#9d0208]">
-                          {item.sources.map((source) => source.documentName).join(", ") || "Source non referencee"}
+                          {item.sources.map((source) => source.documentName).join(", ") || "Dislike sans source"}
+                        </p>
+                        <p className="mt-1 text-[10px] font-semibold text-[#071f3d]">
+                          {item.isSignalement ? "Signalement document" : "Pas un signalement document"}
                         </p>
                         <p className="mt-1 text-[10px] text-[#7b849f]">{formatDate(item.feedbackAt)}</p>
                       </article>

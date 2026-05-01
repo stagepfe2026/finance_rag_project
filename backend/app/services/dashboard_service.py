@@ -30,7 +30,7 @@ class DashboardService:
         }
 
     def get_admin_overview_dashboard(self) -> dict:
-        documents = self.documents_repository.list_recent_documents(limit=8)
+        documents = self.documents_repository.list_recent_documents(limit=500)
         indexed_documents = self.documents_repository.list_recent_indexed(limit=6)
         all_reclamations = self.reclamation_repository.list_all()
         all_users = self.users_repository.list_all_active()
@@ -76,7 +76,7 @@ class DashboardService:
 
         trend_buckets: dict[str, dict[str, int | str]] = defaultdict(lambda: {"label": "", "documents": 0, "reclamations": 0})
         now = datetime.now(UTC)
-        for offset in range(6, -1, -1):
+        for offset in range(30, -1, -1):
             day = (now - timedelta(days=offset)).date()
             key = day.isoformat()
             trend_buckets[key] = {"label": day.strftime("%d/%m"), "documents": 0, "reclamations": 0}

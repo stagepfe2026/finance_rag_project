@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import DashboardDonutCard from "../components/dashboard/DashboardDonutCard";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
@@ -36,10 +36,25 @@ const emptyDashboard: AdminDashboard = {
   urgentCases: [],
 };
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function subtractDays(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() - days);
+  return toDateInputValue(date);
+}
+
 export default function DashboardPage() {
   const [dashboard, setDashboard] = useState<AdminDashboard>(emptyDashboard);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statsStartDate, setStatsStartDate] = useState("");
+  const statsEndDate = useMemo(() => toDateInputValue(new Date()), []);
 
   useEffect(() => {
     document.title = "Dashboard | CIMF";
@@ -55,6 +70,11 @@ export default function DashboardPage() {
         const data = await fetchAdminDashboard();
         if (!cancelled) {
           setDashboard(data);
+          setStatsStartDate((current) => {
+            if (current) return current;
+            const defaultStartDate = subtractDays(statsEndDate, 6);
+            return data.trend.find((point) => point.date >= defaultStartDate)?.date || data.trend[0]?.date || statsEndDate;
+          });
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -71,7 +91,15 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [statsEndDate]);
+
+  const filteredTrend = useMemo(() => {
+    if (!statsStartDate) {
+      return dashboard.trend;
+    }
+
+    return dashboard.trend.filter((point) => point.date >= statsStartDate && point.date <= statsEndDate);
+  }, [dashboard.trend, statsEndDate, statsStartDate]);
 
   return (
     <AdminPageShell>
@@ -79,6 +107,10 @@ export default function DashboardPage() {
         urgentCasesCount={dashboard.summary.reclamationsUrgent}
         pendingReclamationsCount={dashboard.summary.pendingReclamations}
         trend={dashboard.trend}
+        statsStartDate={statsStartDate}
+        statsEndDate={statsEndDate}
+        onStatsStartDateChange={setStatsStartDate}
+        onUseLastMonth={() => setStatsStartDate(subtractDays(statsEndDate, 30))}
       />
 
       <section className="px-5 pb-4 md:px-6">
@@ -89,17 +121,17 @@ export default function DashboardPage() {
         <div className="space-y-3">
           <DashboardSummaryCards summary={dashboard.summary} />
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_390px]">
+          <div className="admin-dashboard-grid grid items-start gap-3">
             <div className="grid min-w-0 gap-3">
-              <DashboardTrendCard trend={dashboard.trend} isLoading={isLoading} />
+              <DashboardTrendCard trend={filteredTrend} isLoading={isLoading} />
               <DashboardRecentDocumentsTable documents={dashboard.recentIndexedDocuments} />
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid min-w-0 gap-3">
               <DashboardDonutCard
                 title="Reclamations"
                 items={[
-                  { label: "En attente", value: dashboard.reclamationBreakdown.pending, color: "#ff9f1c", tone: "#ff9f1c" },
+                  { label: "En attente", value: dashboard.reclamationBreakdown.pending, color: "#f06f80", tone: "#f06f80" },
                   { label: "En cours", value: dashboard.reclamationBreakdown.inProgress, color: "#9d0208", tone: "#9d0208" },
                   { label: "Traitees", value: dashboard.reclamationBreakdown.resolved, color: "#8d7f83", tone: "#8d7f83" },
                   { label: "Urgentes", value: dashboard.reclamationBreakdown.urgent, color: "#071f3d", tone: "#071f3d" },

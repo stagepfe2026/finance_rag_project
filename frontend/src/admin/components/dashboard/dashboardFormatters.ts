@@ -44,9 +44,9 @@ export function getStatusLabel(value: string) {
   return labels[value] ?? value;
 }
 
-export function buildTrendCoordinates(points: AdminDashboardTrendPoint[], key: TrendKey) {
+export function buildTrendCoordinates(points: AdminDashboardTrendPoint[], key: TrendKey, maxValueOverride?: number) {
   if (points.length === 0) return [];
-  const maxValue = Math.max(...points.map((point) => point[key]), 1);
+  const maxValue = Math.max(maxValueOverride ?? Math.max(...points.map((point) => point[key]), 1), 1);
   const horizontalPadding = 3;
   const topPadding = 8;
   const bottomPadding = 92;
@@ -60,27 +60,35 @@ export function buildTrendCoordinates(points: AdminDashboardTrendPoint[], key: T
   }));
 }
 
-export function buildTrendPath(points: AdminDashboardTrendPoint[], key: TrendKey) {
-  const coordinates = buildTrendCoordinates(points, key);
+function buildSmoothPath(coordinates: ReturnType<typeof buildTrendCoordinates>) {
   if (coordinates.length === 0) return "";
   if (coordinates.length === 1) {
     return `M 3 ${coordinates[0].y} L 97 ${coordinates[0].y}`;
   }
 
-  return coordinates
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-    .join(" ");
+  return coordinates.slice(0, -1).reduce((path, point, index) => {
+    const previousPoint = coordinates[index - 1] ?? point;
+    const nextPoint = coordinates[index + 1];
+    const nextNextPoint = coordinates[index + 2] ?? nextPoint;
+    const controlPoint1X = point.x + (nextPoint.x - previousPoint.x) / 6;
+    const controlPoint1Y = point.y + (nextPoint.y - previousPoint.y) / 6;
+    const controlPoint2X = nextPoint.x - (nextNextPoint.x - point.x) / 6;
+    const controlPoint2Y = nextPoint.y - (nextNextPoint.y - point.y) / 6;
+
+    return `${path} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${nextPoint.x} ${nextPoint.y}`;
+  }, `M ${coordinates[0].x} ${coordinates[0].y}`);
 }
 
-export function buildTrendAreaPath(points: AdminDashboardTrendPoint[], key: TrendKey) {
-  const coordinates = buildTrendCoordinates(points, key);
+export function buildTrendPath(points: AdminDashboardTrendPoint[], key: TrendKey, maxValueOverride?: number) {
+  return buildSmoothPath(buildTrendCoordinates(points, key, maxValueOverride));
+}
+
+export function buildTrendAreaPath(points: AdminDashboardTrendPoint[], key: TrendKey, maxValueOverride?: number) {
+  const coordinates = buildTrendCoordinates(points, key, maxValueOverride);
   if (coordinates.length === 0) return "";
   if (coordinates.length === 1) {
     return `M 3 ${coordinates[0].y} L 97 ${coordinates[0].y} L 97 92 L 3 92 Z`;
   }
 
-  const line = coordinates
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-    .join(" ");
-  return `${line} L 97 92 L 3 92 Z`;
+  return `${buildSmoothPath(coordinates)} L ${coordinates[coordinates.length - 1].x} 92 L ${coordinates[0].x} 92 Z`;
 }

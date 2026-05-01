@@ -28,6 +28,7 @@ export type ChatFeedbackRecentDislike = {
   conversationId: string;
   content: string;
   feedbackAt: string;
+  isSignalement?: boolean;
   sources: Array<{
     documentId: string;
     documentName: string;
@@ -37,6 +38,8 @@ export type ChatFeedbackRecentDislike = {
 export type ChatFeedbackStats = {
   summary: {
     reportedResponses: number;
+    dislikesWithoutSource?: number;
+    documentSignalements?: number;
     likes: number;
     dislikes: number;
     satisfactionRate: number;
@@ -51,6 +54,7 @@ export type ChatFeedbackStats = {
     likes: number;
     dislikes: number;
     signalements: number;
+    dislikesWithoutSource?: number;
     satisfactionRate: number;
   };
   documents: ChatFeedbackDocumentStat[];

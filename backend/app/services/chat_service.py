@@ -99,6 +99,7 @@ class ChatService:
         messages = self.chat_repo.list_rated_assistant_messages()
         likes = 0
         dislikes = 0
+        signalement_responses = 0
         now = datetime.now(UTC)
         trend_buckets: dict[str, dict[str, Any]] = {}
 
@@ -133,6 +134,17 @@ class ChatService:
             elif feedback == "dislike":
                 dislikes += 1
 
+            normalized_sources = [source for source in message.sources if isinstance(source, dict)]
+            document_sources = [
+                source
+                for source in normalized_sources
+                if str(source.get("document_id", "")).strip() or str(source.get("document_name", "")).strip()
+            ]
+            is_document_signalement = feedback == "dislike" and bool(document_sources)
+
+            if is_document_signalement:
+                signalement_responses += 1
+
             feedback_at = message.feedback_at or message.created_at
             day_key = feedback_at.astimezone(UTC).date().isoformat()
             if day_key in trend_buckets:
@@ -140,9 +152,9 @@ class ChatService:
                     trend_buckets[day_key]["likes"] += 1
                 elif feedback == "dislike":
                     trend_buckets[day_key]["dislikes"] += 1
-                    trend_buckets[day_key]["signalements"] += 1
+                    if is_document_signalement:
+                        trend_buckets[day_key]["signalements"] += 1
 
-            normalized_sources = [source for source in message.sources if isinstance(source, dict)]
             if feedback == "dislike":
                 recent_dislikes.append(
                     {
@@ -150,17 +162,18 @@ class ChatService:
                         "conversationId": message.conversation_id,
                         "content": self._truncate(message.content, 180),
                         "feedbackAt": feedback_at.astimezone(UTC).isoformat(),
+                        "isSignalement": is_document_signalement,
                         "sources": [
                             {
                                 "documentId": str(source.get("document_id", "")),
                                 "documentName": str(source.get("document_name", "Document sans nom")),
                             }
-                            for source in normalized_sources[:4]
+                            for source in document_sources[:4]
                         ],
                     }
                 )
 
-            for source in normalized_sources:
+            for source in document_sources:
                 document_id = str(source.get("document_id", "")).strip()
                 document_name = str(source.get("document_name", "")).strip()
                 if not document_id and not document_name:
@@ -185,35 +198,37 @@ class ChatService:
             document_items.append(item)
 
         document_items.sort(key=lambda item: (int(item["dislikes"]), int(item["likes"])), reverse=True)
-        flagged_documents = [item for item in document_items if int(item["dislikes"]) > 0]
+        flagged_documents = [item for item in document_items if int(item["signalements"]) > 0]
         total_votes = likes + dislikes
         satisfaction_rate = round((likes / total_votes) * 100) if total_votes else 0
         most_flagged = flagged_documents[0] if flagged_documents else None
 
         distribution = []
-        total_document_dislikes = sum(int(item["dislikes"]) for item in flagged_documents)
+        total_document_signalements = sum(int(item["signalements"]) for item in flagged_documents)
         for item in flagged_documents[:4]:
-            count = int(item["dislikes"])
+            count = int(item["signalements"])
             distribution.append(
                 {
                     "documentName": item["documentName"],
                     "count": count,
-                    "percentage": round((count / total_document_dislikes) * 100) if total_document_dislikes else 0,
+                    "percentage": round((count / total_document_signalements) * 100) if total_document_signalements else 0,
                 }
             )
-        other_count = sum(int(item["dislikes"]) for item in flagged_documents[4:])
+        other_count = sum(int(item["signalements"]) for item in flagged_documents[4:])
         if other_count:
             distribution.append(
                 {
                     "documentName": "Autres documents",
                     "count": other_count,
-                    "percentage": round((other_count / total_document_dislikes) * 100) if total_document_dislikes else 0,
+                    "percentage": round((other_count / total_document_signalements) * 100) if total_document_signalements else 0,
                 }
             )
 
         return {
             "summary": {
-                "reportedResponses": dislikes,
+                "reportedResponses": signalement_responses,
+                "dislikesWithoutSource": max(0, dislikes - signalement_responses),
+                "documentSignalements": total_document_signalements,
                 "likes": likes,
                 "dislikes": dislikes,
                 "satisfactionRate": satisfaction_rate,
@@ -229,7 +244,8 @@ class ChatService:
             "quality": {
                 "likes": likes,
                 "dislikes": dislikes,
-                "signalements": dislikes,
+                "signalements": signalement_responses,
+                "dislikesWithoutSource": max(0, dislikes - signalement_responses),
                 "satisfactionRate": satisfaction_rate,
             },
             "documents": document_items[:10],
