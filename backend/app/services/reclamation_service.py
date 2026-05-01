@@ -142,6 +142,21 @@ class ReclamationService:
             raise ValueError("RECLAMATION_NOT_FOUND")
         return self._serialize_reclamation(reclamation)
 
+    def mark_reply_read(self, current_user: dict, reclamation_id: str) -> dict:
+        if current_user.get("role") == "ADMIN":
+            reclamation = self.repository.get_by_id(reclamation_id)
+            if reclamation is not None and reclamation.deleted_at is not None:
+                reclamation = None
+            if reclamation is None:
+                raise ValueError("RECLAMATION_NOT_FOUND")
+            return self._serialize_reclamation(reclamation)
+
+        user_id = str(current_user.get("id", "")).strip()
+        reclamation = self.repository.mark_reply_read_for_user(reclamation_id, user_id)
+        if reclamation is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+        return self._serialize_reclamation(reclamation)
+
     def get_reclamation_attachment_response_data(self, current_user: dict, reclamation_id: str) -> tuple[Path, str]:
         if current_user.get("role") == "ADMIN":
             reclamation = self.repository.get_by_id(reclamation_id)

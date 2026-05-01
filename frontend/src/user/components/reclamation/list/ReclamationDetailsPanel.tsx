@@ -1,4 +1,5 @@
-import { ExternalLink, X } from "lucide-react";
+import { CheckCircle2, Circle, ExternalLink, Info, X } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { Reclamation } from "../../../../models/reclamation";
 import ReclamationStatusBadge from "../shared/ReclamationStatusBadge";
@@ -12,6 +13,29 @@ function formatDate(value: string | null) {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatShortDate(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatTime(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
@@ -38,6 +62,66 @@ function getPriorityLabel(priority: Reclamation["priority"]) {
   }
 }
 
+function getStatusLabel(status: Reclamation["status"]) {
+  switch (status) {
+    case "PENDING":
+      return "En attente";
+    case "IN_PROGRESS":
+      return "En cours";
+    case "RESOLVED":
+      return "Traitee";
+    case "FAILED":
+      return "A revoir";
+    default:
+      return status;
+  }
+}
+
+function getHistoryItems(reclamation: Reclamation) {
+  const items = [];
+
+  if (reclamation.adminReplyAt || reclamation.status === "RESOLVED") {
+    items.push({
+      title: "Reclamation traitee",
+      date: reclamation.adminReplyAt || reclamation.updatedAt,
+      actor: reclamation.adminReplyBy || reclamation.lastUpdatedByAdminName || "Systeme Admin",
+      tone: "success" as const,
+    });
+  }
+
+  if (reclamation.status === "IN_PROGRESS" || reclamation.status === "RESOLVED") {
+    items.push({
+      title: "En cours de traitement",
+      date: reclamation.lastUpdatedByAdminAt || reclamation.updatedAt,
+      actor: reclamation.lastUpdatedByAdminName || "Systeme Admin",
+      tone: "info" as const,
+    });
+  }
+
+  items.push({
+    title: "Reclamation creee",
+    date: reclamation.createdAt,
+    actor: "Vous",
+    tone: "neutral" as const,
+  });
+
+  return items;
+}
+
+type FieldProps = {
+  label: string;
+  children: ReactNode;
+};
+
+function DetailField({ label, children }: FieldProps) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-slate-500">{label}</p>
+      <div className="mt-2 text-[12px] leading-5 text-[#273043]">{children}</div>
+    </div>
+  );
+}
+
 type Props = {
   reclamation: Reclamation;
   onClose: () => void;
@@ -46,121 +130,151 @@ type Props = {
 export default function ReclamationDetailsPanel({ reclamation, onClose }: Props) {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
   const attachmentUrl = reclamation.attachment?.url ? `${apiBaseUrl}${reclamation.attachment.url}` : null;
-  const attachmentIsImage = Boolean(
-    reclamation.attachment?.contentType?.startsWith("image/") ||
-      reclamation.attachment?.name.match(/\.(png|jpe?g|gif|webp)$/i),
-  );
+  const unread = Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
+  const historyItems = getHistoryItems(reclamation);
 
   return (
-    <aside className="max-h-[88vh] overflow-y-auto rounded-[24px] border border-[#e8d9d6] bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3 border-b border-[#f1e6e3] pb-4">
-        <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#b28a84]">
-            Detail reclamation
-          </p>
-          <h2 className="mt-2 text-[18px] font-semibold text-[#671a12]">
-            {reclamation.subject}
-          </h2>
-          <p className="mt-2 text-xs text-slate-500">
-            Ticket: {reclamation.ticketNumber}
-          </p>
-        </div>
+    <aside className="sticky top-[88px] h-[calc(100vh-104px)] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 pb-4 pt-5">
+        <h2 className="text-[15px] font-semibold text-[#273043]">
+          Detail de la reclamation
+        </h2>
 
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#eadfdb] bg-[#faf7f6] text-slate-500 transition hover:text-[#cf3d4c]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#9d0208]"
+          aria-label="Fermer le detail de la reclamation"
           title="Fermer"
         >
-          <X size={16} />
+          <X size={17} />
         </button>
       </div>
 
-      <div className="mt-5 space-y-4">
-        <div className="rounded-2xl border border-[#f1e6e3] bg-[#fcf8f7] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-slate-700">Statut</span>
-            <ReclamationStatusBadge status={reclamation.status} />
-          </div>
-
-          <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2">
-            <div>
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Type</p>
-              <p className="mt-1">{getProblemLabel(reclamation)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Priorite</p>
-              <p className="mt-1">{getPriorityLabel(reclamation.priority)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Creation</p>
-              <p className="mt-1">{formatDate(reclamation.createdAt)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Mise a jour</p>
-              <p className="mt-1">{formatDate(reclamation.updatedAt)}</p>
-            </div>
-          </div>
+      <div className="space-y-5 px-5 py-5">
+        <div>
+          <span
+            className={[
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold",
+              unread ? "bg-red-50 text-[#9d0208]" : "bg-slate-100 text-slate-600",
+            ].join(" ")}
+          >
+            {getStatusLabel(reclamation.status)}
+            {unread ? (
+              <>
+                <span>- Non lue</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#9d0208]" />
+              </>
+            ) : null}
+          </span>
         </div>
 
-        <div className="rounded-2xl border border-[#f4e8e6] bg-[#fffdfd] p-4">
-          <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Description</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+        <DetailField label="Ticket">
+          <span className="inline-flex rounded-full bg-[#f3efee] px-2.5 py-1 text-[11px] font-semibold text-[#6d6662]">
+            {reclamation.ticketNumber}
+          </span>
+        </DetailField>
+
+        <DetailField label="Sujet">
+          <p className="font-semibold">{reclamation.subject}</p>
+        </DetailField>
+
+        <DetailField label="Statut">
+          <ReclamationStatusBadge status={reclamation.status} />
+        </DetailField>
+
+        <div className="grid grid-cols-2 gap-4">
+          <DetailField label="Date de creation">
+            {formatDate(reclamation.createdAt)}
+          </DetailField>
+          <DetailField label="Mise a jour">
+            {formatDate(reclamation.updatedAt)}
+          </DetailField>
+        </div>
+
+        <DetailField label="Type">
+          {getProblemLabel(reclamation)}
+        </DetailField>
+
+        <DetailField label="Priorite">
+          {getPriorityLabel(reclamation.priority)}
+        </DetailField>
+
+        <DetailField label="Description">
+          <div className="min-h-[56px] whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-3 text-slate-600">
             {reclamation.description}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-[#f4e8e6] bg-[#fffdfd] p-4">
-          <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Piece jointe</p>
-          {reclamation.attachment ? (
-            <div className="mt-2 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 truncate text-sm text-slate-700">{reclamation.attachment.name}</p>
-                {attachmentUrl ? (
-                  <a
-                    href={attachmentUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-[#b03b47] hover:text-[#8f2632]"
-                  >
-                    Ouvrir
-                    <ExternalLink size={12} />
-                  </a>
-                ) : null}
-              </div>
-              {attachmentIsImage && attachmentUrl ? (
-                <img
-                  src={attachmentUrl}
-                  alt={reclamation.attachment.name}
-                  className="max-h-52 w-full rounded-2xl border border-[#efe2df] object-contain bg-white"
-                />
-              ) : null}
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-slate-700">Aucune piece jointe</p>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-[#f4e8e6] bg-[#fffdfd] p-4">
-          <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Reponse admin</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-            {reclamation.adminReply || "Aucune reponse pour le moment."}
-          </p>
-          <div className="mt-3 rounded-2xl bg-[#faf7f6] px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Admin traitant</p>
-            <p className="mt-1 text-sm font-medium text-slate-700">
-              {reclamation.adminReplyBy || reclamation.lastUpdatedByAdminName || "Pas encore assigne"}
-            </p>
           </div>
-          {reclamation.adminReplyAt ? (
-            <div className="mt-2 space-y-1 text-xs text-slate-500">
-              <p>Repondu le {formatDate(reclamation.adminReplyAt)}</p>
-              {reclamation.adminReplyBy ? <p>Par {reclamation.adminReplyBy}</p> : null}
-              {reclamation.lastUpdatedByAdminAt ? (
-                <p>Derniere mise a jour admin: {formatDate(reclamation.lastUpdatedByAdminAt)}</p>
+        </DetailField>
+
+        {reclamation.attachment ? (
+          <DetailField label="Piece jointe">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <span className="min-w-0 truncate">{reclamation.attachment.name}</span>
+              {attachmentUrl ? (
+                <a
+                  href={attachmentUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-white hover:text-[#9d0208]"
+                  title="Ouvrir la piece jointe"
+                >
+                  <ExternalLink size={14} />
+                </a>
               ) : null}
             </div>
-          ) : null}
+          </DetailField>
+        ) : null}
+
+        <DetailField label="Derniere reponse du systeme">
+          <div className="rounded-xl bg-emerald-50 px-3 py-3 text-emerald-700">
+            <p className="whitespace-pre-wrap">
+              {reclamation.adminReply || "Aucune reponse pour le moment."}
+            </p>
+            {reclamation.adminReplyAt ? (
+              <p className="mt-2 text-[11px] text-emerald-600">
+                {formatDate(reclamation.adminReplyAt)}
+              </p>
+            ) : null}
+          </div>
+        </DetailField>
+
+        <div>
+          <p className="text-[11px] font-semibold text-slate-500">Historique</p>
+          <div className="mt-3 space-y-4">
+            {historyItems.map((item, index) => {
+              const isSuccess = item.tone === "success";
+              const isInfo = item.tone === "info";
+
+              return (
+                <div key={`${item.title}-${item.date}`} className="relative flex gap-3">
+                  {index < historyItems.length - 1 ? (
+                    <span className="absolute left-[13px] top-7 h-[calc(100%+8px)] w-px bg-slate-200" />
+                  ) : null}
+
+                  <span
+                    className={[
+                      "relative z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-white",
+                      isSuccess
+                        ? "border-emerald-200 text-emerald-600"
+                        : isInfo
+                          ? "border-blue-200 text-blue-600"
+                          : "border-slate-200 text-slate-400",
+                    ].join(" ")}
+                  >
+                    {isSuccess ? <CheckCircle2 size={15} /> : isInfo ? <Info size={15} /> : <Circle size={13} />}
+                  </span>
+
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-semibold text-[#273043]">{item.title}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {formatShortDate(item.date)} a {formatTime(item.date)}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">{item.actor}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </aside>

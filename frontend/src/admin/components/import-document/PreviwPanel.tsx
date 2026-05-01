@@ -22,7 +22,7 @@ export default function PreviewPanel({
   return (
     <div className="rounded-l border border-[#ede7e5]  shadow-[0_10px_35px_rgba(87,51,39,0.04)]">
       <div className="border-b border-[#f0e8e6] px-4 py-3">
-        <h2 className="border-l-2 border-[#cf2027] pl-2 text-[13px] font-semibold text-[#111111]">
+        <h2 className="border-l-2 border-[#9d0208] pl-2 text-[13px] font-semibold text-[#111111]">
           Preview
         </h2>
       </div>
@@ -42,7 +42,7 @@ export default function PreviewPanel({
             <div className="flex gap-3 pb-2">
               {previewItems.map((page) => (
                 <div key={page.pageNumber} className="group min-w-[88px] cursor-pointer">
-                  <div className="mb-1.5 text-[10px] font-semibold text-[#cf2027]">{page.pageNumber}</div>
+                  <div className="mb-1.5 text-[10px] font-semibold text-[#9d0208]">{page.pageNumber}</div>
                   <img
                     src={page.imageUrl}
                     alt={`Page ${page.pageNumber}`}

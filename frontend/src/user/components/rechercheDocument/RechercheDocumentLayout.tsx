@@ -16,7 +16,7 @@ export default function RechercheDocumentLayout({
   preview,
 }: Props) {
   return (
-    <div className="h-[calc(100vh-83px)] overflow-hidden bg-[#f8f4f3] px-3 py-3 md:px-4 md:py-4">
+    <div className="h-[calc(100vh-83px)] overflow-hidden bg-slate-50 px-3 py-3 md:px-4 md:py-4">
       <div className="mx-auto h-full w-full max-w-[1600px]">
         <div
           className={[
@@ -30,7 +30,7 @@ export default function RechercheDocumentLayout({
             {filters}
           </div>
 
-          <section className="flex h-full min-h-0 flex-col rounded-[22px] border border-[#ece1de] bg-white p-3 shadow-sm md:p-4">
+          <section className="flex h-full min-h-0 flex-col rounded-xl border border-[#ece1de] bg-white p-3 shadow-sm md:p-4">
             {searchBar}
             <div className="mt-2">{resultsHeader}</div>
             <div className="mt-2 min-h-0 flex-1 overflow-y-auto pr-1">

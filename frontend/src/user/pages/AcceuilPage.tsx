@@ -5,7 +5,6 @@ import buildingImage from "../../assets/building_cimf.png";
 import { documentCategoryLabels, type DocumentItem } from "../../models/document";
 import { fetchUserDashboard } from "../../services/dashboard.service";
 import { createNotificationsWebSocket } from "../../services/notifications.service";
-import HelpCard from "../components/acceuil/HelpCard";
 import NotificationsPanel from "../components/acceuil/NotificationsPanel";
 import QuickActionsSection from "../components/acceuil/QuickActionsSection";
 import RecentDocumentsTable from "../components/acceuil/RecentDocumentsTable";
@@ -175,7 +174,6 @@ export default function AccueilPage() {
 
           <div className="flex min-h-0 flex-col space-y-4">
             <NotificationsPanel items={notifications} onDismiss={handleDismissNotification} />
-            <HelpCard />
           </div>
         </div>
       </div>

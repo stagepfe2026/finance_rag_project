@@ -16,7 +16,7 @@ const getCategoryStyle = (category: string) => {
       background: "#fff5f5",
     },
     Juridique: {
-      color: "#142850",
+      color: "#273043",
       border: "1px solid #c7d2fe",
       background: "#f8faff",
     },
@@ -66,7 +66,7 @@ export default function RecentDocumentsTable({ documents }: RecentDocumentsTable
               </td>
               <td className="text-xs text-slate-500">{doc.date}</td>
               <td>
-                <Link to={doc.link} className="rounded-md border px-3 py-1 text-xs">
+                <Link to={doc.link} className="rounded-xl border px-3 py-1 text-xs">
                   Consulter
                 </Link>
               </td>

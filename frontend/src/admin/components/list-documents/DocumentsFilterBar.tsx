@@ -36,7 +36,7 @@ export default function DocumentsFilterBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Rechercher..."
-            className="h-9 w-full rounded-xl border border-[#ede7e5] bg-white pl-9 pr-3 text-[12px] text-[#111111] outline-none placeholder:text-[#9a9a9a] focus:border-[#cf2027]"
+            className="h-9 w-full rounded-xl border border-[#ede7e5] bg-white pl-9 pr-3 text-[12px] text-[#111111] outline-none placeholder:text-[#9a9a9a] focus:border-[#9d0208]"
           />
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function DocumentsFilterBar({
             <select
               value={category}
               onChange={(e) => onCategoryChange(e.target.value as DocumentsFilterBarProps["category"])}
-              className="h-9 appearance-none rounded-xl border border-[#ede7e5] bg-white px-3 pr-9 text-[12px] text-[#111111] outline-none focus:border-[#cf2027]"
+              className="h-9 appearance-none rounded-xl border border-[#ede7e5] bg-white px-3 pr-9 text-[12px] text-[#111111] outline-none focus:border-[#9d0208]"
             >
               <option value="all">Toutes catégories</option>
               {categoryOptions.map((option) => (
@@ -68,7 +68,7 @@ export default function DocumentsFilterBar({
             <select
               value={status}
               onChange={(e) => onStatusChange(e.target.value as DocumentsFilterBarProps["status"])}
-              className="h-9 appearance-none rounded-xl border border-[#ede7e5] bg-white px-3 pr-9 text-[12px] text-[#111111] outline-none focus:border-[#cf2027]"
+              className="h-9 appearance-none rounded-xl border border-[#ede7e5] bg-white px-3 pr-9 text-[12px] text-[#111111] outline-none focus:border-[#9d0208]"
             >
               <option value="all">Tous statuts</option>
               {Object.entries(documentStatusLabels).map(([value, label]) => (

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import type { ChatMessage, Conversation, ResponseMode } from "../../models/chat";
+import type { ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../../models/chat";
 import {
   archiveConversation,
   askChatQuestion,
@@ -11,6 +11,7 @@ import {
   fetchConversations,
   renameConversation,
   restoreConversation,
+  submitChatFeedback,
 } from "../../services/chat.service";
 import ChatMain from "../components/chat/ChatMain";
 import ArchivedConversationsModal from "../components/chat/ArchivedConversationsModal";
@@ -89,6 +90,7 @@ export default function ChatLayout() {
     busy: false,
   });
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [restoringConversationId, setRestoringConversationId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -403,16 +405,48 @@ export default function ChatLayout() {
     }
   }
 
+  async function handleMessageFeedback(messageId: string, feedback: ChatFeedback) {
+    const targetMessage = messages.find((message) => message._id === messageId);
+    if (!targetMessage || targetMessage.role !== "assistant" || targetMessage.pending) {
+      return;
+    }
+
+    const previousFeedback = targetMessage.feedback ?? null;
+    const nextFeedback = previousFeedback === feedback ? null : feedback;
+
+    setMessages((current) =>
+      current.map((message) => (message._id === messageId ? { ...message, feedback: nextFeedback } : message)),
+    );
+
+    try {
+      const updatedMessage = await submitChatFeedback(messageId, nextFeedback);
+      setMessages((current) =>
+        current.map((message) => (message._id === messageId ? { ...message, ...updatedMessage } : message)),
+      );
+      showSnackbar(nextFeedback ? "Avis enregistre." : "Avis retire.", "success");
+    } catch (error) {
+      setMessages((current) =>
+        current.map((message) => (message._id === messageId ? { ...message, feedback: previousFeedback } : message)),
+      );
+      showSnackbar(error instanceof Error ? error.message : "Impossible d enregistrer l avis.", "error");
+    }
+  }
+
   return (
     <>
-      <div className="h-[calc(100vh-81px)] w-full overflow-hidden border-t border-[#e9e3e1] bg-[#f7f2f0]">
-        <div className="grid h-full w-full grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="h-[calc(100vh-81px)] w-full overflow-hidden bg-slate-50 px-3 py-3 md:px-4">
+        <div
+         className="flex h-full min-h-0 gap-4 overflow-hidden"
+        >
+          
           <ChatSidebar
+            isOpen={isHistoryOpen}
             activeConversations={activeConversations}
             selectedConversationId={selectedConversationId}
             search={search}
             isLoading={isLoadingConversations}
             archivedCount={archivedConversations.length}
+            onToggle={() => setIsHistoryOpen((current) => !current)}
             onSearchChange={setSearch}
             onSelectConversation={(conversationId) => {
               setSelectedConversationId(conversationId);
@@ -427,6 +461,7 @@ export default function ChatLayout() {
             onRestoreConversation={handleRestoreConversation}
             onDeleteConversation={handleDeleteConversation}
           />
+          <div className="min-w-0 flex-1">
 
           <ChatMain
             conversation={selectedConversation}
@@ -437,11 +472,12 @@ export default function ChatLayout() {
             responseMode={responseMode}
             onResponseModeChange={setResponseMode}
             onSubmit={handleSendMessage}
+            onFeedback={handleMessageFeedback}
             onNotify={showSnackbar}
           />
         </div>
       </div>
-
+</div>
       <ConversationActionModal
         mode={conversationModal.mode}
         conversation={conversationModal.conversation}

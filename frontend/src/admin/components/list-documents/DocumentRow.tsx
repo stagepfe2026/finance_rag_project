@@ -61,7 +61,7 @@ export default function DocumentRow({ document, onConsult, onDeleteFromIndex, on
       </td>
 
       <td className="px-4 py-3">
-        <span className="inline-flex rounded-lg bg-[#f6efed] px-2.5 py-1 text-[11px] font-medium text-[#8b5e57]">
+        <span className="inline-flex rounded-lg bg-[#fff1f2] px-2.5 py-1 text-[11px] font-medium text-[#9d0208]">
           {documentCategoryLabels[document.category]}
         </span>
       </td>

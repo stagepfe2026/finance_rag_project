@@ -40,10 +40,10 @@ export default function RechercheDocumentResultCard({
     <article
       onClick={() => onSelect(item)}
       className={[
-        "cursor-pointer rounded-[18px] border bg-white p-3.5 shadow-sm transition",
+        "cursor-pointer rounded-xl border bg-white p-3.5 shadow-sm transition",
         isSelected
-          ? "border-[#d76a62] shadow-[0_8px_24px_rgba(178,52,44,0.08)]"
-          : "border-[#efe3e1] hover:border-[#d8b5b0]",
+          ? "border-[#9d0208] shadow-[0_8px_24px_rgba(179,0,15,0.10)]"
+          : "border-[#e2e6f3] hover:border-[#9d0208]",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">
@@ -52,12 +52,12 @@ export default function RechercheDocumentResultCard({
           onClick={() => onSelect(item)}
           className="min-w-0 flex-1 text-left"
         >
-          <h3 className="text-[15px] font-semibold leading-6 text-[#221f1e]">
+          <h3 className="text-[15px] font-semibold leading-6 text-[#273043]">
             <RechercheDocumentHighlightText text={item.title} query={query} />
           </h3>
 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-[#7d6c68]">
-            <span className="rounded-full bg-[#f6efee] px-2.5 py-1 text-[11px] font-medium text-[#7b322b]">
+            <span className="rounded-full bg-[#fff1f2] px-2.5 py-1 text-[11px] font-medium text-[#9d0208]">
               {documentCategoryLabels[item.category]}
             </span>
             <span>{formatDate(item.realizedAt || item.createdAt)}</span>
@@ -70,7 +70,7 @@ export default function RechercheDocumentResultCard({
             event.stopPropagation();
             onToggleFavorite(item);
           }}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#ead9d6] text-[#b2342c] transition hover:bg-[#fbf3f2]"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#ead9d6] text-[#9d0208] transition hover:bg-[#fbf3f2]"
           title={item.isFavored ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
           <Heart size={15} className={item.isFavored ? "fill-current" : ""} />

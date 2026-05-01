@@ -16,12 +16,12 @@ export default function RechercheDocumentResultsHeader({
           {total} résultat{total > 1 ? "s" : ""}
           {query.trim() ? (
             <>
-              {" "}pour <span className="font-semibold text-[#b2342c]">{query}</span>
+              {" "}pour <span className="font-semibold text-[#9d0208]">{query}</span>
             </>
           ) : null}
         </p>
 
-        {error ? <p className="mt-1 text-[12px] text-[#b2342c]">{error}</p> : null}
+        {error ? <p className="mt-1 text-[12px] text-[#9d0208]">{error}</p> : null}
       </div>
     </div>
   );

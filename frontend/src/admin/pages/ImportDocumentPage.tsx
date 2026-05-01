@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bell } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
@@ -7,7 +6,7 @@ import UploadZone from "../components/import-document/UploadZone";
 import DocumentForm from "../components/import-document/DocumentForm";
 import ProgressPanel from "../components/import-document/ProgressPanel";
 import PreviewPanel from "../components/import-document/PreviwPanel";
-import AdminSidebar from "../components/layout/AdminSidebar";
+import AdminPageShell from "../components/layout/AdminPageShell";
 import {
   categoryOptions,
   legalDocumentTypeOptions,
@@ -322,36 +321,19 @@ export default function ImportDocumentPage() {
   }, [availableDocuments, relationSearch]);
 
   return (
-    <div className="min-h-screen bg-[#f7f4f3] text-[#111111]">
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-
-        <main className="flex-1">
-          <header className="flex items-center justify-between border-b border-[#ede7e5] bg-[#fbf8f7] px-7 py-5">
+    <AdminPageShell>
+          <header className="bg-[#f7f9fc] px-7 py-5">
             <div>
-              <h1 className="text-[18px] font-semibold tracking-tight text-[#111111] md:text-[19px]">
-                Import <span className="text-[#cf2027]">Document</span>
+              <h1 className="text-[26px] font-bold tracking-tight text-[#273043]">
+                Import <span className="text-[#9d0208]">Document</span>
               </h1>
-              <p className="mt-1 text-[12px] text-[#7a7472]">
+              <p className="mt-2 text-[13px] text-[#5f6680]">
                 Upload and index your PDF or DOCX files to enrich the knowledge base.
               </p>
             </div>
-
-            <div className="flex items-center gap-3">
-              <button className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#6f6968] shadow-sm ring-1 ring-[#efe8e6]">
-                <Bell size={14} />
-                <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[#cf2027]" />
-              </button>
-              <div className="flex items-center gap-2 rounded-full bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-[#efe8e6]">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f1ecea] text-[11px] font-medium">
-                  A
-                </div>
-                <span className="text-[12px] font-medium">Admin</span>
-              </div>
-            </div>
           </header>
 
-          <section className="px-5 py-5 md:px-7">
+          <section className="px-5 pb-5 md:px-7">
             <div className="grid grid-cols-12 gap-4">
               <div className="col-span-12 xl:col-span-7">
                 <div className="space-y-4">
@@ -427,7 +409,7 @@ export default function ImportDocumentPage() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!selectedFile || isSubmitting || isGeneratingPreview}
-                    className="rounded-lg bg-[#cf2027] px-4 py-2 text-[12px] font-medium text-white transition hover:bg-[#b91c1c] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg bg-[#9d0208] px-4 py-2 text-[12px] font-medium text-white transition hover:bg-[#9d0208] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSubmitting ? "Indexation..." : "Indexer"}
                   </button>
@@ -435,10 +417,6 @@ export default function ImportDocumentPage() {
               </div>
             </div>
           </section>
-        </main>
-      </div>
-    </div>
+    </AdminPageShell>
   );
 }
-
-

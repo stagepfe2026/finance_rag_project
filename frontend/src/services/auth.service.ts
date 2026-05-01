@@ -30,6 +30,7 @@ export type ProfileUpdatePayload = {
   prenom: string;
   email: string;
   telephone: string;
+  profileImageUrl: string;
   adresse: string;
   dateNaissance: string;
   direction: string;

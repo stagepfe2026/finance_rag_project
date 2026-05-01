@@ -11,3 +11,7 @@ class ChatAskRequest(BaseModel):
 
 class ChatConversationRenameRequest(BaseModel):
     summary: str = Field(..., min_length=1, max_length=120)
+
+
+class ChatMessageFeedbackRequest(BaseModel):
+    feedback: Literal["like", "dislike"] | None = None

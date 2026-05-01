@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/v1/notifications", tags=["Notifications"])
 async def list_notifications(
     request: Request,
     current_user: dict = Depends(require_authenticated_user),
-    limit: int = Query(default=20, ge=1, le=50),
+    limit: int = Query(default=20, ge=1, le=100),
 ):
     service = getattr(request.app.state, "notification_service", None)
     if service is None:

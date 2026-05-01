@@ -16,7 +16,7 @@ export default function RechercheDocumentPreviewCard({
   error,
 }: Props) {
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-[18px] border border-[#efe3e1] bg-[#fcfaf9] p-3.5">
+    <div className="flex h-full min-h-0 flex-col rounded-xl border border-[#efe3e1] bg-[#fcfaf9] p-3.5">
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d6c68]">
         <FileText size={13} />
         Contenu du document

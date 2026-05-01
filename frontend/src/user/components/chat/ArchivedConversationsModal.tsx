@@ -83,14 +83,14 @@ export default function ArchivedConversationsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(43,35,33,0.46)] px-4 py-6 backdrop-blur-[2px]">
-      <div className="w-full max-w-[760px] rounded-[24px] border border-[#ddd5d2] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf9_100%)] shadow-[0_24px_80px_rgba(39,24,20,0.22)]">
+      <div className="w-full max-w-[760px] rounded-xl border border-[#ddd5d2] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf9_100%)] shadow-[0_24px_80px_rgba(39,24,20,0.22)]">
         <div className="flex items-center justify-between border-b border-[#eee7e5] px-6 py-5">
           <div className="w-10" />
           <h2 className="text-center text-[16px] font-semibold text-[#2f2725]">Conversations archivées</h2>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#564d49] transition hover:bg-[#f6f0ef] hover:text-[#cb3a32]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#564d49] transition hover:bg-[#f6f0ef] hover:text-[#9d0208]"
             aria-label="Fermer la fenêtre des archives"
           >
             <X size={18} />
@@ -98,7 +98,7 @@ export default function ArchivedConversationsModal({
         </div>
 
         <div className="px-6 py-5">
-          <div className="overflow-hidden rounded-[20px] border border-[#eee7e5] bg-white">
+          <div className="overflow-hidden rounded-xl border border-[#eee7e5] bg-white">
             <div className="grid grid-cols-[minmax(0,1.6fr)_170px_130px] gap-4 border-b border-[#f0e9e7] px-6 py-4 text-[12px] font-semibold text-[#463d39]">
               <span>Titre de la conversation</span>
               <span>Date d'archivage</span>
@@ -130,7 +130,7 @@ export default function ArchivedConversationsModal({
                         type="button"
                         onClick={() => void onRestore(conversation)}
                         disabled={busyConversationId === conversation._id}
-                        className="rounded-xl border border-[#efb4af] px-4 py-2 text-[12px] font-semibold text-[#cb3a32] transition hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-xl border border-[#efb4af] px-4 py-2 text-[12px] font-semibold text-[#9d0208] transition hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {busyConversationId === conversation._id ? "Restauration..." : "Restaurer"}
                       </button>
@@ -159,9 +159,9 @@ export default function ArchivedConversationsModal({
                   type="button"
                   onClick={() => setPage(pageNumber)}
                   className={[
-                    "inline-flex h-8 min-w-8 items-center justify-center rounded-[10px] px-2 text-[12px] font-semibold transition",
+                    "inline-flex h-8 min-w-8 items-center justify-center rounded-xl px-2 text-[12px] font-semibold transition",
                     pageNumber === page
-                      ? "bg-[#cb3a32] text-white shadow-[0_10px_22px_rgba(203,58,50,0.22)]"
+                      ? "bg-[#9d0208] text-white shadow-[0_10px_22px_rgba(203,58,50,0.22)]"
                       : "text-[#4f4744] hover:bg-[#f6f0ef]",
                   ].join(" ")}
                   aria-current={pageNumber === page ? "page" : undefined}

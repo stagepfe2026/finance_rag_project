@@ -9,7 +9,7 @@ interface SectionCardProps {
 
 export default function SectionCard({ title, action, children, className = "" }: SectionCardProps) {
   return (
-    <section className={`rounded-lg border border-slate-200 bg-white p-4 ${className}`}>
+    <section className={`rounded-xl border border-slate-200 bg-white p-4 ${className}`}>
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">{title}</h2>

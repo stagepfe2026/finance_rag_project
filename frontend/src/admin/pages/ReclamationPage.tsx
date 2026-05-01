@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { Reclamation } from "../../models/reclamation";
 import { fetchAdminReclamations, resolveReclamationAsAdmin } from "../../services/admin-reclamation.service";
-import AdminSidebar from "../components/layout/AdminSidebar";
+import AdminPageShell from "../components/layout/AdminPageShell";
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -173,18 +173,14 @@ export default function ReclamationPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f6f3f2] text-[#111111]">
-      <div className="flex h-full overflow-hidden">
-        <AdminSidebar />
-
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <header className="border-b border-[#ede7e5] bg-[#fbf8f7] px-6 py-4">
+    <AdminPageShell>
+          <header className="bg-[#f7f9fc] px-6 py-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h1 className="text-[19px] font-semibold tracking-tight text-[#111111]">
-                  Reclamations <span className="text-[#cf2027]">Admin</span>
+                <h1 className="text-[26px] font-bold tracking-tight text-[#273043]">
+                  Reclamations <span className="text-[#9d0208]">Admin</span>
                 </h1>
-                <p className="mt-1 text-[12px] text-[#7a7472]">
+                <p className="mt-2 text-[13px] text-[#5f6680]">
                   Une seule reponse admin par reclamation, avec suivi automatique du statut.
                 </p>
               </div>
@@ -241,8 +237,8 @@ export default function ReclamationPage() {
             </div>
           </header>
 
-          <section className="min-h-0 flex-1 overflow-hidden px-5 py-5 md:px-6">
-            <div className="flex h-full min-h-0 gap-4">
+          <section className="px-5 pb-5 md:px-6">
+            <div className="flex min-h-[620px] gap-4">
               <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border border-[#ece4e1] bg-white shadow-sm">
                 <div className="flex flex-wrap items-center gap-3 border-b border-[#efe7e4] px-5 py-4">
                   <div className="flex h-10 min-w-[260px] flex-1 items-center gap-2 rounded-2xl border border-[#ddd8d5] bg-[#f9f7f6] px-3">
@@ -268,7 +264,7 @@ export default function ReclamationPage() {
                 </div>
 
                 {error ? (
-                  <div className="mx-5 mt-4 rounded-2xl border border-[#f1d2d0] bg-[#fff8f7] px-4 py-3 text-[12px] text-[#b42318]">
+                  <div className="mx-5 mt-4 rounded-2xl border border-[#f1d2d0] bg-[#fff8f7] px-4 py-3 text-[12px] text-[#9d0208]">
                     {error}
                   </div>
                 ) : null}
@@ -364,7 +360,7 @@ export default function ReclamationPage() {
                       <button
                         type="button"
                         onClick={() => setIsPanelExpanded((current) => !current)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd8d5] bg-white text-slate-500 transition hover:border-[#cf2027] hover:text-[#cf2027]"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd8d5] bg-white text-slate-500 transition hover:border-[#9d0208] hover:text-[#9d0208]"
                         title={isPanelExpanded ? "Reduire" : "Etendre"}
                       >
                         {isPanelExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
@@ -372,7 +368,7 @@ export default function ReclamationPage() {
                       <button
                         type="button"
                         onClick={() => setShowPanel(false)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd8d5] bg-white text-slate-500 transition hover:border-[#cf2027] hover:text-[#cf2027]"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd8d5] bg-white text-slate-500 transition hover:border-[#9d0208] hover:text-[#9d0208]"
                         title="Fermer"
                       >
                         <X size={16} />
@@ -414,7 +410,7 @@ export default function ReclamationPage() {
                             href={`${apiBaseUrl}${selectedReclamation.attachment.url}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="mt-3 inline-flex items-center gap-1 rounded-xl border border-[#e3d9d6] bg-[#faf7f6] px-3 py-2 text-sm font-medium text-[#8f2632] hover:bg-[#f6eeee]"
+                            className="mt-3 inline-flex items-center gap-1 rounded-xl border border-[#e3d9d6] bg-[#faf7f6] px-3 py-2 text-sm font-medium text-[#9d0208] hover:bg-[#f6eeee]"
                           >
                             Voir la piece jointe
                             <ExternalLink size={14} />
@@ -456,14 +452,14 @@ export default function ReclamationPage() {
                           onChange={(event) => setAdminReply(event.target.value)}
                           disabled={alreadyHandled}
                           placeholder="Ecrivez votre reponse a l utilisateur..."
-                          className="mt-3 w-full rounded-2xl border border-[#ddd8d5] bg-[#f9f7f6] px-4 py-3 text-sm outline-none focus:border-[#cf2027] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="mt-3 w-full rounded-2xl border border-[#ddd8d5] bg-[#f9f7f6] px-4 py-3 text-sm outline-none focus:border-[#9d0208] disabled:cursor-not-allowed disabled:opacity-60"
                         />
 
                         <button
                           type="button"
                           onClick={() => void handleSubmitReply()}
                           disabled={isSubmitting || alreadyHandled}
-                          className="mt-3 h-11 w-full rounded-2xl bg-[#8f2632] px-4 text-sm font-semibold text-white transition hover:bg-[#7d1f2b] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="mt-3 h-11 w-full rounded-2xl bg-[#9d0208] px-4 text-sm font-semibold text-white transition hover:bg-[#9d0208] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isSubmitting ? "Envoi..." : "Envoyer la reponse"}
                         </button>
@@ -474,8 +470,6 @@ export default function ReclamationPage() {
               ) : null}
             </div>
           </section>
-        </main>
-      </div>
-    </div>
+    </AdminPageShell>
   );
 }

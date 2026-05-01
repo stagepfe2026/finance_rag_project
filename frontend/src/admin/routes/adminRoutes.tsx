@@ -1,4 +1,5 @@
 import AuditPage from "../pages/AuditPage";
+import ChatFeedbackPage from "../pages/ChatFeedbackPage";
 import DashboardPage from "../pages/DashboardPage";
 import ImportDocumentPage from "../pages/ImportDocumentPage";
 import ListDocumentPage from "../pages/ListDocumentPage";
@@ -16,6 +17,10 @@ export const adminRoutes = [
   {
     path: "audit",
     element: <AuditPage />,
+  },
+  {
+    path: "avis-chat",
+    element: <ChatFeedbackPage />,
   },
   {
     path: "documents/import",

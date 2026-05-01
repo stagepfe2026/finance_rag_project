@@ -1,4 +1,4 @@
-import type { AskChatResult, ChatMessage, Conversation, ResponseMode } from "../models/chat";
+import type { AskChatResult, ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../models/chat";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -171,6 +171,24 @@ export async function askChatQuestion(input: {
   }
 
   return (data as ApiEnvelope<AskChatResult>).data;
+}
+
+export async function submitChatFeedback(messageId: string, feedback: ChatFeedback | null): Promise<ChatMessage> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/chat/messages/${messageId}/feedback`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ feedback }),
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible d enregistrer l avis."));
+  }
+
+  return (data as ApiEnvelope<ChatMessage>).data;
 }
 
 export async function downloadChatSource(documentId: string, fileName: string) {

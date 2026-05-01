@@ -15,8 +15,8 @@ export default function ReclamationPriorityField({
 }: Props) {
   return (
     <div>
-      <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-        Priorite <span className="text-[#cf3d4c]">*</span>
+      <label className="mb-1 block text-[12px] font-semibold text-slate-700">
+        Priorite <span className="text-[#9d0208]">*</span>
       </label>
 
       <select

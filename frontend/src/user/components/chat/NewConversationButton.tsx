@@ -9,10 +9,10 @@ export default function NewConversationButton({ onClick }: NewConversationButton
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#ddd3d0] bg-white px-2 py-2 text-[13px] font-medium text-[#2f2725] transition hover:bg-[#fffafa] cursor-pointer"
+      className="flex h-10 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-[#273043] bg-[#273043] px-3 text-[13px] font-semibold text-white shadow-[0_10px_22px_rgba(39,48,67,0.16)] transition hover:bg-[#10106f]"
     >
       <Plus size={16} />
-      Nouvelle discussion
+      Nouvelle conversation
     </button>
   );
 }

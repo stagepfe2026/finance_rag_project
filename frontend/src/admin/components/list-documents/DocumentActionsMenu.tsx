@@ -68,7 +68,7 @@ export default function DocumentActionsMenu({
               setIsOpen(false);
               onDeleteFromIndex();
             }}
-            className="flex w-full rounded-lg px-3 py-2 text-left text-[12px] text-[#b42318] hover:bg-[#fff3f2] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full rounded-lg px-3 py-2 text-left text-[12px] text-[#9d0208] hover:bg-[#fff3f2] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Supprimer
           </button>

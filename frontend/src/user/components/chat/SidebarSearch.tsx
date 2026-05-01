@@ -7,14 +7,14 @@ type SidebarSearchProps = {
 
 export default function SidebarSearch({ value, onChange }: SidebarSearchProps) {
   return (
-    <label className="flex items-center gap-2 rounded-xl border border-[#e3dad8] bg-white px-2 py-2.5 ">
-      <Search size={15} className="text-[#9d918d]" />
+    <label className="flex h-11 items-center gap-2 rounded-xl border border-[#e7edf7] bg-white px-3 shadow-[0_8px_20px_rgba(39,48,67,0.04)]">
+      <Search size={17} className="text-[#26356f]" />
       <input
         type="text"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Rechercher..."
-        className="w-full bg-transparent text-[12px] text-[#534a47] outline-none placeholder:text-[#b1a6a2]"
+        placeholder="Rechercher une conversation..."
+        className="w-full bg-transparent text-[12px] text-[#26356f] outline-none placeholder:text-[#8790ad]"
       />
     </label>
   );

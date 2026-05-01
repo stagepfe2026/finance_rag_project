@@ -2,7 +2,7 @@ import type { Conversation } from "../../../models/chat";
 import ConversationItem from "./ConversationItem";
 
 type ConversationListProps = {
-  title: string;
+  title?: string;
   emptyMessage: string;
   conversations: Conversation[];
   selectedConversationId: string | null;
@@ -26,14 +26,16 @@ export default function ConversationList({
 }: ConversationListProps) {
   return (
     <section>
-      <div className="px-3 py-2.5">
-        <h2 className="text-[14px] font-semibold text-[#3a2f2c]">{title}</h2>
-      </div>
+      {title ? (
+        <div className="px-5 py-2.5">
+          <h2 className="text-[14px] font-semibold text-[#273043]">{title}</h2>
+        </div>
+      ) : null}
 
       {conversations.length === 0 ? (
-        <p className="px-3 py-2 text-[12px] text-[#7f7673]">{emptyMessage}</p>
+        <p className="px-5 py-4 text-[12px] leading-5 text-[#8790ad]">{emptyMessage}</p>
       ) : (
-        <div className="divide-y divide-[#e6dedd] border-y border-[#eee7e5] bg-[rgba(255,255,255,0.25)]">
+        <div className="divide-y divide-[#edf0f7]">
           {conversations.map((conversation) => (
             <ConversationItem
               key={conversation._id}

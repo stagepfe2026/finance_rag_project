@@ -32,39 +32,43 @@ export default function ReclamationFormFields({
   onChange,
 }: Props) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div>
-        <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-          Sujet de la reclamation <span className="text-[#cf3d4c]">*</span>
+        <label className="mb-1 block text-[12px] font-semibold text-slate-700">
+          Sujet de la reclamation <span className="text-[#9d0208]">*</span>
         </label>
         <input
           type="text"
           value={values.subject}
           onChange={(e) => onChange("subject", e.target.value)}
+          placeholder="Entrez le sujet de votre reclamation"
           className={fieldClassName(Boolean(errors.subject))}
         />
         {errors.subject ? <p className="mt-1 text-xs text-rose-600">{errors.subject}</p> : null}
       </div>
 
       <div>
-        <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-          Description <span className="text-[#cf3d4c]">*</span>
+        <label className="mb-1 block text-[12px] font-semibold text-slate-700">
+          Description <span className="text-[#9d0208]">*</span>
         </label>
         <textarea
-          rows={5}
+          rows={3}
           value={values.description}
           onChange={(e) => onChange("description", e.target.value)}
+          maxLength={1000}
+          placeholder="Decrivez votre probleme en detail (minimum 7 mots)..."
           className={`${fieldClassName(Boolean(errors.description))} resize-none`}
         />
+        <p className="mt-0.5 text-right text-[10px] text-slate-400">{values.description.length}/1000</p>
         {errors.description ? (
           <p className="mt-1 text-xs text-rose-600">{errors.description}</p>
         ) : null}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-            Type de probleme <span className="text-[#cf3d4c]">*</span>
+          <label className="mb-1 block text-[12px] font-semibold text-slate-700">
+            Type de probleme <span className="text-[#9d0208]">*</span>
           </label>
 
           <select
@@ -84,7 +88,7 @@ export default function ReclamationFormFields({
           ) : null}
 
           {values.problemType === "AUTRE" ? (
-            <div className="mt-3">
+            <div className="mt-2">
               <input
                 type="text"
                 value={values.customProblemType}

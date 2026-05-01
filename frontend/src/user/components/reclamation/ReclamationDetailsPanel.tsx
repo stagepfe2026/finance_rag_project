@@ -54,7 +54,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#eadfdb] bg-[#faf7f6] text-slate-500 transition hover:text-[#cf3d4c]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfdb] bg-[#faf7f6] text-slate-500 transition hover:text-[#9d0208]"
           title="Fermer"
         >
           <X size={16} />
@@ -104,7 +104,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
               <img
                 src={attachment.url ?? undefined}
                 alt={attachment.name}
-                className="max-h-[320px] w-full rounded-lg object-contain bg-white"
+                className="max-h-[320px] w-full rounded-xl object-contain bg-white"
               />
               <div className="mt-3 flex items-center justify-between gap-3 px-1">
                 <p className="min-w-0 truncate text-sm text-slate-700">{attachment.name}</p>
@@ -112,7 +112,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
                   href={attachment.url ?? undefined}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 text-sm font-medium text-[#cf3d4c] hover:underline"
+                  className="shrink-0 text-sm font-medium text-[#9d0208] hover:underline"
                 >
                   Ouvrir
                 </a>
@@ -126,7 +126,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
                   href={attachment.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-block font-medium text-[#cf3d4c] hover:underline"
+                  className="mt-2 inline-block font-medium text-[#9d0208] hover:underline"
                 >
                   Ouvrir la piece jointe
                 </a>

@@ -33,10 +33,10 @@ export default function DocumentsPageHeader({
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
-        <h1 className="text-[18px] font-semibold tracking-tight text-[#111111] md:text-[19px]">
-          Documents <span className="text-[#cf2027]">indexes</span>
+        <h1 className="text-[26px] font-bold tracking-tight text-[#273043]">
+          Documents <span className="text-[#9d0208]">indexes</span>
         </h1>
-        <p className="mt-1 text-[12px] text-[#7a7472]">Administration documentaire ministerielle</p>
+        <p className="mt-2 text-[13px] text-[#5f6680]">Administration documentaire ministerielle</p>
       </div>
 
       <div ref={menuRef} className="relative flex items-center gap-2">
@@ -44,7 +44,7 @@ export default function DocumentsPageHeader({
           type="button"
           disabled={isBusy}
           onClick={() => setIsOpen((value) => !value)}
-          className="inline-flex h-9 items-center gap-2 rounded-full bg-white px-4 text-[12px] font-medium text-[#6f6968] shadow-sm ring-1 ring-[#efe8e6] transition hover:bg-[#fafafa] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#dde3ec] bg-white px-4 text-[12px] font-semibold text-[#273043] shadow-sm transition hover:bg-[#f4f7fb] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <FileText size={16} />
           Exporter
@@ -52,7 +52,7 @@ export default function DocumentsPageHeader({
         </button>
 
         {isOpen ? (
-          <div className="absolute right-0 top-11 z-20 min-w-[180px] rounded-xl border border-[#ede7e5] bg-white p-1.5 shadow-lg">
+          <div className="absolute right-0 top-11 z-20 min-w-[180px] rounded-xl border border-[#dde3ec] bg-white p-1.5 shadow-lg">
             <button
               type="button"
               disabled={isBusy}
@@ -60,9 +60,9 @@ export default function DocumentsPageHeader({
                 setIsOpen(false);
                 onExportPdf();
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-[#111111] hover:bg-[#f8f4f2] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-[#273043] hover:bg-[#f4f7fb] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <FileText size={15} className="text-[#cf2027]" />
+              <FileText size={15} className="text-[#9d0208]" />
               {isExportingPdf ? "Generation du PDF..." : "PDF"}
             </button>
 
@@ -73,7 +73,7 @@ export default function DocumentsPageHeader({
                 setIsOpen(false);
                 onExportExcel();
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-[#111111] hover:bg-[#f8f4f2] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-[#273043] hover:bg-[#f4f7fb] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <FileSpreadsheet size={15} className="text-[#1d6f42]" />
               {isExportingExcel ? "Generation du fichier Excel..." : "Excel"}

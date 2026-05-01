@@ -12,6 +12,9 @@ function readErrorMessage(data: unknown, fallback: string) {
     if (typeof detail === "string") {
       return detail;
     }
+    if (Array.isArray(detail) && detail.length > 0) {
+      return "Parametres de notification invalides.";
+    }
   }
 
   return fallback;

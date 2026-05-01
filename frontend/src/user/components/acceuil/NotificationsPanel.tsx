@@ -30,7 +30,7 @@ export default function NotificationsPanel({ items, onDismiss }: NotificationsPa
                   event.stopPropagation();
                   onDismiss(item.id);
                 }}
-                className="opacity-0 transition group-hover:opacity-100 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-[#b2342c]"
+                className="opacity-0 transition group-hover:opacity-100 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-[#9d0208]"
                 title="Supprimer la notification"
               >
                 <X size={14} />
@@ -39,7 +39,7 @@ export default function NotificationsPanel({ items, onDismiss }: NotificationsPa
           );
 
           return item.link ? (
-            <Link key={item.id} to={item.link} className="block rounded-lg p-1 transition hover:bg-slate-50">
+            <Link key={item.id} to={item.link} className="block rounded-xl p-1 transition hover:bg-slate-50">
               {content}
             </Link>
           ) : (

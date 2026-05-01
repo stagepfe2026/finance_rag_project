@@ -35,8 +35,8 @@ export default function RechercheDocumentSearchBar({
   return (
     <div className="flex w-full flex-col gap-2 md:flex-row md:items-center">
       <div className="relative flex-1" ref={searchContainerRef}>
-        <div className="flex h-11 w-full items-center gap-2 rounded-[16px] border border-[#ead9d6] bg-[#fcfaf9] px-4">
-          <Search size={15} className="text-[#8c7b77]" />
+        <div className="flex h-11 w-full items-center gap-2 rounded-xl border border-[#d9def0] bg-[#fcfaf9] px-4 focus-within:border-[#273043]">
+          <Search size={15} className="text-[#273043]" />
           <input
             type="text"
             value={query}
@@ -44,12 +44,12 @@ export default function RechercheDocumentSearchBar({
             onClick={() => setIsRecentOpen(true)}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="Recherche par mot-cle ou phrase..."
-            className="w-full bg-transparent text-[13px] text-[#231f1e] outline-none placeholder:text-[#a19490]"
+            className="w-full bg-transparent text-[13px] text-[#273043] outline-none placeholder:text-[#8a8da8]"
           />
         </div>
 
         {isRecentOpen ? (
-          <div className="absolute left-0 top-[calc(100%+8px)] z-20 w-full overflow-hidden rounded-[18px] border border-[#ead9d6] bg-white shadow-[0_16px_32px_rgba(17,24,39,0.08)]">
+          <div className="absolute left-0 top-[calc(100%+8px)] z-20 w-full overflow-hidden rounded-xl border border-[#ead9d6] bg-white shadow-[0_16px_32px_rgba(17,24,39,0.08)]">
             <div className="border-b border-[#f1e7e5] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b7d79]">
               Dernieres recherches
             </div>
@@ -81,7 +81,7 @@ export default function RechercheDocumentSearchBar({
       <select
         value={sortBy}
         onChange={(event) => onSortChange(event.target.value as "recent" | "title")}
-        className="h-11 w-full rounded-[16px] border border-[#ead9d6] bg-[#fcfaf9] px-4 text-[12px] text-[#5a4e4b] outline-none md:w-[170px]"
+        className="h-11 w-full rounded-xl border border-[#d9def0] bg-[#fcfaf9] px-4 text-[12px] text-[#273043] outline-none focus:border-[#273043] md:w-[170px]"
       >
         <option value="recent">Plus recents</option>
         <option value="title">Titre A-Z</option>

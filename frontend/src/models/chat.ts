@@ -1,5 +1,6 @@
 export type ChatRole = "user" | "assistant";
 export type ResponseMode = "short" | "detailed";
+export type ChatFeedback = "like" | "dislike";
 
 export type Conversation = {
   _id: string;
@@ -36,6 +37,8 @@ export type ChatMessage = {
   content: string;
   createdAt: string;
   sources?: ChatSource[];
+  feedback?: ChatFeedback | null;
+  feedbackAt?: string | null;
   pending?: boolean;
 };
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Search, X } from "lucide-react";
 
-import type { ChatMessage, Conversation, ResponseMode } from "../../../models/chat";
+import type { ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../../../models/chat";
 import { exportConversationToPdf } from "../../utils/chatPdf";
 import ChatInput from "./ChatInput";
 import MessageList from "./MessageList";
@@ -15,6 +15,7 @@ type ChatMainProps = {
   responseMode: ResponseMode;
   onResponseModeChange: (mode: ResponseMode) => void;
   onSubmit: (content: string) => Promise<void>;
+  onFeedback: (messageId: string, feedback: ChatFeedback) => void;
   onNotify?: (message: string, tone?: "success" | "error" | "info") => void;
 };
 
@@ -27,6 +28,7 @@ export default function ChatMain({
   responseMode,
   onResponseModeChange,
   onSubmit,
+  onFeedback,
   onNotify,
 }: ChatMainProps) {
   const [value, setValue] = useState("");
@@ -79,26 +81,24 @@ export default function ChatMain({
   }
 
   return (
-    <main className="flex h-full min-h-0 flex-col bg-[#fffdfd]">
-      <div className="border-b border-[#eee7e5] px-3 py-2">
+<main className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-[#ece1de] bg-white shadow-sm">        <div className="border-b border-[#eee7e5] px-3 py-2">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="truncate text-[12px] font-semibold text-[#2f2725]">
+            <h1 className="truncate py-2 ml-3 text-sm font-semibold text-[#273043]">
               {conversation?.summary || "Nouvelle discussion"}
             </h1>
-           
           </div>
 
           <div className="flex shrink-0 items-center gap-2 self-center">
-            <div className="inline-flex items-center rounded-full border border-[#ddd3d0] bg-white p-1 shadow-sm">
+            <div className="inline-flex items-center rounded-full border border-[#ddd3d0] bg-white p-1  ">
               <button
                 type="button"
                 onClick={() => onResponseModeChange("short")}
                 className={[
-                  "rounded-full px-3 py-1 text-[11px] font-medium transition",
+                  "rounded-full px-3 py-1 text-[11px] font-medium transition cursor-pointer",
                   responseMode === "short"
-                    ? "bg-[#cb3a32] text-white"
-                    : "text-[#5f5652] hover:bg-[#f7f1f0]",
+                    ? "bg-[#273043] text-white"
+                    : "text-[#273043] hover:bg-[#f3f5ff]",
                 ].join(" ")}
               >
                 Court
@@ -107,10 +107,10 @@ export default function ChatMain({
                 type="button"
                 onClick={() => onResponseModeChange("detailed")}
                 className={[
-                  "rounded-full px-3 py-1 text-[11px] font-medium transition",
+                  "rounded-full px-3 py-1 text-[11px] font-medium transition cursor-pointer",
                   responseMode === "detailed"
-                    ? "bg-[#cb3a32] text-white"
-                    : "text-[#5f5652] hover:bg-[#f7f1f0]",
+                    ? "bg-[#273043] text-white"
+                    : "text-[#273043] hover:bg-[#f3f5ff]",
                 ].join(" ")}
               >
                 Detaille
@@ -121,7 +121,7 @@ export default function ChatMain({
               type="button"
               onClick={handleExportPdf}
               disabled={!conversation || messages.length === 0}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#2f2725] transition hover:border-[#cb3a32] hover:text-[#cb3a32] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#273043] transition hover:border-[#273043] hover:text-[#273043] disabled:cursor-not-allowed disabled:opacity-50"
               title="Exporter la conversation en PDF"
               aria-label="Exporter la conversation en PDF"
             >
@@ -132,7 +132,7 @@ export default function ChatMain({
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((value) => !value)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#2f2725] transition hover:border-[#cb3a32] hover:text-[#cb3a32]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#273043] transition hover:border-[#273043] hover:text-[#273043]"
                 title="Rechercher dans la conversation"
                 aria-label="Rechercher dans la conversation"
                 aria-expanded={isSearchOpen}
@@ -163,7 +163,6 @@ export default function ChatMain({
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-[#8a7f7b]">
-    
           {isSearchOpen ? (
             <span>
               {searchQuery.trim()
@@ -176,16 +175,16 @@ export default function ChatMain({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5 pr-2 md:px-4 md:py-3 md:pr-3">
         {error ? (
-          <div className="mb-2 rounded-2xl border border-[#f0d5d2] bg-[#fff6f5] px-3 py-2 text-[11px] text-[#b42318]">
+          <div className="mb-2 rounded-xl border border-[#f0d5d2] bg-[#fff6f5] px-3 py-2 text-[11px] text-[#9d0208]">
             {error}
           </div>
         ) : null}
 
-        <MessageList messages={messages} isLoading={isLoading} searchQuery={searchQuery} />
+        <MessageList messages={messages} isLoading={isLoading} searchQuery={searchQuery} onFeedback={onFeedback} />
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-[#eee7e5] bg-[rgba(255,255,255,0.9)] px-2 py-1.5 backdrop-blur md:px-3">
+      <div className="bg-slate-50 px-3 py-3 md:px-4">
         <ChatInput value={value} onChange={setValue} onSubmit={handleSubmit} disabled={false} />
       </div>
     </main>

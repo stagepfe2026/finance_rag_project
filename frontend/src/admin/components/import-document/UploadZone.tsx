@@ -35,7 +35,7 @@ export default function UploadZone({ file, isBusy, onFileSelect }: UploadZonePro
           disabled={isBusy}
         />
 
-        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-md bg-[#cf2027] text-white shadow-sm">
+        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-md bg-[#9d0208] text-white shadow-sm">
           <span className="text-[14px]">↑</span>
         </div>
 
@@ -48,7 +48,7 @@ export default function UploadZone({ file, isBusy, onFileSelect }: UploadZonePro
           </div>
         ) : (
           <p className="text-[12px] text-[#6f6968]">
-            Drag & drop your document here or <span className="font-semibold text-[#cf2027]">Choose File</span>
+            Drag & drop your document here or <span className="font-semibold text-[#9d0208]">Choose File</span>
           </p>
         )}
       </label>

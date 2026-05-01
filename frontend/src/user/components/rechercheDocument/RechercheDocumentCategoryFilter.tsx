@@ -11,9 +11,9 @@ type Props = {
 
 const categoryOrder: DocumentCategoryValue[] = [
   "finance",
-  "legal",
-  "hr",
-  "compliance",
+  "notes",
+  "conventions",
+  "recueil",
   "other",
 ];
 
@@ -33,7 +33,7 @@ export default function RechercheDocumentCategoryFilter({
 
   return (
     <section>
-      <h3 className="text-sm font-semibold text-[#1d1d1d]">Catégorie</h3>
+      <h4 className="text-xs font-semibold text-[#1d1d1d]">Catégorie</h4>
 
       <div className="mt-2 space-y-2">
         {categoryOrder.map((category) => {
@@ -49,7 +49,7 @@ export default function RechercheDocumentCategoryFilter({
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleCategory(category)}
-                  className="h-4 w-4 rounded border-[#d6c4c1] accent-[#b2342c]"
+                  className="h-4 w-4 rounded border-[#d6c4c1] accent-[#9d0208]"
                 />
                 {documentCategoryLabels[category]}
               </span>

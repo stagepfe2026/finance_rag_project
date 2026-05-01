@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 
-import type { ChatMessage } from "../../../models/chat";
+import type { ChatFeedback, ChatMessage } from "../../../models/chat";
 import MessageActions from "./MessageActions";
 
 type MessageBubbleProps = {
   message: ChatMessage;
   searchQuery?: string;
+  onFeedback: (messageId: string, feedback: ChatFeedback) => void;
 };
 
 function formatTime(value: string) {
@@ -44,7 +45,7 @@ function highlightText(content: string, query: string): ReactNode {
   );
 }
 
-export default function MessageBubble({ message, searchQuery = "" }: MessageBubbleProps) {
+export default function MessageBubble({ message, searchQuery = "", onFeedback }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isPendingAssistant = message.role === "assistant" && message.pending;
 
@@ -53,7 +54,7 @@ export default function MessageBubble({ message, searchQuery = "" }: MessageBubb
       <div className={`flex max-w-[96%] flex-col ${isUser ? "items-end" : "items-start"}`}>
         <div
           className={[
-            "rounded-[15px] px-3 py-2 text-[12px] leading-5 shadow-sm",
+            "rounded-xl px-3 py-2 text-[12px] leading-5 shadow-sm",
             isUser
               ? "bg-[linear-gradient(135deg,#cf4338_0%,#b82f29_100%)] text-white"
               : "border border-[#ece3e1] bg-white text-[#2b2321]",
@@ -69,7 +70,12 @@ export default function MessageBubble({ message, searchQuery = "" }: MessageBubb
 
         {!isUser && !isPendingAssistant ? (
           <div className="mt-1 w-full max-w-[min(100%,52rem)]">
-            <MessageActions content={message.content} sources={message.sources} />
+            <MessageActions
+              content={message.content}
+              sources={message.sources}
+              feedback={message.feedback ?? null}
+              onFeedback={(feedback) => onFeedback(message._id, feedback)}
+            />
           </div>
         ) : null}
       </div>

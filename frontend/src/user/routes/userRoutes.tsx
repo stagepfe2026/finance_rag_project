@@ -4,6 +4,7 @@ import ReclamationCreatePage from "../pages/ReclamationCreatePage";
 import ReclamationPage from "../pages/ReclamationPage";
 import AccueilPage from "../pages/AcceuilPage";
 import UserProfilePage from "../pages/UserProfilePage";
+import UserGuidePage from "../pages/UserGuidePage";
 
 export const userRoutes = [
   {
@@ -33,5 +34,9 @@ export const userRoutes = [
   {
     path: "profil",
     element: <UserProfilePage />,
+  },
+  {
+    path: "guide",
+    element: <UserGuidePage />,
   },
 ];

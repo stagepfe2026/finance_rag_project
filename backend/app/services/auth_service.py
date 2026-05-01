@@ -189,6 +189,7 @@ class AuthService:
                 prenom=str(payload.get("prenom", "")),
                 email=str(payload.get("email", "")),
                 telephone=str(payload.get("telephone", "")),
+                profile_image_url=str(payload.get("profileImageUrl", "")),
                 adresse=str(payload.get("adresse", "")),
                 date_naissance=str(payload.get("dateNaissance", "")),
                 direction=str(payload.get("direction", "")),

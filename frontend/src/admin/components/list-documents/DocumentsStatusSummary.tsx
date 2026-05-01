@@ -9,7 +9,7 @@ export default function DocumentsStatusSummary({
       <span className="mx-3 text-[#d2c8c5]">|</span>
       <span className="font-medium text-[#d38d12]">En cours: {processing}</span>
       <span className="mx-3 text-[#d2c8c5]">|</span>
-      <span className="font-medium text-[#dc4c4c]">Échoués: {failed}</span>
+      <span className="font-medium text-[#9d0208]">Échoués: {failed}</span>
     </div>
   );
 }

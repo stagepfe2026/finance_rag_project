@@ -36,6 +36,7 @@ class ProfileUpdateRequest(BaseModel):
     prenom: str = Field(min_length=1, max_length=80)
     email: str = Field(min_length=3, max_length=160)
     telephone: str = Field(default="", max_length=40)
+    profileImageUrl: str = Field(default="", max_length=500_000)
     adresse: str = Field(default="", max_length=240)
     dateNaissance: str = Field(default="", max_length=20)
     direction: str = Field(default="", max_length=120)
@@ -63,6 +64,7 @@ class ProfileUpdateRequest(BaseModel):
         "nom",
         "prenom",
         "telephone",
+        "profileImageUrl",
         "adresse",
         "dateNaissance",
         "direction",

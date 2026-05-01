@@ -55,6 +55,20 @@ export async function fetchReclamations(): Promise<Reclamation[]> {
   return Array.isArray(payload?.items) ? payload.items : [];
 }
 
+export async function markReclamationReplyAsRead(reclamationId: string): Promise<Reclamation> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}/mark-reply-read`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de marquer la reclamation comme lue."));
+  }
+
+  return (data as ApiEnvelope<Reclamation>).data;
+}
+
 export async function createReclamation(input: CreateReclamationInput): Promise<Reclamation> {
   const formData = new FormData();
   formData.append("subject", input.subject);

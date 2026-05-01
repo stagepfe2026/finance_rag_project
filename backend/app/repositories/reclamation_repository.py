@@ -47,6 +47,16 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None})
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    def mark_reply_read_for_user(self, reclamation_id: str, user_id: str) -> ReclamationModel | None:
+        if not ObjectId.is_valid(reclamation_id):
+            return None
+
+        object_id = ObjectId(reclamation_id)
+        query = {"_id": object_id, "userId": user_id, "deletedAt": None}
+        self.collection.update_one(query, {"$set": {"isReplyReadByUser": True}})
+        raw = self.collection.find_one(query)
+        return ReclamationModel.from_mongo(raw) if raw else None
+
     def mark_failed(self, reclamation_id: str, user_id: str, description: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None

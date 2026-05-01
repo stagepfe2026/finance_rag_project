@@ -1,4 +1,4 @@
-export type DocumentCategoryValue = "finance" | "legal" | "hr" | "compliance" | "other";
+export type DocumentCategoryValue = "finance" | "notes" | "conventions" | "recueil" | "other";
 
 export type DocumentStatusValue = "processing" | "indexed" | "failed";
 export type LegalStatusValue = "en_vigueur" | "modifie" | "remplace" | "abroge" | "inconnu";
@@ -76,11 +76,11 @@ export type DocumentSearchResponse = {
 };
 
 export const documentCategoryLabels: Record<DocumentCategoryValue, string> = {
-  finance: "Loi Finance",
-  legal: "Juridique",
-  hr: "Ressources Humaines",
-  compliance: "Conformite",
-  other: "Autre",
+  finance: "Lois des finances",
+  notes: "Notes communes",
+  conventions: "Conventions de non double imposition",
+  recueil: "Recueils de textes fiscaux",
+  other: "Autre documentation utile",
 };
 
 export const documentStatusLabels: Record<DocumentStatusValue, string> = {

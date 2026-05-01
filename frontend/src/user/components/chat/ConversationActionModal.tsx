@@ -65,8 +65,8 @@ export default function ConversationActionModal({
   const confirmLabel = mode === "rename" ? "Enregistrer" : mode === "archive" ? "Archiver" : "Supprimer";
   const confirmClassName =
     mode === "delete"
-      ? "bg-[#b42318] text-white hover:bg-[#972018]"
-      : "bg-[#cb3a32] text-white hover:bg-[#b7312a]";
+      ? "bg-[#9d0208] text-white hover:bg-[#9d0208]"
+      : "bg-[#273043] text-white hover:bg-[#273043]";
 
   async function handleConfirm() {
     if (mode === "rename") {
@@ -83,8 +83,8 @@ export default function ConversationActionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,24,39,0.34)] px-4 py-6">
-      <div className="w-full max-w-md rounded-[28px] border border-[#eadfdb] bg-white p-6 shadow-[0_24px_80px_rgba(17,24,39,0.18)]">
-        <h2 className="text-[18px] font-semibold text-[#2f2725]">{title}</h2>
+      <div className="w-full max-w-md rounded-xl border border-[#eadfdb] bg-white p-6 shadow-[0_24px_80px_rgba(17,24,39,0.18)]">
+        <h2 className="text-[18px] font-semibold text-[#273043]">{title}</h2>
         <p className="mt-2 text-[13px] leading-6 text-[#746864]">{description}</p>
 
         {mode === "rename" ? (
@@ -96,7 +96,7 @@ export default function ConversationActionModal({
               onChange={(event) => setSummary(event.target.value)}
               maxLength={120}
               autoFocus
-              className="h-11 w-full rounded-2xl border border-[#ddd3d0] bg-white px-4 text-[13px] text-[#2f2725] outline-none transition focus:border-[#cb3a32]"
+              className="h-11 w-full rounded-xl border border-[#ddd3d0] bg-white px-4 text-[13px] text-[#273043] outline-none transition focus:border-[#273043]"
               placeholder="Saisissez un nouveau nom"
             />
           </div>
@@ -107,7 +107,7 @@ export default function ConversationActionModal({
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="rounded-2xl border border-[#ddd3d0] px-4 py-2 text-[13px] font-medium text-[#5f5652] transition hover:bg-[#faf7f6] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl border border-[#ddd3d0] px-4 py-2 text-[13px] font-medium text-[#5f5652] transition hover:bg-[#faf7f6] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Annuler
           </button>
@@ -116,7 +116,7 @@ export default function ConversationActionModal({
             onClick={() => void handleConfirm()}
             disabled={busy || (mode === "rename" && !summary.trim())}
             className={[
-              "rounded-2xl px-4 py-2 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+              "rounded-xl px-4 py-2 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
               confirmClassName,
             ].join(" ")}
           >

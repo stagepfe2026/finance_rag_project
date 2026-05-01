@@ -1,4 +1,6 @@
-export type CategoryValue = "finance" | "legal" | "hr" | "compliance" | "other";
+import { documentCategoryLabels, type DocumentCategoryValue } from "./document";
+
+export type CategoryValue = DocumentCategoryValue;
 export type LegalStatusValue = "en_vigueur" | "modifie" | "remplace" | "abroge" | "inconnu";
 export type LegalDocumentTypeValue = "loi" | "decret" | "arrete" | "note" | "circulaire" | "autre";
 export type LegalRelationTypeValue = "none" | "remplace" | "modifie" | "abroge";
@@ -34,11 +36,11 @@ export type FileMeta = {
 };
 
 export const categoryOptions: CategoryOption[] = [
-  { value: "finance", label: "Loi Finance" },
-  { value: "legal", label: "Juridique" },
-  { value: "hr", label: "Ressources Humaines" },
-  { value: "compliance", label: "Conformité" },
-  { value: "other", label: "Autre" },
+  { value: "finance", label: documentCategoryLabels.finance },
+  { value: "notes", label: documentCategoryLabels.notes },
+  { value: "conventions", label: documentCategoryLabels.conventions },
+  { value: "recueil", label: documentCategoryLabels.recueil },
+  { value: "other", label: documentCategoryLabels.other },
 ];
 
 export const legalStatusOptions: SelectOption[] = [

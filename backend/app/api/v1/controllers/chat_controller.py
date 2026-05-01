@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
 
-from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
-from app.schemas.chat_schema import ChatAskRequest, ChatConversationRenameRequest
+from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
+from app.schemas.chat_schema import ChatAskRequest, ChatConversationRenameRequest, ChatMessageFeedbackRequest
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 
@@ -23,6 +23,16 @@ def _raise_chat_error(exc: ValueError) -> None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"code": "EMPTY_SUMMARY", "message": "Le titre de la conversation est vide."},
+        ) from exc
+    if code == "MESSAGE_NOT_FOUND":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "MESSAGE_NOT_FOUND", "message": "Reponse introuvable."},
+        ) from exc
+    if code == "INVALID_FEEDBACK":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_FEEDBACK", "message": "Avis invalide."},
         ) from exc
     raise exc
 
@@ -169,6 +179,44 @@ async def download_source_document(
         filename=file_path.name,
         headers={"Content-Disposition": f'attachment; filename="{file_path.name}"'},
     )
+
+
+@router.patch("/messages/{message_id}/feedback")
+async def set_message_feedback(
+    message_id: str,
+    payload: ChatMessageFeedbackRequest,
+    request: Request,
+    current_user: dict = Depends(require_finance_or_admin_user),
+):
+    service = getattr(request.app.state, "chat_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service chat non disponible.")
+
+    try:
+        data = service.set_message_feedback(
+            user_id=str(current_user.get("id", "")),
+            message_id=message_id,
+            feedback=payload.feedback,
+        )
+    except ValueError as exc:
+        _raise_chat_error(exc)
+
+    return {"success": True, "message": "Avis enregistre avec succes.", "data": data}
+
+
+@router.get("/feedback/stats")
+async def get_chat_feedback_stats(
+    request: Request,
+    _: dict = Depends(require_admin_user),
+):
+    service = getattr(request.app.state, "chat_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service chat non disponible.")
+
+    return {
+        "success": True,
+        "data": service.get_feedback_stats(),
+    }
 
 
 @router.post("/ask")

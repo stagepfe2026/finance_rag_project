@@ -39,7 +39,7 @@ export default function RechercheDocumentHighlightText({
     return (
       <mark
         key={`${part}-${index}`}
-        className="rounded bg-[#fde7be] px-1 py-0.5 text-[#7d2f19]"
+        className="rounded bg-[#fff1f2] px-1 py-0.5 text-[#9d0208]"
       >
         {part}
       </mark>

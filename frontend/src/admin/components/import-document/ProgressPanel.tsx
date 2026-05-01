@@ -8,7 +8,7 @@ export default function ProgressPanel({ steps }: ProgressPanelProps) {
   return (
     <div className="rounded-l border border-[#ede7e5] shadow-[0_10px_35px_rgba(87,51,39,0.04)]">
       <div className="border-b border-[#f0e8e6] px-4 py-3">
-        <h2 className="border-l-2 border-[#cf2027] pl-2 text-[13px] font-semibold text-[#111111]">
+        <h2 className="border-l-2 border-[#9d0208] pl-2 text-[13px] font-semibold text-[#111111]">
           Progression
         </h2>
       </div>
@@ -20,9 +20,9 @@ export default function ProgressPanel({ steps }: ProgressPanelProps) {
               step.status === "done"
                 ? "bg-red-700 text-white"
                 : step.status === "current"
-                  ? "bg-[#cf2027] text-white"
+                  ? "bg-[#9d0208] text-white"
                   : step.status === "error"
-                    ? "bg-[#fce8e7] text-[#cf2027]"
+                    ? "bg-[#fce8e7] text-[#9d0208]"
                     : "bg-gray-200 text-gray-600";
 
             return (
@@ -35,7 +35,7 @@ export default function ProgressPanel({ steps }: ProgressPanelProps) {
                 </div>
 
                 <div className="pt-0.5">
-                  <p className={`text-[12px] font-medium ${step.status === "current" || step.status === "error" ? "text-[#cf2027]" : "text-[#111111]"}`}>
+                  <p className={`text-[12px] font-medium ${step.status === "current" || step.status === "error" ? "text-[#9d0208]" : "text-[#111111]"}`}>
                     {step.label}
                   </p>
                   <p className="mt-0.5 text-[10px] text-gray-500">{step.sub}</p>

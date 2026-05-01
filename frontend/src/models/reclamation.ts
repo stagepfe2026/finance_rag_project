@@ -6,6 +6,7 @@ export type ReclamationProblemType =
 
 export type ReclamationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 export type ReclamationStatus = "PENDING" | "IN_PROGRESS" | "RESOLVED" | "FAILED";
+export type ReclamationReadFilter = "ALL" | "READ" | "UNREAD";
 
 export type ReclamationAttachment = {
   name: string;

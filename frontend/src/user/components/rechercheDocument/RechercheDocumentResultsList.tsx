@@ -22,7 +22,7 @@ export default function RechercheDocumentResultsList({
 }: Props) {
   if (isLoading) {
     return (
-      <div className="rounded-[18px] bg-white p-5 text-[13px] text-[#7d6c68]">
+      <div className="rounded-xl bg-white p-5 text-[13px] text-[#7d6c68]">
         Chargement des documents...
       </div>
     );
@@ -30,15 +30,15 @@ export default function RechercheDocumentResultsList({
 
   if (!hasActiveSearch) {
     return (
-      <div className="rounded-[18px] border border-dashed border-[#efe3e1] bg-[#fcfaf9] p-5 text-[13px] text-[#7d6c68]">
-        Faire des recherches dans les documents juridique, financiers et administratifs pour afficher les resultats.
+      <div className="rounded-xl border border-dashed border-[#efe3e1] bg-[#fcfaf9] p-5 text-[13px] text-[#7d6c68]">
+        Faire des recherches dans les documents juridique et  financiers  pour afficher les resultats.
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="rounded-[18px] bg-white p-5 text-[13px] text-[#7d6c68]">
+      <div className="rounded-xl bg-white p-5 text-[13px] text-[#7d6c68]">
         Aucun document trouvé.
       </div>
     );

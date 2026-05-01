@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DocumentsFilterBar from "../components/list-documents/DocumentsFilterBar";
 import DocumentsPageHeader from "../components/list-documents/DocumentsPageHeader";
-import AdminSidebar from "../components/layout/AdminSidebar";
+import AdminPageShell from "../components/layout/AdminPageShell";
 import DocumentsStatusSummary from "../components/list-documents/DocumentsStatusSummary";
 import DocumentsTable from "../components/list-documents/DocumentsTable";
 import DocumentsPagination from "../components/list-documents/DocumentsPagination";
@@ -524,12 +524,8 @@ function handleExportExcel() {
 }
 
   return (
-    <div className="min-h-screen bg-[#f7f4f3] text-[#111111]">
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-
-        <main className="flex-1">
-          <header className="border-b border-[#ede7e5] bg-[#fbf8f7] px-7 py-5">
+    <AdminPageShell>
+          <header className="bg-[#f7f9fc] px-7 py-5">
             <DocumentsPageHeader
               onExportPdf={handleExportPdf}
               onExportExcel={handleExportExcel}
@@ -538,7 +534,7 @@ function handleExportExcel() {
             />
           </header>
 
-          <section className="px-5 py-5 md:px-7">
+          <section className="px-5 pb-5 md:px-7">
             <div className="space-y-3">
               <DocumentsFilterBar
                 search={search}
@@ -558,7 +554,7 @@ function handleExportExcel() {
               />
 
               {error ? (
-                <div className="rounded-2xl border border-[#f1d2d0] bg-[#fff8f7] px-4 py-3 text-[12px] text-[#b42318]">
+                <div className="rounded-2xl border border-[#f1d2d0] bg-[#fff8f7] px-4 py-3 text-[12px] text-[#9d0208]">
                   {error}
                 </div>
               ) : null}
@@ -602,9 +598,7 @@ function handleExportExcel() {
               </div>
             </div>
           </section>
-        </main>
-      </div>
-    </div>
+    </AdminPageShell>
   );
 }
 

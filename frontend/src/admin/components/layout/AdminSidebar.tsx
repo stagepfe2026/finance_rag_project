@@ -1,33 +1,77 @@
-import { ClipboardList, FileText, LayoutDashboard, LogOut, MessageSquareWarning, Upload } from "lucide-react";
+import {
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  MessageSquareWarning,
+  Moon,
+  Shield,
+  Sun,
+  Upload,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../../../auth/AuthContext";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/admin/dashboard" },
+  { label: "Avis chat", icon: BarChart3, to: "/admin/avis-chat" },
   { label: "Audit", icon: ClipboardList, to: "/admin/audit" },
   { label: "Documents", icon: FileText, to: "/admin/documents/list" },
   { label: "Import Document", icon: Upload, to: "/admin/documents/import" },
   { label: "Reclamations", icon: MessageSquareWarning, to: "/admin/reclamations" },
 ];
 
-export default function AdminSidebar() {
+type AdminSidebarProps = {
+  isCollapsed: boolean;
+  onToggleCollapsed: () => void;
+  isDarkMode: boolean;
+  onToggleDarkMode: () => void;
+};
+
+export default function AdminSidebar({
+  isCollapsed,
+  onToggleCollapsed,
+  isDarkMode,
+  onToggleDarkMode,
+}: AdminSidebarProps) {
   const { logout, user } = useAuth();
+  const adminInitial = (user?.prenom?.[0] ?? user?.nom?.[0] ?? "A").toUpperCase();
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[210px] shrink-0 flex-col border-r border-[#ede7e5] bg-[#fbf8f7]">
-      <div className="flex items-center gap-2.5 border-b border-[#ede7e5] px-4 py-5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#c81e1e] text-white shadow-sm">
-          <span className="text-[18px] font-bold">A</span>
+    <aside
+      className={[
+        "admin-sidebar relative flex h-screen shrink-0 flex-col overflow-hidden border-r border-[#e2e7f0] bg-[#fcfdff] px-3 py-4 shadow-[8px_0_28px_rgba(7,31,61,0.05)] transition-[width] duration-300",
+        isCollapsed ? "w-[78px]" : "w-[226px]",
+      ].join(" ")}
+    >
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        className="absolute right-3 top-5 z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-[#e2e7f0] bg-white text-[#6c7894] shadow-sm transition hover:border-[#9d0208] hover:text-[#9d0208]"
+        aria-label={isCollapsed ? "Ouvrir la sidebar" : "Fermer la sidebar"}
+        title={isCollapsed ? "Ouvrir la sidebar" : "Fermer la sidebar"}
+      >
+        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
+
+      <div className={["mb-6 flex min-h-[44px] items-center", isCollapsed ? "justify-center" : "gap-3 pr-9"].join(" ")}>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#071f3d] text-white shadow-[0_10px_20px_rgba(7,31,61,0.18)]">
+          <Shield size={21} />
         </div>
-        <div>
-          <h1 className="text-[12px] font-semibold leading-none text-[#111111]">Ministère</h1>
-          <p className="mt-1 text-[10px] text-[#86807e]">Administration</p>
-        </div>
+        {!isCollapsed ? (
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-bold text-[#071f3d]">Ministere</p>
+            <p className="mt-0.5 truncate text-[11px] font-medium text-[#6c7894]">Administration</p>
+          </div>
+        ) : null}
       </div>
 
-      <nav className="flex-1 px-3 py-5">
-        <ul className="space-y-1.5">
+      <nav className="min-h-0 flex-1 overflow-y-auto">
+        <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -35,13 +79,20 @@ export default function AdminSidebar() {
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
-                    `flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[12px] transition ${
-                      isActive ? "bg-[#cf2027] text-white shadow-sm" : "text-[#44403f] hover:bg-white"
-                    }`
+                    [
+                      "admin-sidebar-link flex h-11 w-full items-center rounded-xl text-left text-[12px] font-semibold transition",
+                      isCollapsed ? "justify-center px-0" : "gap-3 px-3",
+                      isActive
+                        ? "bg-[linear-gradient(90deg,#9d0208_0%,#7a0106_100%)] text-white shadow-[0_10px_20px_rgba(157,2,8,0.18)]"
+                        : "text-[#071f3d] hover:bg-[#fff0f3] hover:text-[#9d0208]",
+                    ].join(" ")
                   }
+                  title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon size={14} strokeWidth={2} />
-                  <span className="truncate font-medium">{item.label}</span>
+                  <Icon size={17} strokeWidth={2} />
+                  {!isCollapsed ? (
+                    <span className="truncate">{item.label}</span>
+                  ) : null}
                 </NavLink>
               </li>
             );
@@ -49,24 +100,45 @@ export default function AdminSidebar() {
         </ul>
       </nav>
 
-      <div className="border-t border-[#ede7e5] px-4 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#cf2027] text-[11px] font-semibold text-white">
-            {(user?.prenom?.[0] ?? user?.nom?.[0] ?? "A").toUpperCase()}
+      <div className="mt-4 border-t border-[#e2e7f0] pt-4">
+        <button
+          type="button"
+          onClick={onToggleDarkMode}
+          className={[
+            "mb-3 flex h-10 w-full cursor-pointer items-center rounded-xl text-[12px] font-semibold text-[#5f6680] transition hover:bg-[#f4f7fb] hover:text-[#9d0208]",
+            isCollapsed ? "justify-center px-0" : "gap-2 px-3",
+          ].join(" ")}
+          title={isDarkMode ? "Mode clair" : "Mode sombre"}
+        >
+          {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+          {!isCollapsed ? <span>{isDarkMode ? "Mode clair" : "Mode sombre"}</span> : null}
+        </button>
+
+        <div className={["flex items-center", isCollapsed ? "justify-center" : "gap-2.5"].join(" ")}>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#9d0208] text-[11px] font-bold text-white">
+            {adminInitial}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-semibold text-[#111111]">{user?.prenom} {user?.nom}</p>
-            <p className="truncate text-[9px] text-[#8b8482]">{user?.email}</p>
-          </div>
+          {!isCollapsed ? (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12px] font-semibold text-[#071f3d]">
+                {user?.prenom} {user?.nom}
+              </p>
+              <p className="truncate text-[9px] text-[#6c7894]">{user?.email}</p>
+            </div>
+          ) : null}
         </div>
 
         <button
           type="button"
           onClick={() => void logout()}
-          className="mt-4 flex w-full items-center justify-center gap-2 cursor-pointer rounded-lg border border-[#e5d9d7] bg-white px-3 py-2 text-[11px] font-semibold text-[#5b5755] transition hover:border-[#cf2027] hover:text-[#cf2027]"
+          className={[
+            "mt-4 flex h-10 w-full cursor-pointer items-center justify-center rounded-xl border border-[#e2e7f0] bg-white text-[11px] font-semibold text-[#5f6680] transition hover:border-[#9d0208] hover:text-[#9d0208]",
+            isCollapsed ? "px-0" : "gap-2 px-3",
+          ].join(" ")}
+          title="Deconnexion"
         >
-          <LogOut size={13} />
-          Deconnexion
+          <LogOut size={14} />
+          {!isCollapsed ? "Deconnexion" : null}
         </button>
       </div>
     </aside>

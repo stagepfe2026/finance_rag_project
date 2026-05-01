@@ -7,7 +7,7 @@ const statusConfig: Record<ReclamationStatus, { label: string; className: string
   },
   IN_PROGRESS: {
     label: "En cours",
-    className: "border border-[#f2d8d5] bg-[#fff3f1] text-[#b45b52]",
+    className: "border border-[#f2d8d5] bg-[#fff3f1] text-[#9d0208]",
   },
   RESOLVED: {
     label: "Traitee",
@@ -27,7 +27,7 @@ export default function ReclamationStatusBadge({ status }: ReclamationStatusBadg
   const config = statusConfig[status];
 
   return (
-    <span className={`inline-flex rounded-[999px] px-2.5 py-0.5 text-[12px] font-medium ${config.className}`}>
+    <span className={`inline-flex rounded-xl px-2.5 py-0.5 text-[12px] font-medium ${config.className}`}>
       {config.label}
     </span>
   );

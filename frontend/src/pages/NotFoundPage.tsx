@@ -23,7 +23,7 @@ export default function NotFoundPage() {
 
       <div className="relative z-10 grid w-full max-w-5xl items-center gap-10 rounded-[36px] border border-[#eadfdb] bg-white/90 p-8 shadow-[0_30px_80px_rgba(17,24,39,0.10)] backdrop-blur md:grid-cols-[1.1fr_0.9fr] md:p-12">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#fff1f1] px-4 py-2 text-sm font-semibold text-[#b2342c]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#fff1f1] px-4 py-2 text-sm font-semibold text-[#9d0208]">
             <SearchX size={16} />
             404
           </div>
@@ -39,7 +39,7 @@ export default function NotFoundPage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/user/accueil"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#b2342c] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#972b24]"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#9d0208] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#972b24]"
             >
               <Home size={16} />
               Retour a l accueil
@@ -62,7 +62,7 @@ export default function NotFoundPage() {
               className="h-[320px] w-full rounded-[24px] object-cover"
             />
             <div className="mt-4 rounded-[24px] bg-white px-4 py-3 shadow-sm">
-              <p className="text-sm font-semibold text-[#b2342c]">Navigation disponible</p>
+              <p className="text-sm font-semibold text-[#9d0208]">Navigation disponible</p>
               <p className="mt-1 text-sm text-slate-600">Accueil, Chat, Recherche documents, Reclamations.</p>
             </div>
           </div>

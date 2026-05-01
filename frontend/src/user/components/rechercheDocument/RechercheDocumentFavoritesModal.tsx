@@ -1,4 +1,4 @@
-import { ArrowUpRight, FileText, Heart, X } from "lucide-react";
+import { ArrowUpRight, Heart, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -103,25 +103,20 @@ export default function RechercheDocumentFavoritesModal({
           isVisible ? "opacity-100" : "opacity-0",
         ].join(" ")}
       />
-
       <aside
         className={[
-          "absolute right-0 top-0 h-full w-[min(25vw,420px)] min-w-[320px] border-l border-[#ead9d6] bg-[#fcfbfb] shadow-[-18px_0_40px_rgba(17,24,39,0.12)] transition-transform duration-200 ease-out",
+          "absolute right-0 top-0 h-full w-[min(25vw,420px)] min-w-[320px] border-l border-slate-200 bg-white shadow-[-18px_0_40px_rgba(17,24,39,0.12)] transition-transform duration-200 ease-out",
           isVisible ? "translate-x-0" : "translate-x-full",
         ].join(" ")}
         aria-label="Mes Documents Favoris"
       >
         <div className="flex h-full flex-col">
-          <div className="border-b border-[#efe5e2] bg-white px-6 pb-5 pt-6">
+          <div className="border-b border-slate-200 bg-white px-6 pb-5 pt-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a27772]">
-                  CIMF
-                </p>
-                <h2 className="mt-2 text-[20px] font-semibold text-[#631f1c]">
-                  Mes Documents Favoris
-                </h2>
-                <p className="mt-2 text-[13px] text-[#7f7674]">
+               <h2 className="mt-2 text-[20px] font-bold text-[#9d0208]">
+                  Mes Documents Favoris</h2>
+                <p className="mt-2 text-[13px] text-slate-500">
                   {items.length} document{items.length > 1 ? "s" : ""} enregistre{items.length > 1 ? "s" : ""}
                 </p>
               </div>
@@ -129,7 +124,7 @@ export default function RechercheDocumentFavoritesModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#7f7674] transition hover:bg-[#f7f1f0] hover:text-[#8c2f2d]"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#9d0208]"
                 aria-label="Fermer le panneau des favoris"
               >
                 <X size={18} />
@@ -137,30 +132,26 @@ export default function RechercheDocumentFavoritesModal({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-[#fcfbfb] px-4 py-4">
+          <div className="flex-1 overflow-y-auto bg-white">
             {items.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#e7d9d6] bg-white p-6 text-[13px] text-[#7d6c68]">
+              <div className="mx-6 mt-5 rounded-xl border border-dashed border-slate-200 bg-white p-6 text-[13px] text-slate-500">
                 Aucun document favori pour le moment.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-slate-200">
                 {items.map((item) => (
                   <article
                     key={item.id}
                     onClick={() => onSelect(item)}
-                    className="cursor-pointer rounded-2xl border border-[#ece6e4] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(17,24,39,0.04)] transition hover:border-[#d9b7b2] hover:shadow-[0_12px_24px_rgba(99,31,28,0.08)]"
+                    className="cursor-pointer bg-white px-6 py-4 transition hover:bg-slate-50"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f7f1f0] text-[#8c2f2d]">
-                        <FileText size={18} />
-                      </div>
-
                       <div className="min-w-0 flex-1">
-                        <h3 className="line-clamp-2 text-[14px] font-semibold leading-5 text-[#2f2a29]">
+                        <h3 className="line-clamp-2 text-[14px] font-semibold leading-5 text-[#273043]">
                           {item.title}
                         </h3>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[#8a7f7c]">
-                          <span className="rounded-full bg-[#f8f2f1] px-2.5 py-1 font-medium text-[#8c2f2d]">
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-[#273043]">
                             {documentCategoryLabels[item.category]}
                           </span>
                           <span>{formatDate(item.realizedAt || item.createdAt)}</span>
@@ -174,7 +165,7 @@ export default function RechercheDocumentFavoritesModal({
                             event.stopPropagation();
                             onToggleFavorite(item);
                           }}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#8c2f2d] transition hover:bg-[#f7f1f0]"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#9d0208] transition hover:bg-slate-100"
                           title="Retirer des favoris"
                         >
                           <Heart size={17} className="fill-current" />
@@ -186,7 +177,7 @@ export default function RechercheDocumentFavoritesModal({
                             event.stopPropagation();
                             openDocumentInNewTab(apiBaseUrl, item);
                           }}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#7f7674] transition hover:bg-[#f7f1f0] hover:text-[#8c2f2d]"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#9d0208]"
                           title="Consulter dans un nouvel onglet"
                         >
                           <ArrowUpRight size={16} />

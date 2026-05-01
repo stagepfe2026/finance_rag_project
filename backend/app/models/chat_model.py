@@ -54,6 +54,9 @@ class ChatMessageModel:
     content: str
     created_at: datetime
     sources: list[dict[str, Any]] = field(default_factory=list)
+    feedback: str | None = None
+    feedback_at: datetime | None = None
+    feedback_user_id: str | None = None
     id: str | None = None
 
     @classmethod
@@ -67,6 +70,9 @@ class ChatMessageModel:
             content=str(raw.get("content", "")),
             created_at=_as_utc_datetime(raw.get("createdAt")),
             sources=[item for item in normalized_sources if isinstance(item, dict)],
+            feedback=str(raw.get("feedback")) if raw.get("feedback") in {"like", "dislike"} else None,
+            feedback_at=_as_utc_datetime(raw.get("feedbackAt")) if raw.get("feedbackAt") else None,
+            feedback_user_id=str(raw.get("feedbackUserId")) if raw.get("feedbackUserId") else None,
         )
 
     def to_mongo_insert(self) -> dict[str, Any]:
@@ -76,4 +82,7 @@ class ChatMessageModel:
             "content": self.content,
             "createdAt": self.created_at,
             "sources": self.sources,
+            "feedback": self.feedback,
+            "feedbackAt": self.feedback_at,
+            "feedbackUserId": self.feedback_user_id,
         }

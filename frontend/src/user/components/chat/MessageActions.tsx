@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Copy, Download, ThumbsUp} from "lucide-react";
+import { ChevronDown, Copy, Download, ThumbsDown, ThumbsUp } from "lucide-react";
 
-import type { ChatSource } from "../../../models/chat";
+import type { ChatFeedback, ChatSource } from "../../../models/chat";
 import { downloadChatSource } from "../../../services/chat.service";
 import { legalStatusLabels, legalRelationTypeLabels } from "../../../models/document";
 
 type MessageActionsProps = {
   content: string;
   sources?: ChatSource[];
+  feedback?: ChatFeedback | null;
+  onFeedback: (feedback: ChatFeedback) => void;
 };
 
 export default function MessageActions({
   content,
   sources = [],
+  feedback = null,
+  onFeedback,
 }: MessageActionsProps) {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isSourcesOpen, setIsSourcesOpen] = useState(false);
@@ -122,7 +126,7 @@ export default function MessageActions({
             </button>
 
             {isSourcesOpen ? (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-20 min-w-[320px] max-w-[440px] rounded-2xl border border-[#e7ddda] bg-white p-2 shadow-[0_12px_40px_rgba(28,18,15,0.12)]">
+              <div className="absolute left-0 top-[calc(100%+8px)] z-20 min-w-[320px] max-w-[440px] rounded-xl border border-[#e7ddda] bg-white p-2 shadow-[0_12px_40px_rgba(28,18,15,0.12)]">
                 <div className="max-h-[280px] overflow-y-auto">
                   {sources.map((source, index) => (
                     <div
@@ -167,29 +171,51 @@ export default function MessageActions({
         <button
           type="button"
           onClick={() => void handleCopy()}
-          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-lg"
+          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-xl"
         >
           <Copy size={14} />
         </button>
         <button
           type="button"
           onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-lg"
+          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-xl"
         >
           <Download size={14} />
         </button>
         <button
           type="button"
-          onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-lg"
+          onClick={() => onFeedback("like")}
+          className={[
+            "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12px] transition cursor-pointer",
+            feedback === "like"
+              ? "bg-[#eef4ff] text-[#273043]"
+              : "text-[#5f5652] hover:bg-[#E1DEDD]",
+          ].join(" ")}
+          title="Reponse utile"
+          aria-label="Marquer la reponse comme utile"
+          aria-pressed={feedback === "like"}
         >
           <ThumbsUp size={14} />
         </button>
-        
+        <button
+          type="button"
+          onClick={() => onFeedback("dislike")}
+          className={[
+            "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12px] transition cursor-pointer",
+            feedback === "dislike"
+              ? "bg-[#fff0f1] text-[#9d0208]"
+              : "text-[#5f5652] hover:bg-[#E1DEDD]",
+          ].join(" ")}
+          title="Reponse a corriger"
+          aria-label="Marquer la reponse comme a corriger"
+          aria-pressed={feedback === "dislike"}
+        >
+          <ThumbsDown size={14} />
+        </button>
       </div>
 
       {downloadError ? (
-        <p className="text-[11px] text-[#b42318]">{downloadError}</p>
+        <p className="text-[11px] text-[#9d0208]">{downloadError}</p>
       ) : null}
     </div>
   );

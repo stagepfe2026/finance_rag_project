@@ -1,18 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import type {
   CreateReclamationInput,
   Reclamation,
   ReclamationPriority,
   ReclamationProblemType,
+  ReclamationReadFilter,
   ReclamationStatus,
 } from "../../models/reclamation";
-import { createReclamation, deleteReclamation, fetchReclamations } from "../../services/reclamation.service";
+import {
+  createReclamation,
+  deleteReclamation,
+  fetchReclamations,
+  markReclamationReplyAsRead,
+} from "../../services/reclamation.service";
 import Snackbar from "../components/chat/Snackbar";
 import ReclamationForm from "../components/reclamation/create/ReclamationForm";
 import ReclamationDesk from "../components/reclamation/ReclamationDesk";
 
-const pageSize = 6;
+const pageSize = 4;
 const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
 const maxFileSize = 5 * 1024 * 1024;
 
@@ -47,7 +54,17 @@ const initialValues: FormValues = {
   attachment: null,
 };
 
+function hasUnreadReply(reclamation: Reclamation) {
+  return Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
+}
+
+function hasReadReply(reclamation: Reclamation) {
+  return Boolean(reclamation.adminReply) && reclamation.isReplyReadByUser;
+}
+
 export default function ReclamationPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => {
     document.title = "Reclamations | CIMF";
   }, []);
@@ -55,6 +72,7 @@ export default function ReclamationPage() {
   const [reclamations, setReclamations] = useState<Reclamation[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReclamationStatus | "ALL">("ALL");
+  const [readFilter, setReadFilter] = useState<ReclamationReadFilter>("ALL");
   const [selectedReclamation, setSelectedReclamation] = useState<Reclamation | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [page, setPage] = useState(1);
@@ -66,6 +84,16 @@ export default function ReclamationPage() {
   const [formErrors, setFormErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: "", tone: "info" });
+  const shouldOpenCreateModal = searchParams.get("new") === "1";
+
+  useEffect(() => {
+    if (!shouldOpenCreateModal) {
+      return;
+    }
+
+    setIsCreating(true);
+    setSelectedReclamation(null);
+  }, [shouldOpenCreateModal]);
 
   async function loadReclamations() {
     setIsLoading(true);
@@ -119,16 +147,20 @@ export default function ReclamationPage() {
         reclamation.ticketNumber.toLowerCase().includes(keyword);
 
       const matchesStatus = statusFilter === "ALL" || reclamation.status === statusFilter;
+      const matchesRead =
+        readFilter === "ALL" ||
+        (readFilter === "UNREAD" && hasUnreadReply(reclamation)) ||
+        (readFilter === "READ" && hasReadReply(reclamation));
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesRead;
     });
-  }, [reclamations, search, statusFilter]);
+  }, [readFilter, reclamations, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredReclamations.length / pageSize));
 
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter]);
+  }, [readFilter, search, statusFilter]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -141,8 +173,35 @@ export default function ReclamationPage() {
     return filteredReclamations.slice(startIndex, startIndex + pageSize);
   }, [filteredReclamations, page]);
 
-  function handleConsult(reclamation: Reclamation) {
-    setSelectedReclamation(reclamation);
+  async function handleConsult(reclamation: Reclamation) {
+    if (!hasUnreadReply(reclamation)) {
+      setSelectedReclamation(reclamation);
+      return;
+    }
+
+    const optimisticReclamation = { ...reclamation, isReplyReadByUser: true };
+    setSelectedReclamation(optimisticReclamation);
+    setReclamations((current) =>
+      current.map((item) => (item._id === reclamation._id ? optimisticReclamation : item)),
+    );
+
+    try {
+      const updated = await markReclamationReplyAsRead(reclamation._id);
+      setReclamations((current) =>
+        current.map((item) => (item._id === updated._id ? updated : item)),
+      );
+      setSelectedReclamation((current) => (current?._id === updated._id ? updated : current));
+    } catch (error) {
+      setReclamations((current) =>
+        current.map((item) => (item._id === reclamation._id ? reclamation : item)),
+      );
+      setSelectedReclamation((current) => (current?._id === reclamation._id ? reclamation : current));
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : "Impossible de marquer la reclamation comme lue.",
+        tone: "error",
+      });
+    }
   }
 
   function handleAskDelete(reclamation: Reclamation) {
@@ -239,7 +298,7 @@ export default function ReclamationPage() {
       setReclamations((current) => [created, ...current]);
       setFormValues(initialValues);
       setFormErrors({});
-      setIsCreating(false);
+      closeCreateModal();
       setSnackbar({
         open: true,
         message: `Reclamation creee avec succes. Ticket ${created.ticketNumber}`,
@@ -289,30 +348,49 @@ export default function ReclamationPage() {
     }
   }
 
+  function openCreateModal() {
+    setIsCreating(true);
+    setSelectedReclamation(null);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set("new", "1");
+      return next;
+    }, { replace: true });
+  }
+
+  function closeCreateModal() {
+    setIsCreating(false);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("new");
+      return next;
+    }, { replace: true });
+  }
+
   return (
     <>
       <ReclamationDesk
         reclamations={paginatedReclamations}
-        allReclamations={reclamations}
         selectedReclamation={selectedReclamation}
         search={search}
         statusFilter={statusFilter}
+        readFilter={readFilter}
         page={page}
+        pageSize={pageSize}
         totalPages={totalPages}
         totalResults={filteredReclamations.length}
         isLoading={isLoading}
         pageError={pageError}
         onSearchChange={setSearch}
         onStatusChange={setStatusFilter}
+        onReadFilterChange={setReadFilter}
         onPageChange={setPage}
         onSelect={handleConsult}
         onDelete={handleAskDelete}
         onRefresh={() => void loadReclamations()}
-        onCreate={() => {
-          setIsCreating(true);
-          setSelectedReclamation(null);
-        }}
+        onCreate={openCreateModal}
         onCloseDetails={() => setSelectedReclamation(null)}
+        onCloseCreate={closeCreateModal}
         deleteTarget={deleteTarget}
         isDeleting={isDeleting}
         onCloseDeleteModal={handleCloseDeleteModal}
@@ -327,8 +405,7 @@ export default function ReclamationPage() {
             isSubmitting={isSubmitting}
             onChange={updateField}
             onSubmit={() => void handleCreateSubmit()}
-            onClose={() => setIsCreating(false)}
-            onOpenList={() => setIsCreating(false)}
+            onClose={closeCreateModal}
             modeLabel="Nouvelle reclamation"
           />
         )}

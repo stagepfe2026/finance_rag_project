@@ -8,7 +8,7 @@ export default function DocumentStatusBadge({ status }: DocumentStatusBadgeProps
   const styles: Record<DocumentStatusValue, string> = {
     indexed: "bg-[#e7f6ef] text-[#17795a]",
     processing: "bg-[#fff1dc] text-[#c78918]",
-    failed: "bg-[#fdeaea] text-[#dc4c4c]",
+    failed: "bg-[#fdeaea] text-[#9d0208]",
   };
 
   return (
