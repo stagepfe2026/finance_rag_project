@@ -8,6 +8,7 @@ from app.repositories.qdrant_repository import QdrantRepository
 from app.services.embedding_service import EmbeddingService
 from app.services.generation_service import GenerationService
 from app.services.legal_ranking_service import LegalRankingService
+from app.services.legal_status_service import LegalStatusService
 from app.services.nlp_service import NLPService
 from app.services.prompt_builder_service import PromptBuilderService
 
@@ -24,6 +25,7 @@ class RagService:
         self.document_repository = DocumentRepository()
         self.nlp_service = NLPService(NLPProvider())
         self.legal_ranking_service = LegalRankingService()
+        self.legal_status_service = LegalStatusService(self.document_repository)
         self.prompt_builder_service = PromptBuilderService()
         self.logger = logging.getLogger(__name__)
 
@@ -59,7 +61,9 @@ class RagService:
                 enriched_chunks.append(
                     {
                         **chunk,
-                        "legal_status": chunk.get("legal_status", "inconnu"),
+                        "legal_status": self.legal_status_service.compute_status_from_effective_date(
+                            chunk.get("date_entree_vigueur")
+                        ),
                         "document_type_label": chunk.get("document_type", "autre"),
                     }
                 )
@@ -73,13 +77,14 @@ class RagService:
             if related_document is None and document.related_document_id:
                 related_document = self.document_repository.get_by_id(document.related_document_id)
 
+            effective_legal_status = self.legal_status_service.compute_effective_legal_status(document)
             enriched_chunks.append(
                 {
                     **chunk,
                     "document_title": document.title,
                     "document_type": document.document_type,
                     "document_type_label": document.document_type,
-                    "legal_status": document.legal_status,
+                    "legal_status": effective_legal_status,
                     "date_publication": document.date_publication,
                     "date_entree_vigueur": document.date_entree_vigueur,
                     "version": document.version,
@@ -100,13 +105,18 @@ class RagService:
         retrieved_chunks: list[dict],
         *,
         question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
     ) -> list[dict]:
         ranked = []
 
         for chunk in retrieved_chunks:
             vector_score = float(chunk["score"])
             lexical_score = self._compute_lexical_overlap_score(question, chunk["text"])
-            legal_modifier = self.legal_ranking_service.compute_legal_modifier(chunk, question_profile)
+            legal_modifier = self.legal_ranking_service.compute_legal_modifier(
+                chunk,
+                question_profile,
+                query_mode,
+            )
             final_score = (0.68 * vector_score) + (0.22 * lexical_score) + legal_modifier
 
             enriched_chunk = {
@@ -151,12 +161,35 @@ class RagService:
         self,
         *,
         question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
         main_ranked_chunks: list[dict],
     ) -> bool:
-        if question_profile not in {"historical", "comparative"}:
+        if query_mode != "comparison" and question_profile not in {"historical", "comparative"}:
             return False
 
-        return any(str(chunk.get("related_document_id", "")).strip() for chunk in main_ranked_chunks[:3])
+        return any(self._collect_related_document_targets(chunk) for chunk in main_ranked_chunks[:3])
+
+    def _collect_related_document_targets(self, chunk: dict) -> list[tuple[str, str]]:
+        targets: list[tuple[str, str]] = []
+        category = str(chunk.get("category", "")).strip()
+        related_document_id = str(chunk.get("related_document_id", "")).strip()
+        if category and related_document_id:
+            targets.append((category, related_document_id))
+
+        document_id = str(chunk.get("document_id", "")).strip()
+        if document_id:
+            for source_document in self.document_repository.find_relation_sources_for_target(document_id):
+                if source_document.id:
+                    targets.append((source_document.category, source_document.id))
+
+        deduped: list[tuple[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for target in targets:
+            if target in seen:
+                continue
+            seen.add(target)
+            deduped.append(target)
+        return deduped
 
     def _retrieve_related_ranked_chunks(
         self,
@@ -164,38 +197,37 @@ class RagService:
         question: str,
         query_vector: list[float],
         question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
         main_ranked_chunks: list[dict],
     ) -> list[dict]:
         related_ranked_chunks: list[dict] = []
         seen_related_pairs: set[tuple[str, str]] = set()
 
         for chunk in main_ranked_chunks[:3]:
-            related_document_id = str(chunk.get("related_document_id", "")).strip()
-            category = str(chunk.get("category", "")).strip()
-            if not related_document_id or not category:
-                continue
+            for category, related_document_id in self._collect_related_document_targets(chunk):
+                pair = (category, related_document_id)
+                if pair in seen_related_pairs:
+                    continue
+                seen_related_pairs.add(pair)
 
-            pair = (category, related_document_id)
-            if pair in seen_related_pairs:
-                continue
-            seen_related_pairs.add(pair)
+                related_chunks = self.qdrant_repository.search_chunks_for_document(
+                    category=category,
+                    document_id=related_document_id,
+                    query_vector=query_vector,
+                    limit=2,
+                    query_mode=query_mode,
+                )
+                if not related_chunks:
+                    continue
 
-            related_chunks = self.qdrant_repository.search_chunks_for_document(
-                category=category,
-                document_id=related_document_id,
-                query_vector=query_vector,
-                limit=2,
-            )
-            if not related_chunks:
-                continue
-
-            enriched_related_chunks = self._enrich_chunks_with_document_metadata(related_chunks)
-            ranked_related_chunks = self._hybrid_rerank(
-                question,
-                enriched_related_chunks,
-                question_profile=question_profile,
-            )
-            related_ranked_chunks.extend(ranked_related_chunks)
+                enriched_related_chunks = self._enrich_chunks_with_document_metadata(related_chunks)
+                ranked_related_chunks = self._hybrid_rerank(
+                    question,
+                    enriched_related_chunks,
+                    question_profile=question_profile,
+                    query_mode=query_mode,
+                )
+                related_ranked_chunks.extend(ranked_related_chunks)
 
         related_ranked_chunks.sort(key=lambda item: item["final_score"], reverse=True)
         return self._dedupe_chunks(related_ranked_chunks)
@@ -207,12 +239,21 @@ class RagService:
         related_relevant_chunks: list[dict],
         related_ranked_chunks: list[dict],
         question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
     ) -> list[dict]:
-        if question_profile not in {"historical", "comparative"}:
+        is_comparison_context = query_mode == "comparison" or question_profile in {
+            "historical",
+            "comparative",
+        }
+        if not is_comparison_context:
             return self._dedupe_chunks(main_relevant_chunks)[: settings.final_top_k]
 
         effective_related_chunks = related_relevant_chunks
-        if question_profile == "comparative" and not effective_related_chunks and related_ranked_chunks:
+        if (
+            (query_mode == "comparison" or question_profile == "comparative")
+            and not effective_related_chunks
+            and related_ranked_chunks
+        ):
             effective_related_chunks = related_ranked_chunks[:1]
 
         if not effective_related_chunks:
@@ -220,7 +261,7 @@ class RagService:
 
         main_limit = max(2, settings.final_top_k - 2)
         related_limit = min(2, settings.final_top_k - 1)
-        if question_profile == "comparative":
+        if query_mode == "comparison" or question_profile == "comparative":
             related_limit = max(1, related_limit)
 
         selected_main = main_relevant_chunks[:main_limit]
@@ -251,6 +292,7 @@ class RagService:
         query_vector: list[float],
         categories: list[str],
         question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
     ) -> list[dict]:
         category_candidates = []
 
@@ -259,6 +301,7 @@ class RagService:
                 category=category,
                 query_vector=query_vector,
                 limit=settings.category_probe_top_k,
+                query_mode=query_mode,
             )
             if not probe_chunks:
                 continue
@@ -268,6 +311,7 @@ class RagService:
                 question,
                 enriched_probe_chunks,
                 question_profile=question_profile,
+                query_mode=query_mode,
             )
             best_probe_chunk = ranked_probe_chunks[0]
             category_name_score = self._compute_category_name_score(question, category)
@@ -293,12 +337,14 @@ class RagService:
         query_vector: list[float],
         categories: list[str],
         question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
     ) -> str | None:
         category_candidates = self._probe_categories(
             question=question,
             query_vector=query_vector,
             categories=categories,
             question_profile=question_profile,
+            query_mode=query_mode,
         )
         if not category_candidates:
             return None
@@ -359,7 +405,7 @@ class RagService:
                 "category": str(chunk.get("category", "")).strip(),
                 "document_name": document_name,
                 "document_type": str(chunk.get("document_type", "")).strip(),
-                "legal_status": str(chunk.get("legal_status", "inconnu")).strip(),
+                "legal_status": str(chunk.get("legal_status", "actif")).strip(),
                 "date_publication": chunk.get("date_publication"),
                 "date_entree_vigueur": chunk.get("date_entree_vigueur"),
                 "version": str(chunk.get("version", "")).strip(),
@@ -377,7 +423,37 @@ class RagService:
 
         return sorted(documents.values(), key=lambda item: item["final_score"], reverse=True)
 
-    def ask(self, question: str, response_mode: Literal["short", "detailed"] = "detailed") -> dict:
+    def _ensure_future_warnings(self, answer: str, final_chunks: list[dict]) -> str:
+        if "This legal document is not yet in force." in answer:
+            return answer
+
+        warnings: list[str] = []
+        seen_dates: set[str] = set()
+        for chunk in final_chunks:
+            if str(chunk.get("legal_status", "")).strip() != "futur":
+                continue
+            effective_date = self.prompt_builder_service._format_value(
+                chunk.get("date_entree_vigueur")
+            )
+            if effective_date in seen_dates:
+                continue
+            seen_dates.add(effective_date)
+            warnings.append(
+                "⚠️ This legal document is not yet in force. "
+                f"It will be applicable from {effective_date}."
+            )
+
+        if not warnings:
+            return answer
+
+        return "\n".join([*warnings, answer]).strip()
+
+    def ask(
+        self,
+        question: str,
+        response_mode: Literal["short", "detailed"] = "detailed",
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
+    ) -> dict:
         normalized_question = self.nlp_service.preprocess_query(question)
         query_vector = self.embedding_service.generate_embeddings([normalized_question])[0]
         question_profile = self.legal_ranking_service.detect_question_profile(normalized_question)
@@ -386,6 +462,7 @@ class RagService:
         if not available_categories:
             return {
                 "question": normalized_question,
+                "query_mode": query_mode,
                 "detected_categories": [],
                 "answer": "Aucune base de connaissance n'est disponible dans Qdrant.",
                 "sources": [],
@@ -396,10 +473,12 @@ class RagService:
             query_vector=query_vector,
             categories=available_categories,
             question_profile=question_profile,
+            query_mode=query_mode,
         )
         if best_category is None:
             return {
                 "question": normalized_question,
+                "query_mode": query_mode,
                 "detected_categories": [],
                 "answer": "Information non trouvee dans les sources fournies.",
                 "sources": [],
@@ -409,10 +488,12 @@ class RagService:
             category=best_category,
             query_vector=query_vector,
             limit=settings.retrieval_top_k_per_category,
+            query_mode=query_mode,
         )
         if not retrieved_chunks:
             return {
                 "question": normalized_question,
+                "query_mode": query_mode,
                 "detected_categories": [best_category],
                 "answer": "Information non trouvee dans les sources fournies.",
                 "sources": [],
@@ -423,6 +504,7 @@ class RagService:
             normalized_question,
             enriched_main_chunks,
             question_profile=question_profile,
+            query_mode=query_mode,
         )
         relevant_main_chunks = self._filter_relevant_chunks(ranked_main_chunks)
 
@@ -430,20 +512,23 @@ class RagService:
         related_relevant_chunks: list[dict] = []
         if self._should_run_related_retrieval(
             question_profile=question_profile,
+            query_mode=query_mode,
             main_ranked_chunks=ranked_main_chunks,
         ):
             related_ranked_chunks = self._retrieve_related_ranked_chunks(
                 question=normalized_question,
                 query_vector=query_vector,
                 question_profile=question_profile,
+                query_mode=query_mode,
                 main_ranked_chunks=ranked_main_chunks,
             )
             related_relevant_chunks = self._filter_relevant_chunks(related_ranked_chunks)
 
         self.logger.info(
-            "RAG retrieval question=%r profile=%s category=%s main_retrieved=%d main_ranked=%d main_relevant=%d related_ranked=%d related_relevant=%d",
+            "RAG retrieval question=%r profile=%s query_mode=%s category=%s main_retrieved=%d main_ranked=%d main_relevant=%d related_ranked=%d related_relevant=%d",
             normalized_question,
             question_profile,
+            query_mode,
             best_category,
             len(retrieved_chunks),
             len(ranked_main_chunks),
@@ -454,6 +539,7 @@ class RagService:
         if not relevant_main_chunks and not related_relevant_chunks:
             return {
                 "question": normalized_question,
+                "query_mode": query_mode,
                 "detected_categories": [best_category],
                 "answer": "Information non trouvee dans les sources fournies.",
                 "sources": [],
@@ -464,6 +550,7 @@ class RagService:
             related_relevant_chunks=related_relevant_chunks,
             related_ranked_chunks=related_ranked_chunks,
             question_profile=question_profile,
+            query_mode=query_mode,
         )
         self.logger.info(
             "RAG final_chunks question=%r total=%d documents=%s",
@@ -484,6 +571,7 @@ class RagService:
             context=context,
             response_mode=response_mode,
             question_profile=question_profile,
+            query_mode=query_mode,
         )
 
         answer = self.generation_service.generate_answer(
@@ -510,9 +598,12 @@ class RagService:
                 answer,
             )
             answer = "Information non trouvee dans les sources fournies."
+        else:
+            answer = self._ensure_future_warnings(answer, final_chunks)
 
         return {
             "question": normalized_question,
+            "query_mode": query_mode,
             "detected_categories": [best_category],
             "question_profile": question_profile,
             "answer": answer,

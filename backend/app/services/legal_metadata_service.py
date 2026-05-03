@@ -2,13 +2,14 @@ from datetime import datetime
 
 from app.repositories.document_repository import DocumentRepository
 from app.schemas import LegalDocumentType, LegalRelationType, LegalStatus
-from bson import ObjectId
+from app.services.legal_status_service import LegalStatusService
 from fastapi import HTTPException
 
 
 class LegalMetadataService:
     def __init__(self, document_repository: DocumentRepository | None = None) -> None:
         self.document_repository = document_repository or DocumentRepository()
+        self.legal_status_service = LegalStatusService(self.document_repository)
 
     def prepare_metadata(
         self,
@@ -39,8 +40,12 @@ class LegalMetadataService:
         if normalized_related_document_id is not None:
             self.ensure_related_document_exists(normalized_related_document_id)
 
-        normalized_legal_status = legal_status or self._default_legal_status(normalized_relation_type)
-        self._validate_legal_status(normalized_legal_status)
+        if legal_status is not None:
+            self._validate_legal_status(legal_status)
+
+        normalized_legal_status = self.legal_status_service.compute_status_from_effective_date(
+            date_entree_vigueur
+        )
 
         normalized_version = (version or "").strip()
 
@@ -55,23 +60,19 @@ class LegalMetadataService:
         }
 
     def ensure_related_document_exists(self, document_id: str) -> None:
-        if not ObjectId.is_valid(document_id):
+        normalized_document_id = document_id.strip()
+        if not normalized_document_id:
             raise HTTPException(status_code=400, detail="relatedDocumentId est invalide.")
 
-        related_document = self.document_repository.get_by_id(document_id)
+        related_document = self.document_repository.get_by_id(normalized_document_id)
         if related_document is None or related_document.deleted_at is not None:
-            raise HTTPException(status_code=400, detail="Le document juridique lie est introuvable.")
-
-    @staticmethod
-    def _default_legal_status(relation_type: str) -> str:
-        if relation_type in {
-            LegalRelationType.none.value,
-            LegalRelationType.remplace.value,
-            LegalRelationType.modifie.value,
-            LegalRelationType.abroge.value,
-        }:
-            return LegalStatus.en_vigueur.value
-        return LegalStatus.inconnu.value
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Le document juridique lie est introuvable "
+                    f"(relatedDocumentId={normalized_document_id})."
+                ),
+            )
 
     @staticmethod
     def _validate_legal_status(legal_status: str) -> None:

@@ -45,6 +45,8 @@ async def list_documents(
             skip=skip,
             limit=limit,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -130,11 +132,11 @@ async def index_document(
             detail="Seuls les fichiers PDF et DOCX sont supportes.",
         )
 
-    allowed_categories = {item.value for item in DocumentCategory}
+    allowed_categories = {item.name for item in DocumentCategory}
     if category not in allowed_categories:
         raise HTTPException(
             status_code=400,
-            detail="category doit etre une des valeurs suivantes: finance, legal, hr, compliance, other.",
+            detail=f"category doit etre une des valeurs suivantes: {', '.join(sorted(item.name for item in DocumentCategory))}.",
         )
 
     parsed_realized_at = None
@@ -212,5 +214,7 @@ async def index_document(
             "message": "Document indexe avec succes.",
             "data": result,
         }
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

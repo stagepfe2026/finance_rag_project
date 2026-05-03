@@ -1,6 +1,11 @@
+import logging
+from datetime import UTC, date, datetime
+from typing import Literal
+
 from app.core.config import settings
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
+    DatetimeRange,
     Distance,
     FieldCondition,
     Filter,
@@ -13,6 +18,7 @@ from qdrant_client.models import (
 class QdrantRepository:
     def __init__(self):
         self.client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+        self.logger = logging.getLogger(__name__)
 
     def _normalize_collection_name(self, category: str) -> str:
         return category.lower().replace(" ", "_")
@@ -111,57 +117,122 @@ class QdrantRepository:
         query_vector: list[float],
         limit: int,
         document_id: str | None = None,
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> list[dict]:
         collection_name = self._normalize_collection_name(category)
 
         if not self.collection_exists(collection_name):
             return []
 
-        query_filter = None
-        if document_id:
-            query_filter = Filter(
-                must=[
-                    FieldCondition(
-                        key="document_id",
-                        match=MatchValue(value=document_id),
-                    )
-                ]
-            )
+        query_filter = self._build_query_filter(document_id=document_id, query_mode=query_mode)
+        fallback_filter = self._build_query_filter(document_id=document_id, query_mode="future_preview")
 
-        response = self.client.query_points(
-            collection_name=collection_name,
-            query=query_vector,
-            limit=limit,
-            query_filter=query_filter,
-        )
+        response = None
+        try:
+            response = self.client.query_points(
+                collection_name=collection_name,
+                query=query_vector,
+                limit=limit,
+                query_filter=query_filter,
+            )
+        except Exception:
+            if query_mode != "current":
+                raise
+            self.logger.exception(
+                "Qdrant current-mode datetime filter failed for collection=%s. Retrying without date filter.",
+                collection_name,
+            )
+            response = self.client.query_points(
+                collection_name=collection_name,
+                query=query_vector,
+                limit=limit,
+                query_filter=fallback_filter,
+            )
 
         points = response.points if hasattr(response, "points") else []
 
-        chunks = []
-        for point in points:
-            payload = point.payload or {}
-            chunks.append(
-                {
-                    "score": point.score,
-                    "text": payload.get("text", ""),
-                    "document_id": payload.get("document_id", ""),
-                    "document_title": payload.get("document_title", ""),
-                    "document_name": payload.get("document_name", ""),
-                    "document_type": payload.get("document_type", ""),
-                    "legal_status": payload.get("legal_status", "inconnu"),
-                    "date_publication": payload.get("date_publication"),
-                    "date_entree_vigueur": payload.get("date_entree_vigueur"),
-                    "version": payload.get("version", ""),
-                    "relation_type": payload.get("relation_type", "none"),
-                    "related_document_id": payload.get("related_document_id"),
-                    "related_document_title": payload.get("related_document_title", ""),
-                    "realized_at": payload.get("realized_at"),
-                    "category": payload.get("category", category),
-                    "chunk_index": payload.get("chunk_index", -1),
-                }
+        chunks = [self._point_to_chunk(point, category) for point in points]
+        return [
+            chunk
+            for chunk in chunks
+            if self._matches_query_mode(chunk, query_mode)
+        ]
+
+    def _build_query_filter(
+        self,
+        *,
+        document_id: str | None,
+        query_mode: Literal["current", "future_preview", "comparison"],
+    ) -> Filter | None:
+        must_conditions = []
+        if document_id:
+            must_conditions.append(
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=document_id),
+                )
             )
 
-        return chunks
+        if query_mode == "current":
+            must_conditions.append(
+                FieldCondition(
+                    key="date_entree_vigueur",
+                    range=DatetimeRange(lte=datetime.now(UTC)),
+                )
+            )
+
+        return Filter(must=must_conditions) if must_conditions else None
+
+    @staticmethod
+    def _point_to_chunk(point: object, category: str) -> dict:
+        payload = getattr(point, "payload", None) or {}
+        return {
+            "score": getattr(point, "score", 0.0),
+            "text": payload.get("text", ""),
+            "document_id": payload.get("document_id", ""),
+            "document_title": payload.get("document_title", ""),
+            "document_name": payload.get("document_name", ""),
+            "document_type": payload.get("document_type", ""),
+            "legal_status": payload.get("legal_status", "actif"),
+            "date_publication": payload.get("date_publication"),
+            "date_entree_vigueur": payload.get("date_entree_vigueur"),
+            "version": payload.get("version", ""),
+            "relation_type": payload.get("relation_type", "none"),
+            "related_document_id": payload.get("related_document_id"),
+            "related_document_title": payload.get("related_document_title", ""),
+            "realized_at": payload.get("realized_at"),
+            "category": payload.get("category", category),
+            "chunk_index": payload.get("chunk_index", -1),
+        }
+
+    @classmethod
+    def _matches_query_mode(
+        cls,
+        chunk: dict,
+        query_mode: Literal["current", "future_preview", "comparison"],
+    ) -> bool:
+        if query_mode != "current":
+            return True
+
+        effective_date = cls._parse_date(chunk.get("date_entree_vigueur"))
+        if effective_date is None:
+            return False
+        return effective_date <= datetime.now(UTC).date()
+
+    @staticmethod
+    def _parse_date(value: object) -> date | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+            except ValueError:
+                return None
+        return None
 
     def search_chunks_for_document(
         self,
@@ -170,12 +241,14 @@ class QdrantRepository:
         document_id: str,
         query_vector: list[float],
         limit: int,
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> list[dict]:
         return self.search_chunks(
             category=category,
             query_vector=query_vector,
             limit=limit,
             document_id=document_id,
+            query_mode=query_mode,
         )
 
     def search_chunks_by_category(
@@ -183,6 +256,7 @@ class QdrantRepository:
         categories: list[str],
         query_vector: list[float],
         limit_per_category: int,
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> list[dict]:
         all_results = []
         for category in categories:
@@ -190,6 +264,7 @@ class QdrantRepository:
                 category=category,
                 query_vector=query_vector,
                 limit=limit_per_category,
+                query_mode=query_mode,
             )
             all_results.extend(category_results)
 
@@ -232,7 +307,7 @@ class QdrantRepository:
                     "document_title": payload.get("document_title", ""),
                     "document_name": payload.get("document_name", ""),
                     "document_type": payload.get("document_type", ""),
-                    "legal_status": payload.get("legal_status", "inconnu"),
+                    "legal_status": payload.get("legal_status", "actif"),
                     "date_publication": payload.get("date_publication"),
                     "date_entree_vigueur": payload.get("date_entree_vigueur"),
                     "version": payload.get("version", ""),

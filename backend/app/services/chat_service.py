@@ -1,6 +1,6 @@
+import logging
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
-import logging
 from typing import Any, Literal
 
 from app.models.chat_model import ChatMessageModel, ConversationModel
@@ -260,6 +260,7 @@ class ChatService:
         content: str,
         conversation_id: str | None = None,
         response_mode: Literal["short", "detailed"] = "detailed",
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> dict[str, Any]:
         normalized_content = content.strip()
         if len(normalized_content) < 1:
@@ -289,7 +290,11 @@ class ChatService:
             )
         )
 
-        rag_result = self._ask_assistant(normalized_content, response_mode=response_mode)
+        rag_result = self._ask_assistant(
+            normalized_content,
+            response_mode=response_mode,
+            query_mode=query_mode,
+        )
         assistant_sources = self._normalize_sources(rag_result.get("sources", []))
         assistant_message = self.chat_repo.create_message(
             ChatMessageModel(
@@ -311,15 +316,26 @@ class ChatService:
             "userMessage": self._serialize_message(user_message),
             "assistantMessage": self._serialize_message(assistant_message),
             "sources": assistant_sources,
+            "queryMode": str(rag_result.get("query_mode", query_mode)),
         }
 
-    def _ask_assistant(self, question: str, response_mode: Literal["short", "detailed"] = "detailed") -> dict[str, Any]:
+    def _ask_assistant(
+        self,
+        question: str,
+        response_mode: Literal["short", "detailed"] = "detailed",
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
+    ) -> dict[str, Any]:
         try:
-            return self.rag_service.ask(question=question, response_mode=response_mode)
+            return self.rag_service.ask(
+                question=question,
+                response_mode=response_mode,
+                query_mode=query_mode,
+            )
         except Exception:
             self.logger.exception("Chat assistant request failed during RAG processing.")
             return {
                 "question": question,
+                "query_mode": query_mode,
                 "detected_categories": [],
                 "answer": "Le service de recherche documentaire est temporairement indisponible. Verifiez que Qdrant et le moteur de generation sont bien demarres, puis reessayez.",
                 "sources": [],
@@ -350,7 +366,7 @@ class ChatService:
                     "category": str(item.get("category", "")).strip(),
                     "document_name": document_name,
                     "document_type": str(item.get("document_type", "")).strip(),
-                    "legal_status": str(item.get("legal_status", "inconnu")).strip(),
+                    "legal_status": str(item.get("legal_status", "actif")).strip(),
                     "date_publication": item.get("date_publication"),
                     "date_entree_vigueur": item.get("date_entree_vigueur"),
                     "version": str(item.get("version", "")).strip(),

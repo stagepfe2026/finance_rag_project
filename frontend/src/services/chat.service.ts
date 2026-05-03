@@ -1,4 +1,4 @@
-import type { AskChatResult, ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../models/chat";
+import type { AskChatResult, ChatFeedback, ChatMessage, Conversation, QueryMode, ResponseMode } from "../models/chat";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -151,6 +151,7 @@ export async function askChatQuestion(input: {
   content: string;
   conversationId?: string | null;
   responseMode: ResponseMode;
+  queryMode?: QueryMode;
 }): Promise<AskChatResult> {
   const response = await fetch(`${apiBaseUrl}/api/v1/chat/ask`, {
     method: "POST",
@@ -162,6 +163,7 @@ export async function askChatQuestion(input: {
       content: input.content,
       conversation_id: input.conversationId ?? null,
       response_mode: input.responseMode,
+      query_mode: input.queryMode ?? "current",
     }),
   });
   const data = await parseJson(response);

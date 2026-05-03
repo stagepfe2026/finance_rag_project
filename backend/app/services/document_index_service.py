@@ -19,6 +19,7 @@ from app.services.document_parser_service import DocumentParserService
 from app.services.document_relation_service import DocumentRelationService
 from app.services.embedding_service import EmbeddingService
 from app.services.legal_metadata_service import LegalMetadataService
+from app.services.legal_status_service import LegalStatusService
 from app.services.nlp_service import NLPService
 from app.services.notification_service import NotificationService
 from fastapi import HTTPException, UploadFile
@@ -37,6 +38,7 @@ class DocumentIndexService:
         self.qdrant_repository = QdrantRepository()
         self.document_repository = DocumentRepository()
         self.legal_metadata_service = LegalMetadataService(self.document_repository)
+        self.legal_status_service = LegalStatusService(self.document_repository)
         self.document_relation_service = DocumentRelationService(self.document_repository)
         self.storage_dir = Path(settings.documents_storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
@@ -104,13 +106,14 @@ class DocumentIndexService:
 
             embeddings = self.embedding_service.generate_embeddings(chunks)
             related_document_title = self._resolve_related_document_title(document.related_document_id)
+            effective_legal_status = self.legal_status_service.compute_effective_legal_status(document)
             inserted_count = self.qdrant_repository.upsert_chunks(
                 category=category,
                 document_id=document.id or "",
                 document_title=document.title,
                 document_name=file.filename or title,
                 document_type=document.document_type,
-                legal_status=document.legal_status,
+                legal_status=effective_legal_status,
                 date_publication=document.date_publication.isoformat() if document.date_publication else None,
                 date_entree_vigueur=(
                     document.date_entree_vigueur.isoformat() if document.date_entree_vigueur else None
@@ -136,7 +139,9 @@ class DocumentIndexService:
 
             return {
                 "document": (
-                    stored_document.to_out_schema().model_dump() if stored_document else None
+                    self._with_effective_legal_status(stored_document).to_out_schema().model_dump()
+                    if stored_document
+                    else None
                 ),
                 "document_name": file.filename,
                 "category": category,
@@ -172,7 +177,7 @@ class DocumentIndexService:
         )
         return DocumentListResponse(
             items=[
-                document.to_out_schema(
+                self._with_effective_legal_status(document).to_out_schema(
                     is_favored=bool(current_user_id and current_user_id in document.favorite_user_ids)
                 )
                 for document in documents
@@ -255,7 +260,7 @@ class DocumentIndexService:
             raise HTTPException(status_code=404, detail="Contenu du document introuvable.")
 
         document.content = preview_content
-        return document.to_preview_schema()
+        return self._with_effective_legal_status(document).to_preview_schema()
 
     def set_document_favorite(
         self,
@@ -273,7 +278,7 @@ class DocumentIndexService:
 
         return DocumentActionResponse(
             message="Favori mis a jour avec succes.",
-            data=document.to_out_schema(
+            data=self._with_effective_legal_status(document).to_out_schema(
                 is_favored=current_user_id in document.favorite_user_ids,
             ),
         )
@@ -287,7 +292,9 @@ class DocumentIndexService:
         )
         return DocumentActionResponse(
             message="Document supprime de l index Qdrant.",
-            data=updated_document.to_out_schema() if updated_document else None,
+            data=self._with_effective_legal_status(updated_document).to_out_schema()
+            if updated_document
+            else None,
         )
 
     def reindex_document(self, document_id: str) -> DocumentActionResponse:
@@ -328,7 +335,7 @@ class DocumentIndexService:
                     document_title=updated_document.title,
                     document_name=file_path.name,
                     document_type=updated_document.document_type,
-                    legal_status=updated_document.legal_status,
+                    legal_status=self.legal_status_service.compute_effective_legal_status(updated_document),
                     date_publication=(
                         updated_document.date_publication.isoformat()
                         if updated_document.date_publication
@@ -350,7 +357,9 @@ class DocumentIndexService:
                 self.document_relation_service.apply_relation_after_index(updated_document)
             return DocumentActionResponse(
                 message="Document reindexe avec succes.",
-                data=updated_document.to_out_schema() if updated_document else None,
+                data=self._with_effective_legal_status(updated_document).to_out_schema()
+                if updated_document
+                else None,
             )
         except Exception as exc:
             self.document_repository.mark_failed(document_id, str(exc))
@@ -363,6 +372,10 @@ class DocumentIndexService:
         document = self.document_repository.get_by_id(document_id)
         if document is None or document.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Document introuvable.")
+        return document
+
+    def _with_effective_legal_status(self, document: DocumentModel) -> DocumentModel:
+        document.legal_status = self.legal_status_service.compute_effective_legal_status(document)
         return document
 
     def _store_uploaded_file(self, original_name: str, extension: str, content: bytes) -> Path:
@@ -426,8 +439,9 @@ class DocumentIndexService:
         query: str | None,
         current_user_id: str | None,
     ):
-        return document.to_search_item_schema(
-            snippets=self._build_snippets(document, query=query),
+        effective_document = self._with_effective_legal_status(document)
+        return effective_document.to_search_item_schema(
+            snippets=self._build_snippets(effective_document, query=query),
             is_favored=bool(current_user_id and current_user_id in document.favorite_user_ids),
         )
 

@@ -83,7 +83,7 @@ export default function ImportDocumentPage() {
   const [category, setCategory] = useState<CategoryValue>("finance");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [legalStatus, setLegalStatus] = useState<LegalStatusValue>("en_vigueur");
+  const [legalStatus, setLegalStatus] = useState<LegalStatusValue>("actif");
   const [documentType, setDocumentType] = useState<LegalDocumentTypeValue>("autre");
   const [datePublication, setDatePublication] = useState("");
   const [dateEntreeVigueur, setDateEntreeVigueur] = useState("");
@@ -172,7 +172,7 @@ export default function ImportDocumentPage() {
     if (!file) {
       setTitle("");
       setTitleTouched(false);
-      setLegalStatus("en_vigueur");
+      setLegalStatus("actif");
       setDocumentType("autre");
       setDatePublication("");
       setDateEntreeVigueur("");
@@ -236,7 +236,7 @@ export default function ImportDocumentPage() {
     setCategory("finance");
     setTitle("");
     setDescription("");
-    setLegalStatus("en_vigueur");
+    setLegalStatus("actif");
     setDocumentType("autre");
     setDatePublication("");
     setDateEntreeVigueur("");

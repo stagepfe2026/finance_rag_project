@@ -1,9 +1,9 @@
 export type DocumentCategoryValue = "finance" | "notes" | "conventions" | "recueil" | "other";
 
 export type DocumentStatusValue = "processing" | "indexed" | "failed";
-export type LegalStatusValue = "en_vigueur" | "modifie" | "remplace" | "abroge" | "inconnu";
+export type LegalStatusValue = "actif" | "futur" | "remplace" | "abroge";
 export type LegalDocumentTypeValue = "loi" | "decret" | "arrete" | "note" | "circulaire" | "autre";
-export type LegalRelationTypeValue = "none" | "remplace" | "modifie" | "abroge";
+export type LegalRelationTypeValue = "none" | "remplace" | "abroge";
 
 export type DocumentItem = {
   id: string;
@@ -90,11 +90,10 @@ export const documentStatusLabels: Record<DocumentStatusValue, string> = {
 };
 
 export const legalStatusLabels: Record<LegalStatusValue, string> = {
-  en_vigueur: "En vigueur",
-  modifie: "Modifie",
+  actif: "Actif",
+  futur: "Futur",
   remplace: "Remplace",
   abroge: "Abroge",
-  inconnu: "Inconnu",
 };
 
 export const legalDocumentTypeLabels: Record<LegalDocumentTypeValue, string> = {
@@ -109,6 +108,5 @@ export const legalDocumentTypeLabels: Record<LegalDocumentTypeValue, string> = {
 export const legalRelationTypeLabels: Record<LegalRelationTypeValue, string> = {
   none: "Aucune relation",
   remplace: "Remplace",
-  modifie: "Modifie",
   abroge: "Abroge",
 };

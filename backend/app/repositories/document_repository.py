@@ -10,6 +10,13 @@ class DocumentRepository:
     def __init__(self):
         self.collection = get_documents_collection()
 
+    @staticmethod
+    def _id_filter(document_id: str) -> dict:
+        if not ObjectId.is_valid(document_id):
+            return {"_id": document_id}
+
+        return {"$or": [{"_id": ObjectId(document_id)}, {"_id": document_id}]}
+
     def create(self, document: DocumentModel) -> DocumentModel:
         payload = document.to_mongo_insert()
         result = self.collection.insert_one(payload)
@@ -18,7 +25,7 @@ class DocumentRepository:
 
     def mark_processing(self, document_id: str) -> DocumentModel | None:
         self.collection.update_one(
-            {"_id": ObjectId(document_id)},
+            self._id_filter(document_id),
             {
                 "$set": {
                     "documentStatus": DocumentStatus.processing.value,
@@ -35,7 +42,7 @@ class DocumentRepository:
         content: str | None = None,
     ) -> DocumentModel | None:
         self.collection.update_one(
-            {"_id": ObjectId(document_id)},
+            self._id_filter(document_id),
             {
                 "$set": {
                     "documentStatus": DocumentStatus.indexed.value,
@@ -50,7 +57,7 @@ class DocumentRepository:
 
     def mark_failed(self, document_id: str, error_message: str) -> DocumentModel | None:
         self.collection.update_one(
-            {"_id": ObjectId(document_id)},
+            self._id_filter(document_id),
             {
                 "$set": {
                     "documentStatus": DocumentStatus.failed.value,
@@ -61,20 +68,26 @@ class DocumentRepository:
         return self.get_by_id(document_id)
 
     def get_by_id(self, document_id: str) -> DocumentModel | None:
-        if not ObjectId.is_valid(document_id):
+        if not document_id.strip():
             return None
 
-        raw = self.collection.find_one({"_id": ObjectId(document_id)})
+        raw = self.collection.find_one(self._id_filter(document_id))
         if raw is None:
             return None
         return DocumentModel.from_mongo(raw)
 
     def get_by_ids(self, document_ids: list[str]) -> list[DocumentModel]:
-        valid_ids = [ObjectId(document_id) for document_id in document_ids if ObjectId.is_valid(document_id)]
+        valid_ids = [document_id for document_id in document_ids if document_id.strip()]
         if not valid_ids:
             return []
 
-        cursor = self.collection.find({"_id": {"$in": valid_ids}})
+        id_values = []
+        for document_id in valid_ids:
+            id_values.append(document_id)
+            if ObjectId.is_valid(document_id):
+                id_values.append(ObjectId(document_id))
+
+        cursor = self.collection.find({"_id": {"$in": id_values}})
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
     def list_documents(
@@ -162,12 +175,12 @@ class DocumentRepository:
         return self.collection.count_documents(mongo_query)
 
     def set_favorite(self, document_id: str, user_id: str, is_favored: bool) -> DocumentModel | None:
-        if not ObjectId.is_valid(document_id):
+        if not document_id.strip():
             return None
 
         update_operator = {"$addToSet": {"favoriteUserIds": user_id}} if is_favored else {"$pull": {"favoriteUserIds": user_id}}
         self.collection.update_one(
-            {"_id": ObjectId(document_id), "deletedAt": None},
+            {**self._id_filter(document_id), "deletedAt": None},
             update_operator,
         )
         return self.get_by_id(document_id)
@@ -184,7 +197,7 @@ class DocumentRepository:
         relation_type: str | None = None,
         related_document_id: str | None = None,
     ) -> DocumentModel | None:
-        if not ObjectId.is_valid(document_id):
+        if not document_id.strip():
             return None
 
         updates: dict[str, object] = {}
@@ -204,7 +217,7 @@ class DocumentRepository:
             updates["relatedDocumentId"] = related_document_id
 
         if updates:
-            self.collection.update_one({"_id": ObjectId(document_id)}, {"$set": updates})
+            self.collection.update_one(self._id_filter(document_id), {"$set": updates})
         return self.get_by_id(document_id)
 
     def apply_incoming_relation(
@@ -213,20 +226,18 @@ class DocumentRepository:
         relation_type: str,
         source_document_id: str,
     ) -> DocumentModel | None:
-        if not ObjectId.is_valid(target_document_id):
+        if not target_document_id.strip():
             return None
 
         if relation_type == LegalRelationType.remplace.value:
             legal_status = LegalStatus.remplace.value
         elif relation_type == LegalRelationType.abroge.value:
             legal_status = LegalStatus.abroge.value
-        elif relation_type == LegalRelationType.modifie.value:
-            legal_status = LegalStatus.modifie.value
         else:
-            legal_status = LegalStatus.inconnu.value
+            return self.get_by_id(target_document_id)
 
         self.collection.update_one(
-            {"_id": ObjectId(target_document_id)},
+            self._id_filter(target_document_id),
             {
                 "$set": {
                     "legalStatus": legal_status,
@@ -236,6 +247,24 @@ class DocumentRepository:
             },
         )
         return self.get_by_id(target_document_id)
+
+    def find_relation_sources_for_target(self, target_document_id: str) -> list[DocumentModel]:
+        if not target_document_id.strip():
+            return []
+
+        cursor = self.collection.find(
+            {
+                "deletedAt": None,
+                "relatedDocumentId": target_document_id,
+                "relationType": {
+                    "$in": [
+                        LegalRelationType.remplace.value,
+                        LegalRelationType.abroge.value,
+                    ]
+                },
+            }
+        )
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
 
     def _build_list_query(
         self,

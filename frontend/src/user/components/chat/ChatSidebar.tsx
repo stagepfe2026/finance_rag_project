@@ -69,7 +69,7 @@ export default function ChatSidebar({
             aria-label={`Ouvrir les archives (${archivedCount})`}
             title="Archiver"
           >
-            <Archive size={17} />
+            <Archive size={15} />
             {archivedCount > 0 ? (
               <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#9d0208]" />
             ) : null}
@@ -103,7 +103,7 @@ export default function ChatSidebar({
         <button
           type="button"
           onClick={onOpenArchiveModal}
-          className="mt-4 flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-[#edf0f7] bg-white px-3 text-[13px] font-semibold text-[#273043] shadow-[0_8px_20px_rgba(39,48,67,0.03)] transition hover:border-[#d8def0] hover:bg-[#fbfcff]"
+          className="mt-4 flex cursor-pointer h-8 w-full items-center justify-center gap-3 rounded-xl border border-[#edf0f7] bg-white px-3 text-[13px] font-semibold text-[#273043] shadow-[0_8px_20px_rgba(39,48,67,0.03)] transition hover:border-[#d8def0] hover:bg-[#fbfcff]"
           aria-label={`Ouvrir les archives (${archivedCount})`}
         >
           <Archive size={16} className="text-[#273043]" />

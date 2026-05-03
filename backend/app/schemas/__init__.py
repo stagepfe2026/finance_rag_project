@@ -22,7 +22,7 @@ from app.schemas.document_schema import (
     LegalStatus,
 )
 from app.schemas.notification_schema import NotificationListResponse, NotificationOut
-from app.schemas.rag_schema import AskRequest
+from app.schemas.rag_schema import AskRequest, RagQueryMode
 from app.schemas.reclamation_schema import (
     ReclamationActivityOut,
     ReclamationAttachmentOut,
@@ -64,6 +64,7 @@ __all__ = [
     "ReclamationProblemType",
     "ReclamationResolveRequest",
     "ReclamationStatus",
+    "RagQueryMode",
     "SessionInfoOut",
     "UserDashboardOut",
 ]

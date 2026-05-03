@@ -14,6 +14,19 @@ from app.schemas import (
 )
 
 
+def _normalize_legal_status(value: object) -> str:
+    normalized = str(value or "").strip().lower()
+    legacy_mapping = {
+        "en_vigueur": LegalStatus.actif.value,
+        "modifie": LegalStatus.actif.value,
+        "inconnu": LegalStatus.actif.value,
+        "": LegalStatus.actif.value,
+    }
+    normalized = legacy_mapping.get(normalized, normalized)
+    allowed = {item.value for item in LegalStatus}
+    return normalized if normalized in allowed else LegalStatus.actif.value
+
+
 @dataclass
 class DocumentModel:
     title: str
@@ -90,7 +103,7 @@ class DocumentModel:
             category=str(raw.get("category", "other")),
             description=str(raw.get("description", "")),
             document_status=str(raw.get("documentStatus", DocumentStatus.processing.value)),
-            legal_status=str(raw.get("legalStatus", LegalStatus.inconnu.value)),
+            legal_status=_normalize_legal_status(raw.get("legalStatus", LegalStatus.actif.value)),
             document_type=str(raw.get("documentType", LegalDocumentType.autre.value)),
             realized_at=raw.get("realizedAt"),
             date_publication=raw.get("datePublication"),
@@ -146,11 +159,24 @@ class DocumentModel:
             "content": self.content,
         }
 
+    def _get_category_enum(self) -> DocumentCategory:
+        old_to_new = {
+            "Lois des finances": "finance",
+            "Notes communes": "notes",
+            "Conventions de non double imposition": "conventions",
+            "Recueils de textes fiscaux": "recueil",
+            "Autre documentation utile": "other",
+        }
+        category_value = self.category
+        if category_value in old_to_new:
+            category_value = old_to_new[category_value]
+        return DocumentCategory(category_value)
+
     def to_out_schema(self, *, is_favored: bool | None = None) -> DocumentOut:
         return DocumentOut(
             id=self.id or "",
             title=self.title,
-            category=DocumentCategory(self.category),
+            category=self._get_category_enum(),
             description=self.description,
             documentStatus=DocumentStatus(self.document_status),
             legalStatus=LegalStatus(self.legal_status),
@@ -176,7 +202,7 @@ class DocumentModel:
         return DocumentPreviewOut(
             id=self.id or "",
             title=self.title,
-            category=DocumentCategory(self.category),
+            category=self._get_category_enum(),
             description=self.description,
             legalStatus=LegalStatus(self.legal_status),
             documentType=LegalDocumentType(self.document_type),
@@ -199,7 +225,7 @@ class DocumentModel:
         return DocumentSearchItemOut(
             id=self.id or "",
             title=self.title,
-            category=DocumentCategory(self.category),
+            category=self._get_category_enum(),
             description=self.description,
             realizedAt=self.realized_at,
             legalStatus=LegalStatus(self.legal_status),

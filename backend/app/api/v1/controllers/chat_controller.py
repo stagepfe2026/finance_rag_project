@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import FileResponse
-
 from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
 from app.schemas.chat_schema import ChatAskRequest, ChatConversationRenameRequest, ChatMessageFeedbackRequest
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import FileResponse
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 
@@ -232,9 +231,10 @@ async def ask_chat(
     try:
         data = service.ask(
             user_id=str(current_user.get("id", "")),
-            content=payload.content,
+            content=payload.content or "",
             conversation_id=payload.conversation_id,
             response_mode=payload.response_mode,
+            query_mode=payload.query_mode.value,
         )
     except ValueError as exc:
         _raise_chat_error(exc)

@@ -86,7 +86,7 @@ export default function ArchivedConversationsModal({
       <div className="w-full max-w-[760px] rounded-xl border border-[#ddd5d2] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf9_100%)] shadow-[0_24px_80px_rgba(39,24,20,0.22)]">
         <div className="flex items-center justify-between border-b border-[#eee7e5] px-6 py-5">
           <div className="w-10" />
-          <h2 className="text-center text-[16px] font-semibold text-[#2f2725]">Conversations archivées</h2>
+          <h2 className="text-center text-sm font-semibold text-[#2f2725]">Conversations archivées</h2>
           <button
             type="button"
             onClick={onClose}

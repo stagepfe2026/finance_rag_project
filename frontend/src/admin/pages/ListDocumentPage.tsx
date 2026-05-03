@@ -29,7 +29,7 @@ const emptyPreview: DocumentPreview = {
   title: "Consultation du document",
   category: "other",
   description: "",
-  legalStatus: "inconnu",
+  legalStatus: "actif",
   documentType: "autre",
   datePublication: null,
   dateEntreeVigueur: null,

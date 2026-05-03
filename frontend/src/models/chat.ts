@@ -1,5 +1,6 @@
 export type ChatRole = "user" | "assistant";
 export type ResponseMode = "short" | "detailed";
+export type QueryMode = "current" | "future_preview" | "comparison";
 export type ChatFeedback = "like" | "dislike";
 
 export type Conversation = {
@@ -47,4 +48,5 @@ export type AskChatResult = {
   userMessage: ChatMessage;
   assistantMessage: ChatMessage;
   sources: ChatSource[];
+  queryMode?: QueryMode;
 };

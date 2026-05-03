@@ -1,5 +1,6 @@
-from datetime import UTC, datetime
 import re
+from datetime import UTC, datetime
+from typing import Literal
 
 
 class LegalRankingService:
@@ -21,8 +22,6 @@ class LegalRankingService:
         "ancien montant",
         "etait",
         "était",
-        "version 2019",
-        "loi 2019",
     }
     COMPARATIVE_MARKERS = {
         "qu est ce qui a change",
@@ -35,7 +34,7 @@ class LegalRankingService:
         "remplace",
         "modifie",
         "entre la loi",
-        "entre les deux",
+        "entre les",
     }
 
     def detect_question_profile(self, question: str) -> str:
@@ -51,41 +50,55 @@ class LegalRankingService:
             return "current"
         return "current"
 
-    def compute_legal_modifier(self, chunk: dict, question_profile: str) -> float:
-        legal_status = str(chunk.get("legal_status", "inconnu")).strip().lower()
+    def compute_legal_modifier(
+        self,
+        chunk: dict,
+        question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
+    ) -> float:
+        legal_status = str(chunk.get("legal_status", "actif")).strip().lower()
         recency_bonus = self._compute_recency_bonus(chunk)
 
-        if question_profile == "current":
+        if query_mode == "future_preview":
             status_bonus = {
-                "en_vigueur": 0.08,
-                "modifie": 0.01,
-                "remplace": -0.07,
-                "abroge": -0.1,
-                "inconnu": -0.01,
-            }.get(legal_status, -0.01)
+                "actif": 0.04,
+                "futur": 0.1,
+                "remplace": -0.02,
+                "abroge": -0.08,
+            }.get(legal_status, -0.03)
+        elif query_mode == "comparison":
+            status_bonus = {
+                "actif": 0.06,
+                "futur": 0.08,
+                "remplace": 0.03,
+                "abroge": -0.02,
+            }.get(legal_status, -0.02)
         elif question_profile == "historical":
             status_bonus = {
-                "en_vigueur": 0.02,
-                "modifie": 0.03,
-                "remplace": 0.01,
+                "actif": 0.04,
+                "futur": -0.16,
+                "remplace": 0.03,
                 "abroge": 0.0,
-                "inconnu": 0.0,
-            }.get(legal_status, 0.0)
+            }.get(legal_status, -0.02)
         else:
             status_bonus = {
-                "en_vigueur": 0.04,
-                "modifie": 0.04,
-                "remplace": 0.01,
-                "abroge": -0.02,
-                "inconnu": 0.0,
-            }.get(legal_status, 0.0)
+                "actif": 0.12,
+                "futur": -0.3,
+                "remplace": -0.06,
+                "abroge": -0.14,
+            }.get(legal_status, -0.03)
 
         return status_bonus + recency_bonus
 
     @staticmethod
     def _compute_recency_bonus(chunk: dict) -> float:
         date_value = chunk.get("date_entree_vigueur") or chunk.get("date_publication") or chunk.get("realized_at")
-        if not isinstance(date_value, datetime):
+        if isinstance(date_value, str):
+            try:
+                date_value = datetime.fromisoformat(date_value.replace("Z", "+00:00"))
+            except ValueError:
+                return 0.0
+        elif not isinstance(date_value, datetime):
             return 0.0
 
         now = datetime.now(UTC)

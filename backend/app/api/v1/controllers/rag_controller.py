@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-
 from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
 from app.schemas.rag_schema import AskRequest
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 
@@ -18,7 +17,8 @@ async def ask_question(request: Request, payload: AskRequest):
 
     try:
         result = service.ask(
-            question=payload.question,
+            question=payload.question or "",
+            query_mode=payload.query_mode.value,
         )
 
         return {

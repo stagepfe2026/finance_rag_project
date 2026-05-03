@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field
 
 class DocumentCategory(StrEnum):
     finance = "finance"
-    legal = "legal"
-    hr = "hr"
-    compliance = "compliance"
+    notes = "notes"
+    conventions = "conventions"
+    recueil = "recueil"
     other = "other"
 
 
@@ -19,11 +19,10 @@ class DocumentStatus(StrEnum):
 
 
 class LegalStatus(StrEnum):
-    en_vigueur = "en_vigueur"
-    modifie = "modifie"
+    actif = "actif"
+    futur = "futur"
     remplace = "remplace"
     abroge = "abroge"
-    inconnu = "inconnu"
 
 
 class LegalDocumentType(StrEnum):
@@ -38,7 +37,6 @@ class LegalDocumentType(StrEnum):
 class LegalRelationType(StrEnum):
     none = "none"
     remplace = "remplace"
-    modifie = "modifie"
     abroge = "abroge"
 
 
@@ -48,7 +46,7 @@ class DocumentOut(BaseModel):
     category: DocumentCategory
     description: str = ""
     documentStatus: DocumentStatus
-    legalStatus: LegalStatus = LegalStatus.inconnu
+    legalStatus: LegalStatus = LegalStatus.actif
     documentType: LegalDocumentType = LegalDocumentType.autre
     realizedAt: datetime | None = None
     datePublication: datetime | None = None
@@ -77,7 +75,7 @@ class DocumentPreviewOut(BaseModel):
     title: str
     category: DocumentCategory
     description: str = ""
-    legalStatus: LegalStatus = LegalStatus.inconnu
+    legalStatus: LegalStatus = LegalStatus.actif
     documentType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
@@ -95,7 +93,7 @@ class DocumentSearchItemOut(BaseModel):
     category: DocumentCategory
     description: str = ""
     realizedAt: datetime | None = None
-    legalStatus: LegalStatus = LegalStatus.inconnu
+    legalStatus: LegalStatus = LegalStatus.actif
     documentType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None

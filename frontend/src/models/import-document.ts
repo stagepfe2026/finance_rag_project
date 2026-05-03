@@ -1,9 +1,9 @@
 import { documentCategoryLabels, type DocumentCategoryValue } from "./document";
 
 export type CategoryValue = DocumentCategoryValue;
-export type LegalStatusValue = "en_vigueur" | "modifie" | "remplace" | "abroge" | "inconnu";
+export type LegalStatusValue = "actif" | "futur" | "remplace" | "abroge";
 export type LegalDocumentTypeValue = "loi" | "decret" | "arrete" | "note" | "circulaire" | "autre";
-export type LegalRelationTypeValue = "none" | "remplace" | "modifie" | "abroge";
+export type LegalRelationTypeValue = "none" | "remplace" | "abroge";
 
 export type CategoryOption = {
   value: CategoryValue;
@@ -44,11 +44,10 @@ export const categoryOptions: CategoryOption[] = [
 ];
 
 export const legalStatusOptions: SelectOption[] = [
-  { value: "en_vigueur", label: "En vigueur" },
-  { value: "modifie", label: "Modifié" },
+  { value: "actif", label: "Actif" },
+  { value: "futur", label: "Futur" },
   { value: "remplace", label: "Remplacé" },
   { value: "abroge", label: "Abrogé" },
-  { value: "inconnu", label: "Inconnu" },
 ];
 
 export const legalDocumentTypeOptions: SelectOption[] = [
@@ -63,6 +62,5 @@ export const legalDocumentTypeOptions: SelectOption[] = [
 export const legalRelationTypeOptions: SelectOption[] = [
   { value: "none", label: "Aucune" },
   { value: "remplace", label: "Remplace" },
-  { value: "modifie", label: "Modifie" },
   { value: "abroge", label: "Abroge" },
 ];
