@@ -70,10 +70,18 @@ class PromptBuilderService:
             ),
             "comparison": (
                 "Mode comparison: compare le document selectionne et son document lie lorsque les deux sont fournis. "
+                "Structure toujours la comparaison dans un tableau Markdown clair. "
                 "Si un document futur est utilise, ajoute l avertissement suivant en remplacant [date] par sa date d entree en vigueur: "
                 "⚠️ This legal document is not yet in force. It will be applicable from [date]."
             ),
         }.get(query_mode, "")
+
+        comparison_and_stats_instruction = (
+            "Si la question demande une comparaison ou contient des informations statistiques, structure la reponse avec un tableau Markdown propre. "
+            "Quand des donnees numeriques sont presentes, inclus les valeurs numeriques dans des colonnes dediees afin que l interface puisse generer un graphique. "
+            "Ajoute ensuite une courte synthese analytique fondee uniquement sur les donnees du tableau. "
+            "S il n y a aucune donnee numerique, fournis uniquement le tableau de comparaison."
+        )
 
         return f"""
 Tu es un assistant juridique specialise en recherche documentaire.
@@ -82,6 +90,7 @@ N'ajoute aucune information absente du contexte.
 {response_instruction}
 {profile_instruction}
 {query_mode_instruction}
+{comparison_and_stats_instruction}
 Si une source est future, remplacee ou abrogee, signale-le explicitement.
 S il existe un conflit entre plusieurs textes, privilegie la source la plus pertinente juridiquement et explique ta prudence.
 Si l'information n'apparait pas clairement dans le contexte, reponds exactement :

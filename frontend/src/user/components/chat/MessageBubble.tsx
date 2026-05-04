@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { ChatFeedback, ChatMessage } from "../../../models/chat";
+import StructuredAssistantResponse from "../../chat/StructuredAssistantResponse";
 import MessageActions from "./MessageActions";
 
 type MessageBubbleProps = {
@@ -61,7 +62,15 @@ export default function MessageBubble({ message, searchQuery = "", onFeedback }:
             isPendingAssistant ? "italic text-[#7a706d]" : "",
           ].join(" ")}
         >
-          <p className="whitespace-pre-line">{highlightText(message.content, searchQuery)}</p>
+          {isUser || isPendingAssistant ? (
+            <p className="whitespace-pre-line">{highlightText(message.content, searchQuery)}</p>
+          ) : (
+            <StructuredAssistantResponse
+              content={message.content}
+              searchQuery={searchQuery}
+              highlightText={highlightText}
+            />
+          )}
         </div>
 
         <div className="mt-0.5 px-1 text-[10px] text-[#958885]">
