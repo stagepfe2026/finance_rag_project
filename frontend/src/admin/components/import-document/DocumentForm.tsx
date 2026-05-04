@@ -19,7 +19,6 @@ type DocumentFormProps = {
   category: CategoryValue;
   categoryOptions: CategoryOption[];
   title: string;
-  description: string;
   legalStatus: LegalStatusValue;
   legalStatusOptions: SelectOption[];
   documentType: LegalDocumentTypeValue;
@@ -35,7 +34,6 @@ type DocumentFormProps = {
   fileMeta: FileMeta | null;
   onCategoryChange: (value: CategoryValue) => void;
   onTitleChange: (value: string) => void;
-  onDescriptionChange: (value: string) => void;
   onLegalStatusChange: (value: LegalStatusValue) => void;
   onDocumentTypeChange: (value: LegalDocumentTypeValue) => void;
   onDatePublicationChange: (value: string) => void;
@@ -56,7 +54,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[12px] font-medium text-[#111111]">{label}</label>
+      <label className="mb-1.5 block text-[11px] font-semibold text-[#071f3d]">{label}</label>
       {children}
     </div>
   );
@@ -66,7 +64,6 @@ export default function DocumentForm({
   category,
   categoryOptions,
   title,
-  description,
   legalStatus,
   legalStatusOptions,
   documentType,
@@ -81,7 +78,6 @@ export default function DocumentForm({
   relationSearch,
   onCategoryChange,
   onTitleChange,
-  onDescriptionChange,
   onLegalStatusChange,
   onDocumentTypeChange,
   onDatePublicationChange,
@@ -94,13 +90,17 @@ export default function DocumentForm({
   const showRelatedDocument = relationType !== "none";
 
   return (
-    <div className="rounded-l border border-[#ede7e5] p-4 shadow-[0_10px_35px_rgba(87,51,39,0.04)]">
-      <div className="space-y-4">
+    <div className="rounded-lg border border-[#e5eaf2] bg-white">
+      <div className="border-b border-[#e5eaf2] px-4 py-2">
+        <h2 className="text-sm font-bold text-[#071f3d]">Métadonnées</h2>
+      </div>
+
+      <div className="space-y-4 p-4">
         <FormField label="Categorie">
           <select
             value={category}
             onChange={(event) => onCategoryChange(event.target.value as CategoryValue)}
-            className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+            className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
           >
             {categoryOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -115,7 +115,7 @@ export default function DocumentForm({
             <select
               value={documentType}
               onChange={(event) => onDocumentTypeChange(event.target.value as LegalDocumentTypeValue)}
-              className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             >
               {documentTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -129,7 +129,7 @@ export default function DocumentForm({
             <select
               value={legalStatus}
               onChange={(event) => onLegalStatusChange(event.target.value as LegalStatusValue)}
-              className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             >
               {legalStatusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -146,17 +146,7 @@ export default function DocumentForm({
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
             placeholder="Le titre sera rempli automatiquement"
-            className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
-          />
-        </FormField>
-
-        <FormField label="Description">
-          <textarea
-            rows={3}
-            value={description}
-            onChange={(event) => onDescriptionChange(event.target.value)}
-            placeholder="Resume genere ou description metier du document"
-            className="w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 py-2.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+            className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
           />
         </FormField>
 
@@ -166,7 +156,7 @@ export default function DocumentForm({
               type="date"
               value={datePublication}
               onChange={(event) => onDatePublicationChange(event.target.value)}
-              className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             />
           </FormField>
 
@@ -175,7 +165,7 @@ export default function DocumentForm({
               type="date"
               value={dateEntreeVigueur}
               onChange={(event) => onDateEntreeVigueurChange(event.target.value)}
-              className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             />
           </FormField>
         </div>
@@ -187,7 +177,7 @@ export default function DocumentForm({
               value={version}
               onChange={(event) => onVersionChange(event.target.value)}
               placeholder="Ex: 2024-01"
-              className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             />
           </FormField>
 
@@ -195,7 +185,7 @@ export default function DocumentForm({
             <select
               value={relationType}
               onChange={(event) => onRelationTypeChange(event.target.value as LegalRelationTypeValue)}
-              className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             >
               {relationTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -207,7 +197,7 @@ export default function DocumentForm({
         </div>
 
         {showRelatedDocument ? (
-          <div className="rounded-2xl border border-[#f0e2df] bg-[#fff8f7] p-3">
+          <div className="rounded border border-[#e5eaf2] bg-[#f7f9fc] p-3">
             <div className="space-y-3">
               <FormField label="Rechercher un document lie">
                 <input
@@ -215,7 +205,7 @@ export default function DocumentForm({
                   value={relationSearch}
                   onChange={(event) => onRelationSearchChange(event.target.value)}
                   placeholder="Tapez un titre pour filtrer les documents"
-                  className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+                  className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
                 />
               </FormField>
 
@@ -223,7 +213,7 @@ export default function DocumentForm({
                 <select
                   value={relatedDocumentId}
                   onChange={(event) => onRelatedDocumentIdChange(event.target.value)}
-                  className="h-10 w-full rounded-xl border border-[#ebe5e4] bg-white px-3.5 text-[12px] text-[#4c4847] outline-none transition focus:border-[#9d0208]"
+                  className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
                 >
                   <option value="">Selectionnez un document</option>
                   {relatedDocumentOptions.map((option) => (

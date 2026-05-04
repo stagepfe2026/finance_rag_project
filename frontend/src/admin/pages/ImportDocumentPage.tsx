@@ -6,7 +6,6 @@ import UploadZone from "../components/import-document/UploadZone";
 import DocumentForm from "../components/import-document/DocumentForm";
 import ProgressPanel from "../components/import-document/ProgressPanel";
 import PreviewPanel from "../components/import-document/PreviwPanel";
-import AdminPageShell from "../components/layout/AdminPageShell";
 import {
   categoryOptions,
   legalDocumentTypeOptions,
@@ -82,7 +81,6 @@ export default function ImportDocumentPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [category, setCategory] = useState<CategoryValue>("finance");
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [legalStatus, setLegalStatus] = useState<LegalStatusValue>("actif");
   const [documentType, setDocumentType] = useState<LegalDocumentTypeValue>("autre");
   const [datePublication, setDatePublication] = useState("");
@@ -164,7 +162,6 @@ export default function ImportDocumentPage() {
     setSubmitError("");
     setIsIndexed(false);
     setSelectedFile(file);
-    setDescription("");
     setRelationType("none");
     setRelatedDocumentId("");
     setRelationSearch("");
@@ -213,7 +210,6 @@ export default function ImportDocumentPage() {
         file: selectedFile,
         category,
         title,
-        description,
         legalStatus,
         documentType,
         datePublication: datePublication || undefined,
@@ -235,7 +231,6 @@ export default function ImportDocumentPage() {
     setSelectedFile(null);
     setCategory("finance");
     setTitle("");
-    setDescription("");
     setLegalStatus("actif");
     setDocumentType("autre");
     setDatePublication("");
@@ -310,8 +305,7 @@ export default function ImportDocumentPage() {
       .filter((document) =>
         !normalizedSearch
           ? true
-          : document.title.toLowerCase().includes(normalizedSearch) ||
-            document.description.toLowerCase().includes(normalizedSearch),
+          : document.title.toLowerCase().includes(normalizedSearch),
       )
       .slice(0, 80)
       .map((document) => ({
@@ -321,21 +315,26 @@ export default function ImportDocumentPage() {
   }, [availableDocuments, relationSearch]);
 
   return (
-    <AdminPageShell>
-          <header className="bg-[#f7f9fc] px-7 py-5">
-            <div>
-              <h1 className="text-[26px] font-bold tracking-tight text-[#273043]">
-                Import <span className="text-[#9d0208]">Document</span>
+    <div className="min-h-screen bg-[#f7f9fc]">
+          <header className="px-3 py-1">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h1 className="px-2 text-xl font-bold capitalize tracking-tight text-black">
+                Import <span className="text-red-700">document</span>
               </h1>
-              <p className="mt-2 text-[13px] text-[#5f6680]">
-                Upload and index your PDF or DOCX files to enrich the knowledge base.
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded bg-[#eef2f8] px-2 py-0.5 text-[10px] font-semibold text-[#071f3d]">
+                  {selectedFile ? fileMeta?.extensionLabel : "Aucun fichier"}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded bg-[#f5e6e7] px-2 py-0.5 text-[10px] font-semibold text-[#9d0208]">
+                  {isIndexed ? "Indexé" : isSubmitting ? "Indexation" : "En attente"}
+                </span>
+              </div>
             </div>
           </header>
 
-          <section className="px-5 pb-5 md:px-7">
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 xl:col-span-7">
+          <main className="space-y-4 px-2 py-3">
+            <div className="grid gap-4 lg:grid-cols-[1fr_310px] xl:grid-cols-[1fr_340px]">
+              <div className="min-w-0">
                 <div className="space-y-4">
                   <UploadZone
                     file={selectedFile}
@@ -346,7 +345,6 @@ export default function ImportDocumentPage() {
                     category={category}
                     categoryOptions={categoryOptions}
                     title={title}
-                    description={description}
                     legalStatus={legalStatus}
                     legalStatusOptions={legalStatusOptions}
                     documentType={documentType}
@@ -365,7 +363,6 @@ export default function ImportDocumentPage() {
                       setTitleTouched(true);
                       setTitle(value);
                     }}
-                    onDescriptionChange={setDescription}
                     onLegalStatusChange={setLegalStatus}
                     onDocumentTypeChange={setDocumentType}
                     onDatePublicationChange={setDatePublication}
@@ -384,7 +381,7 @@ export default function ImportDocumentPage() {
                 </div>
               </div>
 
-              <div className="col-span-12 xl:col-span-5">
+              <div className="min-w-0">
                 <div className="space-y-4">
                   <PreviewPanel
                     fileName={selectedFile?.name ?? "Aucun fichier sélectionné"}
@@ -397,11 +394,11 @@ export default function ImportDocumentPage() {
                   />
                   <ProgressPanel steps={steps} />
                 </div>
-                <div className="mt-6 flex justify-end gap-2.5">
+                <div className="mt-4 flex justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-[12px] font-medium text-[#111111] transition hover:bg-gray-50"
+                    className="rounded border border-[#e5eaf2] bg-white px-3 py-2 text-[12px] font-semibold text-[#071f3d] transition hover:border-[#071f3d]"
                   >
                     Reset
                   </button>
@@ -409,14 +406,14 @@ export default function ImportDocumentPage() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!selectedFile || isSubmitting || isGeneratingPreview}
-                    className="rounded-lg bg-[#9d0208] px-4 py-2 text-[12px] font-medium text-white transition hover:bg-[#9d0208] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded bg-[#9d0208] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#8a0207] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSubmitting ? "Indexation..." : "Indexer"}
                   </button>
                 </div>
               </div>
             </div>
-          </section>
-    </AdminPageShell>
+          </main>
+    </div>
   );
 }

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from app.repositories import ReclamationRepository, SessionsRepository, UsersRepository
+from app.repositories import AuditEventRepository, ChatRepository, ReclamationRepository, SessionsRepository, UsersRepository
 
 
 class AuditService:
@@ -12,6 +11,9 @@ class AuditService:
         self.sessions_repository = SessionsRepository()
         self.reclamation_repository = ReclamationRepository()
         self.users_repository = UsersRepository()
+        self.chat_repository = ChatRepository()
+        self.audit_event_repository = AuditEventRepository()
+        self.audit_event_repository.ensure_indexes()
 
     def list_activities(
         self,
@@ -29,6 +31,8 @@ class AuditService:
         activities = [
             *self._build_session_activities(users_map, limit=limit),
             *self._build_reclamation_activities(users_map, limit=limit),
+            *self._build_chat_activities(users_map, limit=limit),
+            *self._build_document_search_activities(limit=limit),
         ]
         activities.sort(key=lambda item: item["occurredAt"], reverse=True)
 
@@ -52,6 +56,38 @@ class AuditService:
             "users": self._build_user_filters(activities),
             "actionTypes": self._build_action_filters(activities),
         }
+
+    def record_document_activity(
+        self,
+        *,
+        current_user: dict[str, Any],
+        action_type: str,
+        action_label: str,
+        entity_type: str,
+        entity_id: str,
+        entity_label: str,
+        summary: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        full_name = " ".join(
+            part.strip()
+            for part in [str(current_user.get("prenom", "")), str(current_user.get("nom", ""))]
+            if part and part.strip()
+        ).strip()
+        self.audit_event_repository.record(
+            user_id=str(current_user.get("id", "")),
+            user_name=full_name or str(current_user.get("email", "")) or "Utilisateur",
+            user_email=str(current_user.get("email", "")),
+            user_role=str(current_user.get("role", "")),
+            action_type=action_type,
+            action_label=action_label,
+            category="Recherche document",
+            entity_type=entity_type,
+            entity_id=entity_id,
+            entity_label=entity_label,
+            summary=summary,
+            metadata=metadata,
+        )
 
     def _build_users_map(self) -> dict[str, dict[str, str]]:
         users = self.users_repository.list_active_by_roles(["ADMIN", "FINANCE_USER"])
@@ -181,6 +217,122 @@ class AuditService:
 
         return items
 
+    def _build_chat_activities(
+        self,
+        users_map: dict[str, dict[str, str]],
+        *,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        conversations = self.chat_repository.list_recent_conversations(limit=limit)
+        conversation_by_id = {conversation.id or "": conversation for conversation in conversations}
+        items: list[dict[str, Any]] = []
+
+        for conversation in conversations:
+            user_info = self._resolve_user_info(users_map, user_id=conversation.user_id)
+            items.append(
+                self._make_activity(
+                    activity_id=f"chat:conversation:{conversation.id}:created",
+                    occurred_at=conversation.created_at,
+                    user_info=user_info,
+                    action_type="CHAT_CONVERSATION_CREATED",
+                    action_label="Conversation chat",
+                    category="Chat",
+                    entity_type="CHAT_CONVERSATION",
+                    entity_id=conversation.id or "",
+                    entity_label=conversation.summary or "Nouvelle discussion",
+                    summary=f"{user_info['name']} a demarre une conversation chat.",
+                    metadata={
+                        "conversation": conversation.summary,
+                        "archivee": conversation.is_archived,
+                        "supprimeeLe": self._serialize_datetime(conversation.deleted_at),
+                    },
+                )
+            )
+
+        for message in self.chat_repository.list_recent_messages(limit=limit):
+            conversation = conversation_by_id.get(message.conversation_id)
+            user_info = self._resolve_user_info(
+                users_map,
+                user_id=conversation.user_id if conversation else "",
+            )
+            if message.role == "user":
+                items.append(
+                    self._make_activity(
+                        activity_id=f"chat:message:{message.id}:question",
+                        occurred_at=message.created_at,
+                        user_info=user_info,
+                        action_type="CHAT_QUESTION",
+                        action_label="Question chat",
+                        category="Chat",
+                        entity_type="CHAT_MESSAGE",
+                        entity_id=message.id or "",
+                        entity_label=conversation.summary if conversation else "Message chat",
+                        summary=f"{user_info['name']} a pose une question au chat.",
+                        metadata={
+                            "conversationId": message.conversation_id,
+                            "conversation": conversation.summary if conversation else "",
+                            "extrait": message.content[:240],
+                        },
+                    )
+                )
+
+            if message.feedback and message.feedback_at:
+                feedback_user = self._resolve_user_info(
+                    users_map,
+                    user_id=message.feedback_user_id or (conversation.user_id if conversation else ""),
+                )
+                label = "Like chat" if message.feedback == "like" else "Dislike chat"
+                items.append(
+                    self._make_activity(
+                        activity_id=f"chat:message:{message.id}:feedback",
+                        occurred_at=message.feedback_at,
+                        user_info=feedback_user,
+                        action_type=f"CHAT_FEEDBACK_{message.feedback.upper()}",
+                        action_label=label,
+                        category="Chat",
+                        entity_type="CHAT_MESSAGE",
+                        entity_id=message.id or "",
+                        entity_label=conversation.summary if conversation else "Feedback chat",
+                        summary=f"{feedback_user['name']} a donne un avis sur une reponse du chat.",
+                        metadata={
+                            "conversationId": message.conversation_id,
+                            "conversation": conversation.summary if conversation else "",
+                            "feedback": message.feedback,
+                            "extrait": message.content[:240],
+                        },
+                    )
+                )
+
+        return items
+
+    def _build_document_search_activities(self, *, limit: int) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        for raw_event in self.audit_event_repository.list_recent(limit=limit):
+            occurred_at = self._coerce_datetime(raw_event.get("occurredAt")) or datetime.now(UTC)
+            user_info = {
+                "id": str(raw_event.get("userId", "")),
+                "name": str(raw_event.get("userName", "")),
+                "email": str(raw_event.get("userEmail", "")),
+                "role": str(raw_event.get("userRole", "")),
+            }
+            items.append(
+                self._make_activity(
+                    activity_id=f"event:{raw_event.get('_id')}",
+                    occurred_at=occurred_at,
+                    user_info=user_info,
+                    action_type=str(raw_event.get("actionType", "DOCUMENT_SEARCH")),
+                    action_label=str(raw_event.get("actionLabel", "Recherche document")),
+                    category=str(raw_event.get("category", "Recherche document")),
+                    entity_type=str(raw_event.get("entityType", "DOCUMENT_SEARCH")),
+                    entity_id=str(raw_event.get("entityId", "")),
+                    entity_label=str(raw_event.get("entityLabel", "Recherche document")),
+                    summary=str(raw_event.get("summary", "")),
+                    metadata=dict(raw_event.get("metadata") or {}),
+                )
+            )
+
+        return items
+
     def _matches_filters(
         self,
         item: dict[str, Any],
@@ -227,6 +379,8 @@ class AuditService:
             "uniqueUsers": len(user_ids),
             "authActivities": sum(1 for item in items if item.get("category") == "Authentification"),
             "reclamationActivities": sum(1 for item in items if item.get("category") == "Reclamations"),
+            "chatActivities": sum(1 for item in items if item.get("category") == "Chat"),
+            "documentSearchActivities": sum(1 for item in items if item.get("category") == "Recherche document"),
             "last24Hours": sum(
                 1
                 for item in items
@@ -236,10 +390,16 @@ class AuditService:
 
     def _build_trend(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         now = datetime.now(UTC)
-        buckets: dict[str, int] = defaultdict(int)
+        buckets: dict[str, dict[str, int]] = {}
         for offset in range(6, -1, -1):
             day = (now - timedelta(days=offset)).date()
-            buckets[day.isoformat()] = 0
+            buckets[day.isoformat()] = {
+                "count": 0,
+                "authentification": 0,
+                "reclamations": 0,
+                "chat": 0,
+                "documentSearch": 0,
+            }
 
         for item in items:
             occurred_at = self._coerce_datetime(item.get("occurredAt"))
@@ -247,7 +407,16 @@ class AuditService:
                 continue
             day_key = occurred_at.date().isoformat()
             if day_key in buckets:
-                buckets[day_key] += 1
+                buckets[day_key]["count"] += 1
+                category = str(item.get("category", ""))
+                if category == "Authentification":
+                    buckets[day_key]["authentification"] += 1
+                elif category == "Reclamations":
+                    buckets[day_key]["reclamations"] += 1
+                elif category == "Chat":
+                    buckets[day_key]["chat"] += 1
+                elif category == "Recherche document":
+                    buckets[day_key]["documentSearch"] += 1
 
         trend: list[dict[str, Any]] = []
         for day_key, count in buckets.items():
@@ -256,7 +425,7 @@ class AuditService:
                 {
                     "date": day_key,
                     "label": current.strftime("%d/%m"),
-                    "count": count,
+                    **count,
                 }
             )
         return trend

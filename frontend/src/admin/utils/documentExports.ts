@@ -14,7 +14,6 @@ type ExportFilters = {
 
 type ExportRow = {
   title: string;
-  description: string;
   category: string;
   status: string;
   date: string;
@@ -135,7 +134,6 @@ function formatFilterValue(filters: ExportFilters, key: "search" | "category" | 
 function buildRows(documents: DocumentItem[]): ExportRow[] {
   return documents.map((document) => ({
     title: document.title || "-",
-    description: document.description || "-",
     category: documentCategoryLabels[document.category],
     status: documentStatusLabels[document.documentStatus],
     date: formatDocumentDate(document),
@@ -314,11 +312,10 @@ function buildPdfContent(documents: DocumentItem[], filters: ExportFilters) {
 
   rows.forEach((row, index) => {
     const titleLines = clampLines(wrapText(row.title, 34), 2);
-    const descriptionLines = row.description !== "-" ? clampLines(wrapText(row.description, 40), 2) : [];
-    const rowLineCount = titleLines.length + descriptionLines.length;
+    const rowLineCount = titleLines.length;
     const rowHeight = Math.max(
       38,
-      PDF_ROW_PADDING * 2 + rowLineCount * PDF_ROW_LINE_HEIGHT + (descriptionLines.length ? 2 : 0),
+      PDF_ROW_PADDING * 2 + rowLineCount * PDF_ROW_LINE_HEIGHT,
     );
 
     if (cursorY - rowHeight < PDF_TABLE_BOTTOM) {
@@ -335,11 +332,6 @@ function buildPdfContent(documents: DocumentItem[], filters: ExportFilters) {
 
     titleLines.forEach((line) => {
       drawText(line, titleX, currentY, "F2", 9, [0.07, 0.07, 0.07]);
-      currentY -= PDF_ROW_LINE_HEIGHT;
-    });
-
-    descriptionLines.forEach((line) => {
-      drawText(line, titleX, currentY, "F1", 8, [0.47, 0.43, 0.42]);
       currentY -= PDF_ROW_LINE_HEIGHT;
     });
 
@@ -453,17 +445,16 @@ export function exportDocumentsToExcel(documents: DocumentItem[], filters: Expor
  <Worksheet ss:Name="Documents">
   <Table>
    <Column ss:Width="220"/>
-   <Column ss:Width="180"/>
    <Column ss:Width="130"/>
    <Column ss:Width="110"/>
    <Column ss:Width="110"/>
    <Column ss:Width="90"/>
    <Column ss:Width="90"/>
    <Row>
-    <Cell ss:MergeAcross="6" ss:StyleID="Title"><Data ss:Type="String">Export des documents indexes</Data></Cell>
+    <Cell ss:MergeAcross="5" ss:StyleID="Title"><Data ss:Type="String">Export des documents indexes</Data></Cell>
    </Row>
    <Row>
-    <Cell ss:MergeAcross="6" ss:StyleID="Muted"><Data ss:Type="String">Genere le ${escapeXml(generatedAt)}</Data></Cell>
+    <Cell ss:MergeAcross="5" ss:StyleID="Muted"><Data ss:Type="String">Genere le ${escapeXml(generatedAt)}</Data></Cell>
    </Row>
    <Row>
     <Cell><Data ss:Type="String">Recherche</Data></Cell>
@@ -475,7 +466,6 @@ export function exportDocumentsToExcel(documents: DocumentItem[], filters: Expor
    </Row>
    <Row>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Document</Data></Cell>
-    <Cell ss:StyleID="Header"><Data ss:Type="String">Description</Data></Cell>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Categorie</Data></Cell>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Statut</Data></Cell>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Date</Data></Cell>
@@ -486,7 +476,6 @@ ${rows
   .map(
     (row) => `   <Row>
     <Cell ss:StyleID="Cell"><Data ss:Type="String">${escapeXml(row.title)}</Data></Cell>
-    <Cell ss:StyleID="Cell"><Data ss:Type="String">${escapeXml(row.description)}</Data></Cell>
     <Cell ss:StyleID="Cell"><Data ss:Type="String">${escapeXml(row.category)}</Data></Cell>
     <Cell ss:StyleID="Cell"><Data ss:Type="String">${escapeXml(row.status)}</Data></Cell>
     <Cell ss:StyleID="Cell"><Data ss:Type="String">${escapeXml(row.date)}</Data></Cell>

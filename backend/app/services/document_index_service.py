@@ -50,7 +50,6 @@ class DocumentIndexService:
         file: UploadFile,
         category: str,
         title: str,
-        description: str,
         realized_at: datetime | None = None,
         legal_status: str | None = None,
         document_type: str | None = None,
@@ -78,7 +77,6 @@ class DocumentIndexService:
         document = DocumentModel.new_processing(
             title=title,
             category=category,
-            description=description,
             legal_status=str(prepared_legal_metadata["legal_status"]),
             document_type=str(prepared_legal_metadata["document_type"]),
             realized_at=realized_at,
@@ -446,9 +444,7 @@ class DocumentIndexService:
         )
 
     def _build_snippets(self, document: DocumentModel, *, query: str | None) -> list[str]:
-        source = "\n".join(
-            part.strip() for part in [document.description or "", document.content or ""] if part and part.strip()
-        ).strip()
+        source = (document.content or "").strip()
         if not source:
             return []
 

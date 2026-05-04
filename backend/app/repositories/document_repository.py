@@ -279,7 +279,6 @@ class DocumentRepository:
         if normalized_search:
             query["$or"] = [
                 {"title": {"$regex": normalized_search, "$options": "i"}},
-                {"description": {"$regex": normalized_search, "$options": "i"}},
             ]
 
         if category:
@@ -313,7 +312,6 @@ class DocumentRepository:
                 {
                     "$or": [
                         {"title": {"$regex": normalized_query, "$options": "i"}},
-                        {"description": {"$regex": normalized_query, "$options": "i"}},
                         {"content": {"$regex": normalized_query, "$options": "i"}},
                         {"category": {"$regex": normalized_query, "$options": "i"}},
                     ]

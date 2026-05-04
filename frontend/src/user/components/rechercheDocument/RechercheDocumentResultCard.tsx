@@ -85,7 +85,7 @@ export default function RechercheDocumentResultCard({
             </p>
           ))
         ) : (
-          <p className="line-clamp-3">{item.description || "Aucun extrait disponible."}</p>
+          <p className="line-clamp-3">Aucun extrait disponible.</p>
         )}
       </div>
     </article>

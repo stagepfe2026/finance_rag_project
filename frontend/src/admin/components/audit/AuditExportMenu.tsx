@@ -40,7 +40,7 @@ export default function AuditExportMenu({ activities, prefix }: AuditExportMenuP
         onClick={() => setIsOpen((current) => !current)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border bg-white transition ${
+        className={`inline-flex h-8 w-8 items-center cursor-pointer justify-center rounded-xl border bg-white transition ${
           isOpen
             ? "border-[#9d0208] text-[#9d0208] shadow-[0_10px_24px_rgba(207,32,39,0.14)]"
             : "border-[#e3d8d5] text-[#6d605d] hover:border-[#9d0208] hover:text-[#9d0208]"
@@ -58,7 +58,7 @@ export default function AuditExportMenu({ activities, prefix }: AuditExportMenuP
         <button
           type="button"
           onClick={() => handleExport(() => exportAuditToJson(activities, prefix))}
-          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-[#443b39] transition hover:bg-[#fff4f3] hover:text-[#9d0208]"
+          className="flex w-full items-center justify-between rounded-lg px-3 py-1 cursor-pointer text-xs text-[#443b39] transition hover:bg-[#fff4f3] hover:text-[#9d0208]"
         >
           JSON
           <span className="text-[11px] text-[#9a8b87]">.json</span>
@@ -66,7 +66,7 @@ export default function AuditExportMenu({ activities, prefix }: AuditExportMenuP
         <button
           type="button"
           onClick={() => handleExport(() => exportAuditToExcel(activities, prefix))}
-          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-[#443b39] transition hover:bg-[#fff4f3] hover:text-[#9d0208]"
+          className="flex w-full items-center justify-between rounded-lg px-3 py-1 cursor-pointer text-xs text-[#443b39] transition hover:bg-[#fff4f3] hover:text-[#9d0208]"
         >
           Excel
           <span className="text-[11px] text-[#9a8b87]">.xlsx</span>
@@ -74,7 +74,7 @@ export default function AuditExportMenu({ activities, prefix }: AuditExportMenuP
         <button
           type="button"
           onClick={() => handleExport(() => exportAuditToPdf(activities, prefix))}
-          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-[#443b39] transition hover:bg-[#fff4f3] hover:text-[#9d0208]"
+          className="flex w-full items-center justify-between rounded-lg px-3 py-1 cursor-pointer text-xs text-[#443b39] transition hover:bg-[#fff4f3] hover:text-[#9d0208]"
         >
           PDF
           <span className="text-[11px] text-[#9a8b87]">.pdf</span>

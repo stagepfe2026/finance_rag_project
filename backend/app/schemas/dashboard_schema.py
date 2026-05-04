@@ -47,6 +47,8 @@ class AdminDashboardIndexedDocumentOut(BaseModel):
     createdAt: str
     indexedAt: str | None
     fileType: str
+    publicationDate: str | None
+    effectiveDate: str | None
     chunksCount: int | None
 
 

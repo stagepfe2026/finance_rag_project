@@ -6,13 +6,13 @@ type DocumentStatusBadgeProps = {
 
 export default function DocumentStatusBadge({ status }: DocumentStatusBadgeProps) {
   const styles: Record<DocumentStatusValue, string> = {
-    indexed: "bg-[#e7f6ef] text-[#17795a]",
-    processing: "bg-[#fff1dc] text-[#c78918]",
-    failed: "bg-[#fdeaea] text-[#9d0208]",
+    indexed: "bg-[#eef2f8] text-[#071f3d]",
+    processing: "bg-[#f5e6e7] text-[#9d0208]",
+    failed: "bg-[#f7f9fc] text-[#6b7280]",
   };
 
   return (
-    <span className={`inline-flex rounded-lg px-2.5 py-1 text-[11px] font-medium ${styles[status]}`}>
+    <span className={`inline-flex rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${styles[status]}`}>
       {documentStatusLabels[status]}
     </span>
   );

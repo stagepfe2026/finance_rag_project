@@ -9,7 +9,6 @@ export type DocumentItem = {
   id: string;
   title: string;
   category: DocumentCategoryValue;
-  description: string;
   documentStatus: DocumentStatusValue;
   legalStatus: LegalStatusValue;
   documentType: LegalDocumentTypeValue;
@@ -39,7 +38,6 @@ export type DocumentPreview = {
   id: string;
   title: string;
   category: DocumentCategoryValue;
-  description: string;
   legalStatus: LegalStatusValue;
   documentType: LegalDocumentTypeValue;
   datePublication: string | null;
@@ -56,7 +54,6 @@ export type DocumentSearchItem = {
   id: string;
   title: string;
   category: DocumentCategoryValue;
-  description: string;
   realizedAt: string | null;
   legalStatus: LegalStatusValue;
   documentType: LegalDocumentTypeValue;

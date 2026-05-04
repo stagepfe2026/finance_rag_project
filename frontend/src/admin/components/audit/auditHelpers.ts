@@ -17,9 +17,16 @@ export function getRoleLabel(role: string) {
 }
 
 export function getCategoryClassName(category: string) {
-  return category === "Authentification"
-    ? "border-[#d9def0] bg-[#f8faff] text-[#273043]"
-    : "border-[#f2d6d4] bg-[#fff4f3] text-[#9d0208]";
+  if (category === "Authentification") {
+    return "border-[#d9def0] bg-[#eef2f8] text-[#071f3d]";
+  }
+  if (category === "Chat") {
+    return "border-[#d8dce5] bg-[#f7f9fc] text-[#111827]";
+  }
+  if (category === "Recherche document") {
+    return "border-[#dfe3ea] bg-white text-[#5f6680]";
+  }
+  return "border-[#f2d6d4] bg-[#f5e6e7] text-[#9d0208]";
 }
 
 export function getActionClassName(actionType: string) {
@@ -32,7 +39,13 @@ export function getActionClassName(actionType: string) {
   if (actionType.includes("DELETED")) {
     return "border-rose-200 bg-rose-50 text-rose-700";
   }
-  return "border-[#f0d9d7] bg-[#fff6f5] text-[#9d0208]";
+  if (actionType.includes("CHAT")) {
+    return "border-[#d8dce5] bg-[#f7f9fc] text-[#111827]";
+  }
+  if (actionType.includes("DOCUMENT")) {
+    return "border-[#dfe3ea] bg-white text-[#5f6680]";
+  }
+  return "border-[#f2d6d4] bg-[#f5e6e7] text-[#9d0208]";
 }
 
 export function buildSmoothLinePath(points: AuditTrendPoint[]) {

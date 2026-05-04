@@ -19,13 +19,15 @@ export default function UploadZone({ file, isBusy, onFileSelect }: UploadZonePro
   }
 
   return (
-    <div className="rounded-l border border-[#ede7e5] p-4 shadow-[0_10px_35px_rgba(87,51,39,0.04)]">
-      <h2 className="mb-3 text-[13px] font-semibold text-[#111111]">Upload File</h2>
+    <div className="rounded-lg border border-[#e5eaf2] bg-white">
+      <div className="border-b border-[#e5eaf2] px-4 py-2">
+        <h2 className="text-sm font-bold text-[#071f3d]">Fichier</h2>
+      </div>
 
       <label
         onDragOver={(event) => event.preventDefault()}
         onDrop={handleDrop}
-        className="flex min-h-[116px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#e4dedd] bg-[#fcfbfb] px-6 text-center"
+        className="m-4 flex min-h-[116px] cursor-pointer flex-col items-center justify-center rounded border border-dashed border-[#e5eaf2] bg-[#f7f9fc] px-6 text-center transition hover:border-[#071f3d]"
       >
         <input
           type="file"
@@ -35,19 +37,19 @@ export default function UploadZone({ file, isBusy, onFileSelect }: UploadZonePro
           disabled={isBusy}
         />
 
-        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-md bg-[#9d0208] text-white shadow-sm">
+        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded bg-[#9d0208] text-white shadow-sm">
           <span className="text-[14px]">↑</span>
         </div>
 
         {file ? (
           <div>
-            <p className="text-[12px] font-medium text-[#111111]">{file.name}</p>
-            <p className="mt-1 text-[11px] text-[#6f6968]">
+            <p className="text-[12px] font-semibold text-[#071f3d]">{file.name}</p>
+            <p className="mt-1 text-[11px] text-[#5f6680]">
               Cliquez pour remplacer le document sélectionné.
             </p>
           </div>
         ) : (
-          <p className="text-[12px] text-[#6f6968]">
+          <p className="text-[12px] text-[#5f6680]">
             Drag & drop your document here or <span className="font-semibold text-[#9d0208]">Choose File</span>
           </p>
         )}

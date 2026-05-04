@@ -23,11 +23,11 @@ export function formatRelative(value: string) {
 
 export function getCategoryLabel(value: string) {
   const labels: Record<string, string> = {
-    finance: "Loi Finance",
-    legal: "Juridique",
-    hr: "RH",
-    compliance: "Conformite",
-    other: "Autre",
+  finance: "Lois des finances",
+  notes: "Notes communes",
+  conventions: "Conventions de non double imposition",
+  recueil: "Recueils de textes fiscaux",
+  other: "Autre documentation utile",
   };
   return labels[value] ?? value;
 }

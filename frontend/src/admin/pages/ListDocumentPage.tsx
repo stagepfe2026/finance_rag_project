@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DocumentsFilterBar from "../components/list-documents/DocumentsFilterBar";
 import DocumentsPageHeader from "../components/list-documents/DocumentsPageHeader";
-import AdminPageShell from "../components/layout/AdminPageShell";
 import DocumentsStatusSummary from "../components/list-documents/DocumentsStatusSummary";
 import DocumentsTable from "../components/list-documents/DocumentsTable";
 import DocumentsPagination from "../components/list-documents/DocumentsPagination";
@@ -28,7 +27,6 @@ const emptyPreview: DocumentPreview = {
   id: "",
   title: "Consultation du document",
   category: "other",
-  description: "",
   legalStatus: "actif",
   documentType: "autre",
   datePublication: null,
@@ -206,7 +204,6 @@ export default function ListDocumentPage() {
       id: document.id,
       title: document.title,
       category: document.category,
-      description: document.description,
       fileType: document.fileType,
       createdAt: document.createdAt,
     });
@@ -282,7 +279,6 @@ export default function ListDocumentPage() {
 
     const rows = documents.map((document) => ({
       title: document.title || "-",
-      description: document.description || "-",
       category: document.category || "-",
       status: document.documentStatus || "-",
       date: formatDocumentDate(document),
@@ -403,7 +399,7 @@ export default function ListDocumentPage() {
       body:
         rows.length > 0
           ? rows.map((row) => [
-              `${row.title}\n${row.description !== "-" ? row.description : ""}`.trim(),
+              row.title,
               row.category,
               row.status,
               row.date,
@@ -498,7 +494,6 @@ function handleExportExcel() {
 
     const rows = documents.map((document) => ({
       Document: document.title || "-",
-      Description: document.description || "-",
       Categorie: document.category || "-",
       Statut: document.documentStatus || "-",
       Date: formatDocumentDate(document),
@@ -524,8 +519,8 @@ function handleExportExcel() {
 }
 
   return (
-    <AdminPageShell>
-          <header className="bg-[#f7f9fc] px-7 py-5">
+    <>
+          <header className="bg-[#f7f9fc] px-3 py-1">
             <DocumentsPageHeader
               onExportPdf={handleExportPdf}
               onExportExcel={handleExportExcel}
@@ -534,7 +529,7 @@ function handleExportExcel() {
             />
           </header>
 
-          <section className="px-5 pb-5 md:px-7">
+          <section className="px-2 py-1">
             <div className="space-y-3">
               <DocumentsFilterBar
                 search={search}
@@ -554,13 +549,13 @@ function handleExportExcel() {
               />
 
               {error ? (
-                <div className="rounded-2xl border border-[#f1d2d0] bg-[#fff8f7] px-4 py-3 text-[12px] text-[#9d0208]">
+                <div className="rounded border border-[#f3c6cc] bg-[#f5e6e7] px-2 py-2.5 text-sm text-[#9d0208]">
                   {error}
                 </div>
               ) : null}
 
               {actionMessage ? (
-                <div className="rounded-2xl border border-[#d9ebe1] bg-[#f4fbf7] px-4 py-3 text-[12px] text-[#157347]">
+                <div className="rounded border border-[#d9ebe1] bg-[#f4fbf7] px-2 py-2.5 text-sm text-[#157347]">
                   {actionMessage}
                 </div>
               ) : null}
@@ -568,7 +563,7 @@ function handleExportExcel() {
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
                 <div className="min-w-0 flex-1 space-y-3">
                   {isLoading ? (
-                    <div className="rounded-2xl border border-[#ede7e5] bg-white px-4 py-6 text-[12px] text-[#7a7472]">
+                    <div className="rounded border border-[#e5eaf2] bg-white px-4 py-6 text-[12px] text-[#5f6680]">
                       Chargement des documents...
                     </div>
                   ) : documents.length > 0 ? (
@@ -579,7 +574,7 @@ function handleExportExcel() {
                       onReindex={handleReindex}
                     />
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-[#d8d1d1] bg-white px-4 py-6 text-[12px] text-[#7a7472]">
+                    <div className="rounded border border-dashed border-[#e5eaf2] bg-white px-4 py-6 text-[12px] text-[#5f6680]">
                       Aucun document trouve.
                     </div>
                   )}
@@ -598,7 +593,6 @@ function handleExportExcel() {
               </div>
             </div>
           </section>
-    </AdminPageShell>
+    </>
   );
 }
-

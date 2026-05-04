@@ -44,7 +44,6 @@ class DocumentOut(BaseModel):
     id: str
     title: str = Field(..., min_length=1)
     category: DocumentCategory
-    description: str = ""
     documentStatus: DocumentStatus
     legalStatus: LegalStatus = LegalStatus.actif
     documentType: LegalDocumentType = LegalDocumentType.autre
@@ -74,7 +73,6 @@ class DocumentPreviewOut(BaseModel):
     id: str
     title: str
     category: DocumentCategory
-    description: str = ""
     legalStatus: LegalStatus = LegalStatus.actif
     documentType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
@@ -91,7 +89,6 @@ class DocumentSearchItemOut(BaseModel):
     id: str
     title: str
     category: DocumentCategory
-    description: str = ""
     realizedAt: datetime | None = None
     legalStatus: LegalStatus = LegalStatus.actif
     documentType: LegalDocumentType = LegalDocumentType.autre

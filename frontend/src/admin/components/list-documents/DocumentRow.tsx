@@ -50,23 +50,20 @@ export default function DocumentRow({ document, onConsult, onDeleteFromIndex, on
   }
 
   return (
-    <tr className="border-b border-[#f2ece9] align-top last:border-b-0">
+    <tr className="border-t border-[#e5eaf2] align-top transition-colors hover:bg-[#f7f9fc]">
       <td className="px-4 py-3">
-        <div className="max-w-[420px] space-y-1">
-          <p className="text-[13px] font-medium leading-5 text-[#111111]">{document.title}</p>
-          {document.description ? (
-            <p className="line-clamp-2 text-[12px] leading-4 text-[#7a7472]">{document.description}</p>
-          ) : null}
+        <div className="max-w-[420px]">
+          <p className="truncate text-xs font-semibold leading-5 text-[#071f3d]">{document.title}</p>
         </div>
       </td>
 
       <td className="px-4 py-3">
-        <span className="inline-flex rounded-lg bg-[#fff1f2] px-2.5 py-1 text-[11px] font-medium text-[#9d0208]">
+        <span className="inline-flex rounded bg-[#f5e6e7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#9d0208]">
           {documentCategoryLabels[document.category]}
         </span>
       </td>
 
-      <td className="px-4 py-3 text-[12px] text-[#7a7472]">{formatDocumentDate(document)}</td>
+      <td className="px-4 py-3 text-xs text-[#5f6680]">{formatDocumentDate(document)}</td>
 
       <td className="px-4 py-3">
         <DocumentStatusBadge status={document.documentStatus} />

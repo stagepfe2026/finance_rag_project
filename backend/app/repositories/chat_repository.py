@@ -25,6 +25,14 @@ class ChatRepository:
         cursor = self.conversations.find({"userId": user_id, "deletedAt": None}).sort("updatedAt", -1)
         return [ConversationModel.from_mongo(raw) for raw in cursor]
 
+    def list_recent_conversations(self, *, limit: int = 250) -> list[ConversationModel]:
+        cursor = self.conversations.find({}).sort("updatedAt", -1).limit(limit)
+        return [ConversationModel.from_mongo(raw) for raw in cursor]
+
+    def list_recent_messages(self, *, limit: int = 250) -> list[ChatMessageModel]:
+        cursor = self.messages.find({}).sort("createdAt", -1).limit(limit)
+        return [ChatMessageModel.from_mongo(raw) for raw in cursor]
+
     def get_conversation_for_user(self, conversation_id: str, user_id: str) -> ConversationModel | None:
         if not ObjectId.is_valid(conversation_id):
             return None

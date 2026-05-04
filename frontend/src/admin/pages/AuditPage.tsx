@@ -8,7 +8,6 @@ import AuditHeader from "../components/audit/AuditHeader";
 import AuditPagination from "../components/audit/AuditPagination";
 import AuditRecentActivityList from "../components/audit/AuditRecentActivityList";
 import AuditStatsGrid from "../components/audit/AuditStatsGrid";
-import AdminPageShell from "../components/layout/AdminPageShell";
 import type { AuditActivitiesPayload, AuditStats, AuditTrendPoint } from "../../models/audit";
 import { fetchAuditActivities } from "../../services/audit.service";
 
@@ -19,10 +18,12 @@ const emptyPayload: AuditActivitiesPayload = {
   total: 0,
   stats: {
     total: 0,
-    uniqueUsers: 0,
-    authActivities: 0,
-    reclamationActivities: 0,
-    last24Hours: 0,
+      uniqueUsers: 0,
+      authActivities: 0,
+      reclamationActivities: 0,
+      chatActivities: 0,
+      documentSearchActivities: 0,
+      last24Hours: 0,
   },
   trend: [],
   users: [],
@@ -110,6 +111,8 @@ export default function AuditPage() {
       uniqueUsers,
       authActivities: filteredActivities.filter((item) => item.category === "Authentification").length,
       reclamationActivities: filteredActivities.filter((item) => item.category === "Reclamations").length,
+      chatActivities: filteredActivities.filter((item) => item.category === "Chat").length,
+      documentSearchActivities: filteredActivities.filter((item) => item.category === "Recherche document").length,
       last24Hours: filteredActivities.filter((item) => {
         const time = new Date(item.occurredAt).getTime();
         return Number.isFinite(time) && time >= Date.now() - 24 * 60 * 60 * 1000;
@@ -118,12 +121,33 @@ export default function AuditPage() {
   }, [filteredActivities]);
 
   const filteredTrend = useMemo<AuditTrendPoint[]>(() => {
-    const buckets = new Map(payload.trend.map((point) => [point.date, { ...point, count: 0 }]));
+    const buckets = new Map(
+      payload.trend.map((point) => [
+        point.date,
+        {
+          ...point,
+          count: 0,
+          authentification: 0,
+          reclamations: 0,
+          chat: 0,
+          documentSearch: 0,
+        },
+      ]),
+    );
     filteredActivities.forEach((item) => {
       const key = item.occurredAt.slice(0, 10);
       const bucket = buckets.get(key);
       if (bucket) {
         bucket.count += 1;
+        if (item.category === "Authentification") {
+          bucket.authentification += 1;
+        } else if (item.category === "Reclamations") {
+          bucket.reclamations += 1;
+        } else if (item.category === "Chat") {
+          bucket.chat += 1;
+        } else if (item.category === "Recherche document") {
+          bucket.documentSearch += 1;
+        }
       }
     });
     return Array.from(buckets.values());
@@ -133,55 +157,56 @@ export default function AuditPage() {
   const exportPrefix = userFilter === "ALL" ? "audit-activites" : "audit-activites-user";
 
   return (
-    <>
-      <AdminPageShell>
-          <AuditHeader />
+    <div className="min-h-screen bg-[#f7f9fc]">
+      <AuditHeader totalActivities={filteredStats.total} last24Hours={filteredStats.last24Hours} />
 
-          <section className="px-5 pb-5 md:px-6">
-            <div className="space-y-5">
-              <AuditStatsGrid stats={filteredStats} />
+      <main className="space-y-4 px-2 py-1">
+        <AuditStatsGrid stats={filteredStats} />
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_380px]">
-                <AuditChart trend={filteredTrend} />
-                <AuditRecentActivityList items={recentActivities} />
-              </div>
+        <div className="grid gap-4 lg:grid-cols-[1fr_310px] xl:grid-cols-[1fr_340px]">
+          <div className="min-w-0">
+            <AuditChart trend={filteredTrend} />
+          </div>
 
-              <div className="min-h-0 rounded-2xl border border-[#eadfdd] bg-white shadow-sm">
-                <AuditFiltersBar
-                  search={search}
-                  userFilter={userFilter}
-                  actionFilter={actionFilter}
-                  users={payload.users}
-                  actionTypes={payload.actionTypes}
-                  filteredActivities={filteredActivities}
-                  exportPrefix={exportPrefix}
-                  onSearchChange={setSearch}
-                  onUserFilterChange={setUserFilter}
-                  onActionFilterChange={setActionFilter}
-                />
+          <div className="min-w-0">
+            <AuditRecentActivityList items={recentActivities} />
+          </div>
+        </div>
 
-                <AuditActivitiesTable
-                  isLoading={isLoading}
-                  error={error}
-                  filteredActivitiesCount={filteredActivities.length}
-                  paginatedActivities={paginatedActivities}
-                  onSelectActivity={setSelectedActivityId}
-                />
+        <section className="min-h-0 w-full rounded-lg border border-[#e5eaf2] bg-white">
+          <AuditFiltersBar
+            search={search}
+            userFilter={userFilter}
+            actionFilter={actionFilter}
+            users={payload.users}
+            actionTypes={payload.actionTypes}
+            filteredActivities={filteredActivities}
+            exportPrefix={exportPrefix}
+            onSearchChange={setSearch}
+            onUserFilterChange={setUserFilter}
+            onActionFilterChange={setActionFilter}
+          />
 
-                <AuditPagination
-                  safeCurrentPage={safeCurrentPage}
-                  totalPages={totalPages}
-                  pageNumbers={pageNumbers}
-                  filteredCount={filteredActivities.length}
-                  pageSize={PAGE_SIZE}
-                  onPageChange={setCurrentPage}
-                />
-              </div>
-            </div>
-          </section>
-      </AdminPageShell>
+          <AuditActivitiesTable
+            isLoading={isLoading}
+            error={error}
+            filteredActivitiesCount={filteredActivities.length}
+            paginatedActivities={paginatedActivities}
+            onSelectActivity={setSelectedActivityId}
+          />
+
+          <AuditPagination
+            safeCurrentPage={safeCurrentPage}
+            totalPages={totalPages}
+            pageNumbers={pageNumbers}
+            filteredCount={filteredActivities.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
+        </section>
+      </main>
 
       <AuditDetailPanel activity={selectedActivity} onClose={() => setSelectedActivityId(null)} />
-    </>
+    </div>
   );
 }

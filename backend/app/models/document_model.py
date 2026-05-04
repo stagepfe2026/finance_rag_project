@@ -31,7 +31,6 @@ def _normalize_legal_status(value: object) -> str:
 class DocumentModel:
     title: str
     category: str
-    description: str
     document_status: str
     legal_status: str
     document_type: str
@@ -60,7 +59,6 @@ class DocumentModel:
         *,
         title: str,
         category: str,
-        description: str,
         legal_status: str,
         document_type: str,
         realized_at: datetime | None = None,
@@ -77,7 +75,6 @@ class DocumentModel:
         return cls(
             title=title.strip(),
             category=category,
-            description=description.strip(),
             document_status=DocumentStatus.processing.value,
             legal_status=legal_status,
             document_type=document_type,
@@ -101,7 +98,6 @@ class DocumentModel:
             id=str(raw.get("_id")) if raw.get("_id") is not None else None,
             title=str(raw.get("title", "")),
             category=str(raw.get("category", "other")),
-            description=str(raw.get("description", "")),
             document_status=str(raw.get("documentStatus", DocumentStatus.processing.value)),
             legal_status=_normalize_legal_status(raw.get("legalStatus", LegalStatus.actif.value)),
             document_type=str(raw.get("documentType", LegalDocumentType.autre.value)),
@@ -136,7 +132,6 @@ class DocumentModel:
         return {
             "title": self.title,
             "category": self.category,
-            "description": self.description,
             "documentStatus": self.document_status,
             "legalStatus": self.legal_status,
             "documentType": self.document_type,
@@ -177,7 +172,6 @@ class DocumentModel:
             id=self.id or "",
             title=self.title,
             category=self._get_category_enum(),
-            description=self.description,
             documentStatus=DocumentStatus(self.document_status),
             legalStatus=LegalStatus(self.legal_status),
             documentType=LegalDocumentType(self.document_type),
@@ -203,7 +197,6 @@ class DocumentModel:
             id=self.id or "",
             title=self.title,
             category=self._get_category_enum(),
-            description=self.description,
             legalStatus=LegalStatus(self.legal_status),
             documentType=LegalDocumentType(self.document_type),
             datePublication=self.date_publication,
@@ -226,7 +219,6 @@ class DocumentModel:
             id=self.id or "",
             title=self.title,
             category=self._get_category_enum(),
-            description=self.description,
             realizedAt=self.realized_at,
             legalStatus=LegalStatus(self.legal_status),
             documentType=LegalDocumentType(self.document_type),

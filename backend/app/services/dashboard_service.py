@@ -16,6 +16,20 @@ class DashboardService:
         self.users_repository = UsersRepository()
         self.notification_service = notification_service
 
+    @staticmethod
+    def _format_file_type(file_type: str) -> str:
+        normalized = (file_type or "").strip().lower()
+        if normalized == "application/pdf" or normalized.endswith(".pdf"):
+            return "PDF"
+        if (
+            normalized == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            or normalized == "application/msword"
+            or normalized.endswith(".docx")
+            or normalized.endswith(".doc")
+        ):
+            return "Word"
+        return file_type or "-"
+
     def get_user_home_dashboard(self, current_user: dict) -> dict:
         prenom = str(current_user.get("prenom", "")).strip()
         nom = str(current_user.get("nom", "")).strip()
@@ -128,7 +142,17 @@ class DashboardService:
                     "documentStatus": document.document_status,
                     "createdAt": document.created_at.astimezone(UTC).isoformat(),
                     "indexedAt": document.indexed_at.astimezone(UTC).isoformat() if document.indexed_at else None,
-                    "fileType": document.file_type,
+                    "fileType": self._format_file_type(document.file_type),
+                    "publicationDate": (
+                        document.date_publication.astimezone(UTC).isoformat()
+                        if document.date_publication
+                        else None
+                    ),
+                    "effectiveDate": (
+                        document.date_entree_vigueur.astimezone(UTC).isoformat()
+                        if document.date_entree_vigueur
+                        else None
+                    ),
                     "chunksCount": document.chunks_count,
                 }
                 for document in indexed_documents

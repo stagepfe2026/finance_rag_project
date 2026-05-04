@@ -16,7 +16,6 @@ type IndexDocumentInput = {
   file: File;
   category: CategoryValue;
   title: string;
-  description: string;
   legalStatus?: LegalStatusValue;
   documentType?: LegalDocumentTypeValue;
   datePublication?: string;
@@ -87,7 +86,6 @@ export async function indexDocument({
   file,
   category,
   title,
-  description,
   legalStatus,
   documentType,
   datePublication,
@@ -100,7 +98,6 @@ export async function indexDocument({
   payload.append("file", file);
   payload.append("category", category);
   payload.append("title", title);
-  payload.append("description", description);
   if (legalStatus) {
     payload.append("legal_status", legalStatus);
   }

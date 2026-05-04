@@ -29,21 +29,21 @@ export default function AuditFiltersBar({
   onActionFilterChange,
 }: AuditFiltersBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-[#efe4e1] px-5 py-4">
-      <div className="flex h-11 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[#e3d8d5] bg-[#faf7f6] px-3">
-        <Search size={15} className="text-[#9f8f8c]" />
+    <div className="flex flex-wrap items-center gap-3 border-b border-[#e5eaf2] px-4 py-3">
+      <div className="flex h-9 min-w-[240px] flex-1 items-center gap-2 rounded border border-[#e5eaf2] bg-[#f7f9fc] px-3">
+        <Search size={14} className="text-[#8a96ad]" />
         <input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Rechercher une activite, un ticket ou un utilisateur ..."
-          className="w-full bg-transparent text-sm text-[#201d1d] outline-none placeholder:text-[#ad9d9a]"
+          placeholder="Rechercher une activité, un ticket ou un utilisateur..."
+          className="w-full bg-transparent text-[12px] text-[#071f3d] outline-none placeholder:text-[#8a96ad]"
         />
       </div>
 
       <select
         value={userFilter}
         onChange={(event) => onUserFilterChange(event.target.value)}
-        className="h-11 rounded-xl border border-[#e3d8d5] bg-white px-3 text-sm text-[#4b4341] outline-none transition focus:border-[#9d0208]"
+        className="h-9 rounded border border-[#e5eaf2] cursor-pointer bg-white px-3 text-[12px] font-semibold text-[#071f3d] outline-none transition focus:border-[#071f3d]"
       >
         <option value="ALL">Tous les utilisateurs</option>
         {users.map((user) => (
@@ -56,7 +56,7 @@ export default function AuditFiltersBar({
       <select
         value={actionFilter}
         onChange={(event) => onActionFilterChange(event.target.value)}
-        className="h-11 rounded-xl border border-[#e3d8d5] bg-white px-3 text-sm text-[#4b4341] outline-none transition focus:border-[#9d0208]"
+        className="h-9 rounded border border-[#e5eaf2] cursor-pointer bg-white px-3 text-[12px] font-semibold text-[#071f3d] outline-none transition focus:border-[#071f3d]"
       >
         <option value="ALL">Tous les types</option>
         {actionTypes.map((action) => (
@@ -68,10 +68,8 @@ export default function AuditFiltersBar({
 
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden text-right md:block">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-[#a08f8c]">Export</p>
-          <p className="mt-1 text-[12px] text-[#6d6260]">
-            {userFilter === "ALL" ? "Filtre courant" : "Activites du user selectionne"}
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700 ">Export</p>
+         
         </div>
         <AuditExportMenu activities={filteredActivities} prefix={exportPrefix} />
       </div>

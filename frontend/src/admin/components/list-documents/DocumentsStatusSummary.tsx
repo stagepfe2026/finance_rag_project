@@ -1,15 +1,33 @@
+type DocumentsStatusSummaryProps = {
+  indexed?: number;
+  processing?: number;
+  failed?: number;
+};
+
 export default function DocumentsStatusSummary({
-  indexed = 8,
-  processing = 2,
-  failed = 2,
-}) {
+  indexed = 0,
+  processing = 0,
+  failed = 0,
+}: DocumentsStatusSummaryProps) {
+  const items = [
+    { label: "Indexes", value: indexed, sub: "Documents prets" },
+    { label: "En cours", value: processing, sub: "Indexation active" },
+    { label: "Echoues", value: failed, sub: "A reprendre" },
+  ];
+
   return (
-    <div className="rounded-2xl border border-[#ede7e5] bg-white px-4 py-3 text-[12px]">
-      <span className="font-medium text-[#138a6a]">Indexés: {indexed}</span>
-      <span className="mx-3 text-[#d2c8c5]">|</span>
-      <span className="font-medium text-[#d38d12]">En cours: {processing}</span>
-      <span className="mx-3 text-[#d2c8c5]">|</span>
-      <span className="font-medium text-[#9d0208]">Échoués: {failed}</span>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.label} className="rounded border border-[#e5eaf2] bg-white p-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700">
+            {item.label}
+          </p>
+          <p className="mt-1 text-lg font-bold leading-none tracking-tight text-[#071f3d]">
+            {item.value}
+          </p>
+          <p className="mt-1 truncate text-xs text-[#5f6680]">{item.sub}</p>
+        </div>
+      ))}
     </div>
   );
 }

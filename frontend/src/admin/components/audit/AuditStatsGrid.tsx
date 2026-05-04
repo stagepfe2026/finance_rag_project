@@ -1,29 +1,27 @@
-import { Activity, Download, FileText, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
-
 import type { AuditStats } from "../../../models/audit";
 
-function StatsCard({ label, value, icon: Icon }: { label: string; value: number; icon: LucideIcon }) {
+function StatsCard({ label, value, sub }: { label: string; value: number; sub: string }) {
   return (
-    <div className="rounded-2xl border border-[#eadfdd] bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-[#a08f8c]">{label}</p>
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff3f2] text-[#9d0208]">
-          <Icon size={16} />
-        </span>
+    <div className="rounded border border-[#e5eaf2] rounded-lg bg-white p-2">
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700">{label}</p>
+        <p className="mt-1 text-lg font-bold leading-none tracking-tight text-[#071f3d]">{value}</p>
+        <p className="mt-1 truncate text-xs text-[#5f6680]">{sub}</p>
       </div>
-      <p className="mt-3 text-[28px] font-semibold tracking-tight text-[#211f1f]">{value}</p>
     </div>
   );
 }
 
 export default function AuditStatsGrid({ stats }: { stats: AuditStats }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-      <StatsCard label="Total activites" value={stats.total} icon={Activity} />
-      <StatsCard label="Utilisateurs" value={stats.uniqueUsers} icon={UserRound} />
-      <StatsCard label="Auth" value={stats.authActivities} icon={ShieldCheck} />
-      <StatsCard label="Reclamations" value={stats.reclamationActivities} icon={FileText} />
-      <StatsCard label="Dernieres 24h" value={stats.last24Hours} icon={Download} />
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-7">
+      <StatsCard label="Total activites" value={stats.total} sub="Journal filtre" />
+      <StatsCard label="Utilisateurs" value={stats.uniqueUsers} sub="Acteurs uniques" />
+      <StatsCard label="Authentification" value={stats.authActivities} sub="Connexions et sessions" />
+      <StatsCard label="Reclamations" value={stats.reclamationActivities} sub="Actions metier" />
+      <StatsCard label="Chat" value={stats.chatActivities} sub="Conversations et avis" />
+      <StatsCard label="Documents" value={stats.documentSearchActivities} sub="Recherche et consultation" />
+      <StatsCard label="Dernieres 24h" value={stats.last24Hours} sub="Activite recente" />
     </div>
   );
 }

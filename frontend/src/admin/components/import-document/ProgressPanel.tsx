@@ -6,14 +6,12 @@ type ProgressPanelProps = {
 
 export default function ProgressPanel({ steps }: ProgressPanelProps) {
   return (
-    <div className="rounded-l border border-[#ede7e5] shadow-[0_10px_35px_rgba(87,51,39,0.04)]">
-      <div className="border-b border-[#f0e8e6] px-4 py-3">
-        <h2 className="border-l-2 border-[#9d0208] pl-2 text-[13px] font-semibold text-[#111111]">
-          Progression
-        </h2>
+    <div className="rounded-lg border border-[#e5eaf2] bg-white">
+      <div className="border-b border-[#e5eaf2] px-4 py-2">
+        <h2 className="text-sm font-bold text-[#071f3d]">Progression</h2>
       </div>
 
-      <div className="x-4 py-1">
+      <div className="px-4 py-3">
         <div className="space-y-1">
           {steps.map((step, index) => {
             const tone =
@@ -34,11 +32,11 @@ export default function ProgressPanel({ steps }: ProgressPanelProps) {
                   {index < steps.length - 1 ? <div className="mt-1.5 h-7 w-px bg-gray-200" /> : null}
                 </div>
 
-                <div className="pt-0.5">
-                  <p className={`text-[12px] font-medium ${step.status === "current" || step.status === "error" ? "text-[#9d0208]" : "text-[#111111]"}`}>
+                <div className="min-w-0 pt-0.5">
+                  <p className={`text-[12px] font-semibold ${step.status === "current" || step.status === "error" ? "text-[#9d0208]" : "text-[#071f3d]"}`}>
                     {step.label}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-gray-500">{step.sub}</p>
+                  <p className="mt-0.5 truncate text-[10px] text-[#8a96ad]">{step.sub}</p>
                 </div>
               </div>
             );
@@ -48,4 +46,3 @@ export default function ProgressPanel({ steps }: ProgressPanelProps) {
     </div>
   );
 }
-

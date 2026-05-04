@@ -19,6 +19,10 @@ export type AuditTrendPoint = {
   date: string;
   label: string;
   count: number;
+  authentification: number;
+  reclamations: number;
+  chat: number;
+  documentSearch: number;
 };
 
 export type AuditUserFilter = {
@@ -38,6 +42,8 @@ export type AuditStats = {
   uniqueUsers: number;
   authActivities: number;
   reclamationActivities: number;
+  chatActivities: number;
+  documentSearchActivities: number;
   last24Hours: number;
 };
 

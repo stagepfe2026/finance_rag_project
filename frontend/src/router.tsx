@@ -1,17 +1,29 @@
 import { createBrowserRouter } from "react-router-dom";
+
 import AdminLayout from "./admin/layouts/AdminLayout";
-import { adminRoutes } from "./admin/routes/adminRoutes";
+import UserLayout from "./user/layouts/UserLayout";
+
 import { PublicOnlyRoute, RequireAuth, RoleHomeRedirect } from "./auth/guards";
+
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import UserLayout from "./user/layouts/UserLayout";
+
+import DashboardPage from "./admin/pages/DashboardPage";
+import AuditPage from "./admin/pages/AuditPage";
+import ChatFeedbackPage from "./admin/pages/ChatFeedbackPage";
+import ImportDocumentPage from "./admin/pages/ImportDocumentPage";
+import ListDocumentPage from "./admin/pages/ListDocumentPage";
+
+
 import { userRoutes } from "./user/routes/userRoutes";
+import ReclamationPage from "./admin/pages/ReclamationPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RoleHomeRedirect />,
   },
+
   {
     element: <PublicOnlyRoute />,
     children: [
@@ -21,16 +33,26 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
   {
     path: "/admin",
     element: <RequireAuth allowedRoles={["ADMIN"]} />,
     children: [
       {
         element: <AdminLayout />,
-        children: adminRoutes,
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: "dashboard", element: <DashboardPage /> },
+          { path: "audit", element: <AuditPage /> },
+          { path: "avis-chat", element: <ChatFeedbackPage /> },
+          { path: "documents/import", element: <ImportDocumentPage /> },
+          { path: "documents/list", element: <ListDocumentPage /> },
+          { path: "reclamations", element: <ReclamationPage /> },
+        ],
       },
     ],
   },
+
   {
     path: "/user",
     element: <RequireAuth allowedRoles={["FINANCE_USER", "ADMIN"]} />,
@@ -41,6 +63,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
   {
     path: "*",
     element: <NotFoundPage />,

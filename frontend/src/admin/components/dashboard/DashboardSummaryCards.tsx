@@ -1,29 +1,20 @@
-import { AlertTriangle, FileBarChart2, ShieldAlert, Users, type LucideIcon } from "lucide-react";
-
 import type { AdminDashboardSummary } from "../../../models/admin-dashboard";
 
-function SummaryCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-}: {
-  title: string;
+type CardProps = {
+  label: string;
   value: number;
-  subtitle: string;
-  icon: LucideIcon;
-}) {
+  sub: string;
+};
+
+function SummaryCard({ label, value, sub }: CardProps) {
   return (
-    <div className="rounded-lg border border-[#e0e6f0] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[#f3c6cc] hover:shadow-[0_18px_34px_rgba(7,31,61,0.08)]">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#fff0f2] text-[#9d0208]">
-          <Icon size={19} />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.1em] text-[#6c7894]">{title}</p>
-          <p className="mt-1 text-[24px] font-bold leading-none tracking-tight text-[#071f3d]">{value}</p>
-          <p className="mt-1 truncate text-[12px] text-[#5f6680]">{subtitle}</p>
-        </div>
+    <div className="rounded border border-[#e5eaf2] rounded-lg bg-white p-2 flex items-start">
+      
+
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-[0.05em] font-semibold text-red-700">{label}</p>
+        <p className="mt-1 text-lg font-bold leading-none tracking-tight text-[#071f3d]">{value}</p>
+        <p className="mt-1 text-xs text-[#5f6680] truncate">{sub}</p>
       </div>
     </div>
   );
@@ -31,21 +22,28 @@ function SummaryCard({
 
 export default function DashboardSummaryCards({ summary }: { summary: AdminDashboardSummary }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       <SummaryCard
-        title="Documents indexes"
+        label="Documents indexés"
         value={summary.documentsIndexed}
-        subtitle={`${summary.documentsTotal} documents au total`}
-        icon={FileBarChart2}
+        sub={`${summary.documentsTotal} au total`}
       />
       <SummaryCard
-        title="Reclamations"
+        label="Réclamations"
         value={summary.reclamationsTotal}
-        subtitle={`${summary.pendingReclamations} en attente`}
-        icon={ShieldAlert}
+        sub={`${summary.pendingReclamations} en attente`}
       />
-      <SummaryCard title="Cas urgents" value={summary.reclamationsUrgent} subtitle="A prioriser rapidement" icon={AlertTriangle} />
-      <SummaryCard title="Derniers acces" value={summary.activeUsers} subtitle="Utilisateurs actifs recents" icon={Users} />
+      <SummaryCard
+        label="Cas urgents"
+        value={summary.reclamationsUrgent}
+        sub="À prioriser"
+        
+      />
+      <SummaryCard
+        label="Utilisateurs actifs"
+        value={summary.activeUsers}
+        sub="Derniers accès"
+        />
     </div>
   );
 }

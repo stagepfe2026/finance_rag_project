@@ -35,6 +35,8 @@ export type AdminDashboardIndexedDocument = {
   createdAt: string;
   indexedAt: string | null;
   fileType: string;
+  publicationDate: string | null;
+  effectiveDate: string | null;
   chunksCount: number | null;
 };
 
@@ -45,6 +47,7 @@ export type AdminDashboardLatestAccess = {
   role: string;
   lastActivityAt: string;
   authMethod: string;
+  imageProfileUrl: string;
 };
 
 export type AdminDashboardUrgentCase = {
