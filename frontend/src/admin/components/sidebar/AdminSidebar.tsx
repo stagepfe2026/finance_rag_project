@@ -1,15 +1,14 @@
-
 import {
-  LayoutDashboard,
   BarChart3,
   ClipboardList,
   FileText,
-  Upload,
+  LayoutDashboard,
   MessageSquareWarning,
+  Upload,
 } from "lucide-react";
 import SidebarFooter from "./SidebarFooter";
-import SidebarMenu from "./SidebarMenu";
 import SidebarHeader from "./SidebarHeader";
+import SidebarMenu from "./SidebarMenu";
 
 const menuItems = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
@@ -36,19 +35,14 @@ export default function AdminSidebar({
   return (
     <aside
       className={[
-        "flex h-screen flex-col border-r border-gray-200 bg-white transition-all",
+        "admin-sidebar flex h-screen flex-col border-r border-[#e5eaf2] bg-white transition-all duration-300",
         isCollapsed ? "w-[78px]" : "w-[240px]",
       ].join(" ")}
     >
-      <SidebarHeader
-        isCollapsed={isCollapsed}
-        onToggleCollapsed={onToggleCollapsed}
-      />
-
+      <SidebarHeader isCollapsed={isCollapsed} isDarkMode={isDarkMode} onToggleCollapsed={onToggleCollapsed} />
       <div className="flex-1 overflow-y-auto px-2">
         <SidebarMenu items={menuItems} isCollapsed={isCollapsed} />
       </div>
-
       <SidebarFooter
         isCollapsed={isCollapsed}
         isDarkMode={isDarkMode}

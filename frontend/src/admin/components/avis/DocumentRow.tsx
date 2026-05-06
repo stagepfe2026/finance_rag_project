@@ -29,17 +29,6 @@ export default function DocumentRow({ document, onReindex, isBusy }: DocumentRow
       </td>
       <td className="px-4 py-3 text-center text-xs font-semibold text-[#071f3d]">{document.likes}</td>
       <td className="px-4 py-3 text-center text-xs font-semibold text-[#9d0208]">{document.dislikes}</td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="w-9 text-right text-[11px] font-semibold text-[#071f3d]">{document.reportRate}%</span>
-          <span className="h-1.5 flex-1 rounded-full bg-[#e5eaf2]">
-            <span
-              className="block h-full rounded-full bg-[#9d0208]"
-              style={{ width: `${Math.min(100, document.reportRate)}%` }}
-            />
-          </span>
-        </div>
-      </td>
       <td className="px-4 py-3 text-right">
         <button
           type="button"

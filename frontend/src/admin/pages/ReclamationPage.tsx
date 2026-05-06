@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import Snackbar from "../components/Snackbar";
 import ReclamationDetailPanel from "../components/réclamation/ReclamationDetailPanel";
 import ReclamationFilters from "../components/réclamation/ReclamationFilters";
 import ReclamationLayout from "../components/réclamation/ReclamationLayout";
@@ -23,8 +24,8 @@ export default function ReclamationPage() {
   const [adminReply, setAdminReply] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", tone: "info" as "success" | "error" | "info" });
+  const closeSnackbar = useCallback(() => setSnackbar((s) => ({ ...s, open: false })), []);
 
   useEffect(() => {
     void loadReclamations();
@@ -33,11 +34,10 @@ export default function ReclamationPage() {
   async function loadReclamations() {
     try {
       setIsLoading(true);
-      setError("");
       const items = await fetchAdminReclamations();
       setReclamations(items);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Impossible de charger les reclamations.");
+      setSnackbar({ open: true, tone: "error", message: loadError instanceof Error ? loadError.message : "Impossible de charger les réclamations." });
     } finally {
       setIsLoading(false);
     }
@@ -100,13 +100,11 @@ export default function ReclamationPage() {
 
     try {
       setIsSubmitting(true);
-      setError("");
-      setMessage("");
       const updated = await resolveReclamationAsAdmin(selectedReclamation._id, adminReply, "RESOLVED");
       setReclamations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
-      setMessage("La reclamation a ete traitee. L envoi est maintenant desactive pour les autres admins.");
+      setSnackbar({ open: true, tone: "success", message: "La réclamation a été traitée avec succès." });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Impossible d envoyer la reponse.");
+      setSnackbar({ open: true, tone: "error", message: submitError instanceof Error ? submitError.message : "Impossible d'envoyer la réponse." });
     } finally {
       setIsSubmitting(false);
     }
@@ -127,18 +125,6 @@ export default function ReclamationPage() {
             onSearchChange={setSearch}
             onStatusFilterChange={setStatusFilter}
           />
-
-          {error ? (
-            <div className="mx-4 mt-4 rounded border border-[#f3c6cc] bg-[#f5e6e7] px-4 py-3 text-[12px] text-[#9d0208]">
-              {error}
-            </div>
-          ) : null}
-
-          {message ? (
-            <div className="mx-4 mt-4 rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-[12px] text-emerald-700">
-              {message}
-            </div>
-          ) : null}
 
           <ReclamationList
             items={filteredReclamations}
@@ -165,6 +151,12 @@ export default function ReclamationPage() {
           />
         ) : null}
       </div>
+      <Snackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        tone={snackbar.tone}
+        onClose={closeSnackbar}
+      />
     </ReclamationLayout>
   );
 }

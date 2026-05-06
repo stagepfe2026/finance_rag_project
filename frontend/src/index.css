@@ -20,6 +20,10 @@ body {
   color: var(--cimf-blue);
 }
 
+body {
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
 body.user-dark-theme {
   background: #0f172a;
   color: #e2e8f0;
@@ -143,6 +147,13 @@ body.user-dark-theme .user-theme-root .bg-orange-50 {
   --admin-surface-muted: #f7f9fd;
   --admin-border: #e1e7f1;
   background: var(--admin-page-bg);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+.admin-theme-root *,
+.admin-theme-root *::before,
+.admin-theme-root *::after {
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
 }
 
 .admin-theme-root main {
@@ -219,6 +230,58 @@ body.user-dark-theme .user-theme-root .bg-orange-50 {
 .admin-theme-root .apexcharts-canvas,
 .admin-theme-root .apexcharts-svg {
   overflow: hidden !important;
+}
+
+/* ApexCharts dark mode overrides */
+.admin-theme-root.admin-dark-theme .apexcharts-text tspan,
+.admin-theme-root.admin-dark-theme .apexcharts-xaxis-label tspan,
+.admin-theme-root.admin-dark-theme .apexcharts-yaxis-label tspan {
+  fill: #94a3b8 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-legend-text {
+  color: #94a3b8 !important;
+  fill: #94a3b8 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-gridline {
+  stroke: #243041 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-grid-borders line,
+.admin-theme-root.admin-dark-theme .apexcharts-gridlines-horizontal line,
+.admin-theme-root.admin-dark-theme .apexcharts-gridlines-vertical line {
+  stroke: #243041 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-xcrosshairs,
+.admin-theme-root.admin-dark-theme .apexcharts-ycrosshairs {
+  stroke: #334155 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-tooltip {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-tooltip-title {
+  background: #243041 !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-tooltip-text {
+  color: #e2e8f0 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-tooltip-y-group .apexcharts-tooltip-text-y-label,
+.admin-theme-root.admin-dark-theme .apexcharts-tooltip-y-group .apexcharts-tooltip-text-y-value {
+  color: #cbd5e1 !important;
+}
+
+.admin-theme-root.admin-dark-theme .apexcharts-canvas svg {
+  background: transparent !important;
 }
 
 .admin-theme-root .rounded-xl,
@@ -390,6 +453,57 @@ body.user-dark-theme .user-theme-root .bg-orange-50 {
 
 .admin-theme-root.admin-dark-theme [class*="shadow"] {
   box-shadow: 0 16px 34px rgba(2, 6, 23, 0.38) !important;
+}
+
+.admin-theme-root.admin-dark-theme button:not([class*="bg-[#9d0208]"]):not([class*="bg-[#071f3d]"]):not([class*="bg-white"]) {
+  color: #e2e8f0;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-[#f5e6e7]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#f5e8e8]"] {
+  background-color: rgba(157, 2, 8, 0.15) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-[#f7f9fc]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#f7f9fd]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#f8fafc]"] {
+  background-color: #172036 !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-[#eef2f8]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#eef1f7]"] {
+  background-color: #1a2a40 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-sidebar .border-t {
+  border-color: #1f2a44 !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-red-700"],
+.admin-theme-root.admin-dark-theme [class*="text-[#9d0208]"] {
+  color: #e05a5f !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="border-[#f3c6cc]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#fdf2f3]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#f5e6e7]"] {
+  background-color: rgba(157, 2, 8, 0.12) !important;
+  border-color: rgba(157, 2, 8, 0.3) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-[#d9ebe1]"],
+.admin-theme-root.admin-dark-theme [class*="bg-[#f4fbf7]"] {
+  background-color: rgba(21, 115, 71, 0.12) !important;
+  border-color: rgba(21, 115, 71, 0.3) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-[#157347]"] {
+  color: #4ade80 !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-[#5f6680]"],
+.admin-theme-root.admin-dark-theme [class*="text-[#8a96ad]"] {
+  color: #64748b !important;
 }
 
 .login-grid-bg {

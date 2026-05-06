@@ -7,67 +7,59 @@ type Props = {
   onToggleDarkMode: () => void;
 };
 
-export default function SidebarFooter({
-  isCollapsed,
-  isDarkMode,
-  onToggleDarkMode,
-}: Props) {
+export default function SidebarFooter({ isCollapsed, isDarkMode, onToggleDarkMode }: Props) {
   const { logout, user } = useAuth();
 
   return (
-    <div className="border-t border-gray-200 p-3 space-y-4">
-      {/* USER */}
-      <div
-        className={[
-          "flex items-center",
-          isCollapsed ? "justify-center" : "gap-2",
-        ].join(" ")}
-      >
+    <div className="border-t border-[#e5eaf2] p-3 space-y-3">
+      {/* User profile */}
+      <div className={["flex items-center", isCollapsed ? "justify-center" : "gap-2"].join(" ")}>
         <div className="h-8 w-8 shrink-0">
           <img
             src={user?.profileImageUrl}
             alt={user?.prenom}
-            className="h-8 w-8 rounded-full object-cover"
+            className="h-8 w-8 rounded-full object-cover ring-2 ring-[#e5eaf2]"
           />
         </div>
-
         {!isCollapsed && (
-          <div className="text-xs leading-tight">
-            <p className="font-medium">
+          <div className="text-xs leading-tight min-w-0">
+            <p className="font-semibold text-[#071f3d] truncate">
               {user?.prenom} {user?.nom}
             </p>
-            <p className="text-gray-500 truncate max-w-[120px]">
-              {user?.email}
-            </p>
+            <p className="text-[#8a96ad] truncate max-w-[120px]">{user?.email}</p>
           </div>
         )}
       </div>
 
-      {/* ACTIONS */}
-      <div
-        className={[
-          "flex items-center",
-          isCollapsed ? "flex-col gap-2" : "justify-between gap-2",
-        ].join(" ")}
-      >
-        {/* DARK MODE */}
+      {/* Actions */}
+      <div className={["flex items-center", isCollapsed ? "flex-col gap-2" : "justify-between"].join(" ")}>
+        {/* Dark mode toggle */}
         <button
+          type="button"
           onClick={onToggleDarkMode}
+          aria-label={isDarkMode ? "Activer le mode clair" : "Activer le mode sombre"}
           className={[
-            "flex h-9 items-center rounded-md text-xs cursor-pointer hover:bg-gray-100 transition",
-            isCollapsed ? "justify-center w-9" : "gap-2 px-3",
+            "flex h-8 items-center rounded-md text-[11px] font-medium cursor-pointer transition-all duration-200",
+            isCollapsed ? "justify-center w-8" : "gap-1.5 px-2",
+            "text-[#5f6680] hover:bg-[#f7f9fc] hover:text-[#071f3d]",
           ].join(" ")}
         >
-          {isDarkMode ? <Sun size={16} /> : <Moon size={14} />}
-          {!isCollapsed && "Mode"}
+          {isDarkMode ? (
+            <Sun size={14} className="text-[#9d0208]" />
+          ) : (
+            <Moon size={14} />
+          )}
+          {!isCollapsed && (isDarkMode ? "Mode clair" : "Mode sombre")}
         </button>
 
-        {/* LOGOUT */}
+        {/* Logout */}
         <button
-          onClick={() => logout()}
+          type="button"
+          onClick={() => void logout()}
           className={[
-            "flex h-9 items-center rounded-md text-xs cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 transition",
-            isCollapsed ? "justify-center w-9" : "gap-2 px-3",
+            "flex h-8 items-center rounded-md text-[11px] font-medium cursor-pointer transition-all duration-200",
+            "text-[#9d0208] hover:bg-[#f5e6e7]",
+            isCollapsed ? "justify-center w-8" : "gap-1.5 px-2",
           ].join(" ")}
         >
           <LogOut size={14} />

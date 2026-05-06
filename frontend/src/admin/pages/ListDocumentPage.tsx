@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Snackbar from "../components/Snackbar";
 import DocumentsFilterBar from "../components/list-documents/DocumentsFilterBar";
 import DocumentsPageHeader from "../components/list-documents/DocumentsPageHeader";
 import DocumentsStatusSummary from "../components/list-documents/DocumentsStatusSummary";
@@ -116,8 +117,9 @@ export default function ListDocumentPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [actionMessage, setActionMessage] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", tone: "info" as "success" | "error" | "info" });
+  const closeSnackbar = useCallback(() => setSnackbar((s) => ({ ...s, open: false })), []);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
   const [previewDocument, setPreviewDocument] = useState<DocumentPreview | null>(null);
   const [previewError, setPreviewError] = useState("");
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -129,7 +131,7 @@ export default function ListDocumentPage() {
 
     async function loadDocuments() {
       setIsLoading(true);
-      setError("");
+      closeSnackbar();
 
       try {
         const response = await fetchDocuments({
@@ -147,11 +149,7 @@ export default function ListDocumentPage() {
         if (!cancelled) {
           setDocuments([]);
           setTotal(0);
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Erreur pendant le chargement des documents.",
-          );
+          setSnackbar({ open: true, tone: "error", message: loadError instanceof Error ? loadError.message : "Erreur pendant le chargement des documents." });
         }
       } finally {
         if (!cancelled) {
@@ -187,15 +185,18 @@ export default function ListDocumentPage() {
   };
 
   const handleClosePreview = () => {
+    setSelectedDocument(null);
     setPreviewDocument(null);
     setPreviewError("");
     setIsPreviewLoading(false);
   };
 
   const handleConsultDocument = async (document: DocumentItem) => {
+    setSelectedDocument(document);
     const normalizedType = document.fileType.toLowerCase();
+
     if (normalizedType.includes("pdf")) {
-      window.open(`${apiBaseUrl}/api/v1/documents/${document.id}/file`, "_blank", "noopener,noreferrer");
+      setPreviewDocument(null);
       return;
     }
 
@@ -229,7 +230,7 @@ export default function ListDocumentPage() {
 
   async function handleDeleteFromIndex(document: DocumentItem) {
     try {
-      setError("");
+      closeSnackbar();
       const result = await deleteDocumentFromIndex({
         apiBaseUrl,
         documentId: document.id,
@@ -239,19 +240,15 @@ export default function ListDocumentPage() {
           current.map((item) => (item.id === document.id ? result.data ?? item : item)),
         );
       }
-      setActionMessage(result.message);
+      setSnackbar({ open: true, tone: "success", message: result.message });
     } catch (actionError) {
-      setError(
-        actionError instanceof Error
-          ? actionError.message
-          : "Erreur pendant la suppression de l index du document.",
-      );
+      setSnackbar({ open: true, tone: "error", message: actionError instanceof Error ? actionError.message : "Erreur pendant la suppression de l'index du document." });
     }
   }
 
   async function handleReindex(document: DocumentItem) {
     try {
-      setError("");
+      closeSnackbar();
       const result = await reindexDocument({
         apiBaseUrl,
         documentId: document.id,
@@ -261,20 +258,16 @@ export default function ListDocumentPage() {
           current.map((item) => (item.id === document.id ? result.data ?? item : item)),
         );
       }
-      setActionMessage(result.message);
+      setSnackbar({ open: true, tone: "success", message: result.message });
     } catch (actionError) {
-      setError(
-        actionError instanceof Error
-          ? actionError.message
-          : "Erreur pendant la reindexation du document.",
-      );
+      setSnackbar({ open: true, tone: "error", message: actionError instanceof Error ? actionError.message : "Erreur pendant la réindexation du document." });
     }
   }
 
   function handleExportPdf() {
   try {
-    setError("");
-    setActionMessage("");
+    closeSnackbar();
+    closeSnackbar();
     setIsExportingPdf(true);
 
     const rows = documents.map((document) => ({
@@ -309,92 +302,25 @@ export default function ListDocumentPage() {
       border: [229, 229, 229] as [number, number, number],
     };
 
-    const categoryLabel =
-      category === "all" ? "Toutes les catégories" : category;
-
-    const statusLabel =
-      status === "all" ? "Tous les statuts" : status;
-
     const drawHeader = (pageNumber: number) => {
       doc.setFillColor(...colors.red);
-      doc.rect(marginLeft, 20, pageWidth - marginLeft - marginRight, 4, "F");
+      doc.rect(marginLeft, 20, pageWidth - marginLeft - marginRight, 3, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setTextColor(...colors.black);
-      doc.text("Export des documents indexés", marginLeft, 50);
+      doc.text("Liste des documents indexés", marginLeft, 46);
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...colors.gray);
-      doc.text(`Page ${pageNumber}`, pageWidth - 72, 50);
-
-      doc.setFontSize(10);
-      doc.setTextColor(...colors.darkGray);
-      doc.text("Rapport de la liste des documents", marginLeft, 68);
-
       doc.setFontSize(8);
       doc.setTextColor(...colors.gray);
-      doc.text(`Généré le ${generatedAt}`, marginLeft, 84);
-
-      const cardY = 104;
-      const cardH = 34;
-
-      const cards = [
-        { label: "Documents", value: String(documents.length), x: marginLeft, w: 100 },
-        { label: "Catégorie", value: categoryLabel, x: marginLeft + 112, w: 150 },
-        { label: "Statut", value: statusLabel, x: marginLeft + 274, w: 120 },
-      ];
-
-      cards.forEach((card) => {
-        doc.setDrawColor(...colors.border);
-        doc.setFillColor(...colors.white);
-        doc.roundedRect(card.x, cardY, card.w, cardH, 4, 4, "FD");
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(...colors.gray);
-        doc.text(card.label, card.x + 8, cardY + 11);
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(...colors.black);
-        const lines = doc.splitTextToSize(card.value, card.w - 16);
-        doc.text(lines.slice(0, 1), card.x + 8, cardY + 24);
-      });
-
-      const searchY = 148;
-      const searchH = 34;
-
-      doc.setDrawColor(...colors.border);
-      doc.setFillColor(...colors.white);
-      doc.roundedRect(
-        marginLeft,
-        searchY,
-        pageWidth - marginLeft - marginRight,
-        searchH,
-        4,
-        4,
-        "FD",
-      );
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(...colors.gray);
-      doc.text("Recherche", marginLeft + 10, searchY + 11);
-
-      doc.setFontSize(8);
-      doc.setTextColor(...colors.black);
-      const searchLines = doc.splitTextToSize(
-        search.trim() || "Aucune recherche",
-        pageWidth - marginLeft - marginRight - 20,
-      );
-      doc.text(searchLines.slice(0, 1), marginLeft + 10, searchY + 24);
+      doc.text(`Généré le ${generatedAt}`, marginLeft, 60);
+      doc.text(`Page ${pageNumber}`, pageWidth - 72, 46);
     };
 
     autoTable(doc, {
-      startY: 198,
-      margin: { left: marginLeft, right: marginRight, top: 198, bottom: 34 },
+      startY: 76,
+      margin: { left: marginLeft, right: marginRight, top: 76, bottom: 34 },
       head: [["Document", "Catégorie", "Statut", "Date", "Type", "Taille"]],
       body:
         rows.length > 0
@@ -474,13 +400,9 @@ export default function ListDocumentPage() {
     });
 
     doc.save(makeFilename("pdf"));
-    setActionMessage("Le rapport PDF a été généré et téléchargé.");
+    setSnackbar({ open: true, tone: "success", message: "Le rapport PDF a été généré et téléchargé." });
   } catch (exportError) {
-    setError(
-      exportError instanceof Error
-        ? exportError.message
-        : "Erreur pendant la génération du PDF.",
-    );
+    setSnackbar({ open: true, tone: "error", message: exportError instanceof Error ? exportError.message : "Erreur pendant la génération du PDF." });
   } finally {
     setIsExportingPdf(false);
   }
@@ -488,8 +410,8 @@ export default function ListDocumentPage() {
 
 function handleExportExcel() {
   try {
-    setError("");
-    setActionMessage("");
+    closeSnackbar();
+    closeSnackbar();
     setIsExportingExcel(true);
 
     const rows = documents.map((document) => ({
@@ -506,13 +428,9 @@ function handleExportExcel() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Documents");
 
     XLSX.writeFile(workbook, makeFilename("xlsx"));
-    setActionMessage("Le fichier Excel a été généré et téléchargé.");
+    setSnackbar({ open: true, tone: "success", message: "Le fichier Excel a été généré et téléchargé." });
   } catch (exportError) {
-    setError(
-      exportError instanceof Error
-        ? exportError.message
-        : "Erreur pendant la génération du fichier Excel.",
-    );
+    setSnackbar({ open: true, tone: "error", message: exportError instanceof Error ? exportError.message : "Erreur pendant la génération du fichier Excel." });
   } finally {
     setIsExportingExcel(false);
   }
@@ -548,17 +466,6 @@ function handleExportExcel() {
                 failed={failedCount}
               />
 
-              {error ? (
-                <div className="rounded border border-[#f3c6cc] bg-[#f5e6e7] px-2 py-2.5 text-sm text-[#9d0208]">
-                  {error}
-                </div>
-              ) : null}
-
-              {actionMessage ? (
-                <div className="rounded border border-[#d9ebe1] bg-[#f4fbf7] px-2 py-2.5 text-sm text-[#157347]">
-                  {actionMessage}
-                </div>
-              ) : null}
 
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
                 <div className="min-w-0 flex-1 space-y-3">
@@ -582,17 +489,27 @@ function handleExportExcel() {
                   <DocumentsPagination total={total} />
                 </div>
 
-                {previewDocument ? (
+                {selectedDocument ? (
                   <DocumentPreviewAside
+                    document={selectedDocument}
                     preview={previewDocument}
-                    isLoading={isPreviewLoading}
-                    error={previewError}
+                    isPreviewLoading={isPreviewLoading}
+                    previewError={previewError}
+                    apiBaseUrl={apiBaseUrl}
                     onClose={handleClosePreview}
+                    onReindex={() => handleReindex(selectedDocument)}
+                    onDeleteFromIndex={() => handleDeleteFromIndex(selectedDocument)}
                   />
                 ) : null}
               </div>
             </div>
           </section>
+      <Snackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        tone={snackbar.tone}
+        onClose={closeSnackbar}
+      />
     </>
   );
 }

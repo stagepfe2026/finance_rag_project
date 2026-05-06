@@ -25,14 +25,13 @@ export default function DocumentsTable({ documents, busyDocumentId, onReindex }:
               <th className="whitespace-nowrap px-4 py-2.5 text-center">Signalements</th>
               <th className="whitespace-nowrap px-4 py-2.5 text-center">Likes</th>
               <th className="whitespace-nowrap px-4 py-2.5 text-center">Dislikes</th>
-              <th className="whitespace-nowrap px-4 py-2.5">Taux de Signalements</th>
               <th className="whitespace-nowrap px-4 py-2.5 text-right">Mesure</th>
             </tr>
           </thead>
           <tbody>
             {documents.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-[#8a96ad]">
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-[#8a96ad]">
                   Aucun avis chat pour le moment.
                 </td>
               </tr>
