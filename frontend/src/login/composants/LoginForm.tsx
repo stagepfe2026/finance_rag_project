@@ -1,28 +1,36 @@
 import { InputField } from "./InputField";
-import { Lock, User } from "lucide-react";
 
 export function LoginForm() {
   return (
-    <div className="mt-8 flex w-full max-w-[372px] flex-col items-center">
-  
-      <div className="w-full space-y-[12px]">
-        <InputField type="text" placeholder="Nom d'utilisateur" icon={<User size={16} strokeWidth={1.9} />} />
-        <InputField type="password" placeholder="Mot de passe" icon={<Lock size={16} strokeWidth={1.9} />} />
+    <div className="flex w-full max-w-[560px] flex-col">
+      <p className="text-[13px] font-semibold uppercase tracking-[0.44em] text-[#b3121b]">
+        Portail officiel
+      </p>
+      <h1 className="mt-4 font-serif text-[40px] leading-none text-[#061f3d]">Connexion</h1>
+      <p className="mt-4 text-[16px] text-[#8a94a5]">
+        Identifiez-vous pour acceder a votre espace securise.
+      </p>
+
+      <div className="mt-12 w-full space-y-7">
+        <InputField
+          type="email"
+          label="Adresse electronique"
+          placeholder="prenom.nom@finances.gov.tn"
+        />
+        <InputField
+          type="password"
+          label="Mot de passe"
+          placeholder="Votre mot de passe"
+        />
       </div>
 
-      <a href="#" className="mt-4 text-[12px] font-medium text-[#e53935] transition hover:opacity-80">
-        Mot de passe oublie ?
-      </a>
-
       <button
-        className="mt-5 h-[37px] w-full rounded-[6px] text-[14px] font-semibold text-white transition hover:opacity-95"
-        style={{
-          background: "linear-gradient(90deg, #ba1d29 0%, #e22635 100%)",
-          boxShadow: "0 8px 22px rgba(198,40,40,0.22)",
-        }}
+        className="mt-10 h-[54px] w-full rounded-[6px] bg-[#09284a] text-[14px] font-semibold uppercase tracking-[0.35em] text-white transition hover:bg-[#061f3d]"
       >
         Se connecter
       </button>
+
+      <div className="mt-9 h-px w-full bg-[#e6ebf1]" />
     </div>
   );
 }

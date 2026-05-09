@@ -31,6 +31,8 @@ export type ChatSource = {
   final_score: number;
 };
 
+export type ChatMessageStatus = "generating" | "completed" | "failed";
+
 export type ChatMessage = {
   _id: string;
   conversationId: string;
@@ -41,6 +43,7 @@ export type ChatMessage = {
   feedback?: ChatFeedback | null;
   feedbackAt?: string | null;
   pending?: boolean;
+  status?: ChatMessageStatus;
 };
 
 export type AskChatResult = {

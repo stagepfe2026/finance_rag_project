@@ -134,6 +134,13 @@ class DocumentIndexService:
                 self.document_relation_service.apply_relation_after_index(stored_document)
                 if self.notification_service is not None:
                     await self.notification_service.notify_document_indexed(stored_document)
+                    # Notify users who favorited a document that this new doc replaces/supersedes
+                    if related_document_id and relation_type in ("replaces", "supersedes", "abrogates"):
+                        deprecated = self.document_repository.get_by_id(related_document_id)
+                        if deprecated is not None:
+                            await self.notification_service.notify_document_deprecated_for_favorites(
+                                deprecated, stored_document.title
+                            )
 
             return {
                 "document": (
@@ -149,6 +156,11 @@ class DocumentIndexService:
             }
         except Exception as exc:
             self.document_repository.mark_failed(document.id, str(exc))
+            if self.notification_service is not None:
+                try:
+                    await self.notification_service.notify_indexation_failed(title, str(exc)[:200])
+                except Exception:
+                    pass
             raise
 
     def list_documents(

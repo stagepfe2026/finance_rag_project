@@ -148,6 +148,37 @@ class ChatRepository:
         raw = self.messages.find_one({"_id": ObjectId(message_id), "role": "assistant"})
         return ChatMessageModel.from_mongo(raw) if raw else None
 
+    def update_assistant_message(
+        self,
+        message_id: str,
+        *,
+        content: str,
+        sources: list[dict],
+        status: str,
+    ) -> ChatMessageModel | None:
+        if not ObjectId.is_valid(message_id):
+            return None
+        self.messages.update_one(
+            {"_id": ObjectId(message_id)},
+            {"$set": {"content": content, "sources": sources, "status": status}},
+        )
+        raw = self.messages.find_one({"_id": ObjectId(message_id)})
+        return ChatMessageModel.from_mongo(raw) if raw else None
+
+    def list_generating_messages_for_user(self, user_id: str) -> list[ChatMessageModel]:
+        conv_ids = [
+            str(doc["_id"])
+            for doc in self.conversations.find(
+                {"userId": user_id, "deletedAt": None}, {"_id": 1}
+            )
+        ]
+        if not conv_ids:
+            return []
+        cursor = self.messages.find(
+            {"conversationId": {"$in": conv_ids}, "role": "assistant", "status": "generating"}
+        )
+        return [ChatMessageModel.from_mongo(raw) for raw in cursor]
+
     def list_rated_assistant_messages(self) -> list[ChatMessageModel]:
         cursor = self.messages.find({"role": "assistant", "feedback": {"$in": ["like", "dislike"]}}).sort(
             "feedbackAt",

@@ -253,7 +253,7 @@ class ChatService:
             "recentDislikes": recent_dislikes[:8],
         }
 
-    def ask(
+    def ask_pending(
         self,
         *,
         user_id: str,
@@ -262,6 +262,7 @@ class ChatService:
         response_mode: Literal["short", "detailed"] = "detailed",
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> dict[str, Any]:
+        """Save user + assistant (generating) messages and return immediately."""
         normalized_content = content.strip()
         if len(normalized_content) < 1:
             raise ValueError("EMPTY_MESSAGE")
@@ -287,22 +288,17 @@ class ChatService:
                 role="user",
                 content=normalized_content,
                 created_at=datetime.now(UTC),
+                status="completed",
             )
         )
 
-        rag_result = self._ask_assistant(
-            normalized_content,
-            response_mode=response_mode,
-            query_mode=query_mode,
-        )
-        assistant_sources = self._normalize_sources(rag_result.get("sources", []))
         assistant_message = self.chat_repo.create_message(
             ChatMessageModel(
                 conversation_id=conversation.id or "",
                 role="assistant",
-                content=str(rag_result.get("answer", "")),
+                content="",
                 created_at=datetime.now(UTC),
-                sources=assistant_sources,
+                status="generating",
             )
         )
 
@@ -315,9 +311,41 @@ class ChatService:
             "conversation": self._serialize_conversation(updated_conversation or conversation),
             "userMessage": self._serialize_message(user_message),
             "assistantMessage": self._serialize_message(assistant_message),
-            "sources": assistant_sources,
-            "queryMode": str(rag_result.get("query_mode", query_mode)),
+            "sources": [],
+            "queryMode": query_mode,
         }
+
+    def run_rag_background(
+        self,
+        *,
+        assistant_message_id: str,
+        content: str,
+        response_mode: Literal["short", "detailed"] = "detailed",
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
+    ) -> None:
+        """Run RAG in a background thread and update the assistant message."""
+        try:
+            rag_result = self._ask_assistant(content, response_mode=response_mode, query_mode=query_mode)
+            assistant_sources = self._normalize_sources(rag_result.get("sources", []))
+            self.chat_repo.update_assistant_message(
+                assistant_message_id,
+                content=str(rag_result.get("answer", "")),
+                sources=assistant_sources,
+                status="completed",
+            )
+        except Exception:
+            self.logger.exception("Background RAG task failed for message %s.", assistant_message_id)
+            self.chat_repo.update_assistant_message(
+                assistant_message_id,
+                content="La generation de la reponse a echoue. Veuillez reessayer.",
+                sources=[],
+                status="failed",
+            )
+
+    def get_generating_messages(self, user_id: str) -> list[dict[str, Any]]:
+        """Return all assistant messages currently being generated for a user."""
+        messages = self.chat_repo.list_generating_messages_for_user(user_id)
+        return [self._serialize_message(m) for m in messages]
 
     def _ask_assistant(
         self,
@@ -419,4 +447,5 @@ class ChatService:
             "sources": message.sources,
             "feedback": message.feedback,
             "feedbackAt": message.feedback_at.isoformat() if message.feedback_at else None,
+            "status": message.status,
         }

@@ -48,7 +48,8 @@ function highlightText(content: string, query: string): ReactNode {
 
 export default function MessageBubble({ message, searchQuery = "", onFeedback }: MessageBubbleProps) {
   const isUser = message.role === "user";
-  const isPendingAssistant = message.role === "assistant" && message.pending;
+  const isPendingAssistant =
+    message.role === "assistant" && (message.pending || message.status === "generating");
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>

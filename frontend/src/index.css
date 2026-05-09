@@ -24,45 +24,70 @@ body {
   transition: background-color 300ms ease, color 300ms ease;
 }
 
+/* ── User Dark Mode: Color Tokens ─────────────────────────────────────────── */
+
 body.user-dark-theme {
-  background: #0f172a;
-  color: #e2e8f0;
+  --udm-bg:             #0f172a;
+  --udm-surface:        #111827;
+  --udm-surface-raised: #172036;
+  --udm-surface-over:   #1e293b;
+  --udm-border:         #1e2d42;
+  --udm-border-strong:  #374151;
+  --udm-text-primary:   #f3f4f6;
+  --udm-text-secondary: #9ca3af;
+  --udm-text-muted:     #64748b;
+  background: var(--udm-bg);
+  color: var(--udm-text-primary);
 }
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
 
 body.user-dark-theme .user-theme-root {
-  background: #0f172a !important;
-  color: #e2e8f0 !important;
-}
-
-body.user-dark-theme .user-theme-root header {
-  background: #111c34 !important;
-  border-color: #23304a !important;
+  background: var(--udm-bg) !important;
+  color: var(--udm-text-primary) !important;
 }
 
 body.user-dark-theme .user-theme-root main,
 body.user-dark-theme .user-theme-root [class*="bg-[#f8f4f3]"],
 body.user-dark-theme .user-theme-root [class*="bg-[#fcf8f7]"],
-body.user-dark-theme .user-theme-root [class*="bg-slate-50"] {
-  background: #0f172a !important;
+body.user-dark-theme .user-theme-root [class*="bg-slate-50"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f7f8"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f8fa"] {
+  background: var(--udm-bg) !important;
 }
 
+/* ── Cards & Surfaces ──────────────────────────────────────────────────────── */
+
 body.user-dark-theme .user-theme-root section,
-body.user-dark-theme .user-theme-root aside,
 body.user-dark-theme .user-theme-root article,
+body.user-dark-theme .user-theme-root aside,
 body.user-dark-theme .user-theme-root form,
-body.user-dark-theme .user-theme-root [class*="bg-white"] {
-  background-color: #111827 !important;
-  border-color: #243041 !important;
-  color: #e2e8f0 !important;
+body.user-dark-theme .user-theme-root [class*="bg-white"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fff"] {
+  background-color: var(--udm-surface) !important;
+  border-color: var(--udm-border) !important;
 }
+
+body.user-dark-theme .user-theme-root [class*="bg-slate-100"],
+body.user-dark-theme .user-theme-root [class*="bg-[#faf"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fbf"],
+body.user-dark-theme .user-theme-root [class*="bg-[#fcf"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f4f"] {
+  background-color: var(--udm-surface-raised) !important;
+}
+
+/* ── Borders ───────────────────────────────────────────────────────────────── */
 
 body.user-dark-theme .user-theme-root [class*="border-[#"],
 body.user-dark-theme .user-theme-root [class*="border-slate-"],
 body.user-dark-theme .user-theme-root [class*="border-rose-"],
 body.user-dark-theme .user-theme-root [class*="border-emerald-"],
-body.user-dark-theme .user-theme-root [class*="border-orange-"] {
-  border-color: #243041 !important;
+body.user-dark-theme .user-theme-root [class*="border-orange-"],
+body.user-dark-theme .user-theme-root [class*="border-amber-"] {
+  border-color: var(--udm-border) !important;
 }
+
+/* ── Typography ────────────────────────────────────────────────────────────── */
 
 body.user-dark-theme .user-theme-root h1,
 body.user-dark-theme .user-theme-root h2,
@@ -74,71 +99,194 @@ body.user-dark-theme .user-theme-root p,
 body.user-dark-theme .user-theme-root label,
 body.user-dark-theme .user-theme-root span,
 body.user-dark-theme .user-theme-root div,
+body.user-dark-theme .user-theme-root li,
 body.user-dark-theme .user-theme-root th,
 body.user-dark-theme .user-theme-root td {
   color: inherit;
 }
 
+body.user-dark-theme .user-theme-root [class*="text-[#221f1e]"],
+body.user-dark-theme .user-theme-root [class*="text-[#273043]"],
+body.user-dark-theme .user-theme-root [class*="text-[#111"],
+body.user-dark-theme .user-theme-root [class*="text-slate-900"],
+body.user-dark-theme .user-theme-root [class*="text-slate-800"],
+body.user-dark-theme .user-theme-root [class*="text-slate-700"] {
+  color: var(--udm-text-primary) !important;
+}
+
+body.user-dark-theme .user-theme-root [class*="text-slate-600"],
 body.user-dark-theme .user-theme-root [class*="text-slate-500"],
 body.user-dark-theme .user-theme-root [class*="text-slate-400"],
 body.user-dark-theme .user-theme-root [class*="text-[#7d"],
 body.user-dark-theme .user-theme-root [class*="text-[#8"],
 body.user-dark-theme .user-theme-root [class*="text-[#9"] {
-  color: #94a3b8 !important;
+  color: var(--udm-text-secondary) !important;
 }
 
-body.user-dark-theme .user-theme-root [class*="text-slate-700"],
-body.user-dark-theme .user-theme-root [class*="text-slate-800"],
-body.user-dark-theme .user-theme-root [class*="text-slate-900"],
-body.user-dark-theme .user-theme-root [class*="text-[#221f1e]"],
-body.user-dark-theme .user-theme-root [class*="text-[#273043]"] {
-  color: #e2e8f0 !important;
-}
+/* ── Forms & Inputs ────────────────────────────────────────────────────────── */
 
 body.user-dark-theme .user-theme-root input,
 body.user-dark-theme .user-theme-root textarea,
 body.user-dark-theme .user-theme-root select {
-  background: #0f172a !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
+  background: var(--udm-surface) !important;
+  color: var(--udm-text-primary) !important;
+  border-color: var(--udm-border-strong) !important;
+}
+
+body.user-dark-theme .user-theme-root input:focus,
+body.user-dark-theme .user-theme-root textarea:focus,
+body.user-dark-theme .user-theme-root select:focus {
+  border-color: #60a5fa !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15) !important;
 }
 
 body.user-dark-theme .user-theme-root input::placeholder,
 body.user-dark-theme .user-theme-root textarea::placeholder {
-  color: #64748b !important;
+  color: var(--udm-text-muted) !important;
 }
 
-body.user-dark-theme .user-theme-root button:not([class*="bg-[#273043]"]):not([class*="bg-[#9d0208]"]):not([class*="from-[#f1b300]"]):not([class*="from-[#273043]"]) {
-  color: #e2e8f0;
-}
-
-body.user-dark-theme .user-theme-root [class*="bg-[#faf"],
-body.user-dark-theme .user-theme-root [class*="bg-[#fbf"],
-body.user-dark-theme .user-theme-root [class*="bg-[#fcf"],
-body.user-dark-theme .user-theme-root [class*="bg-[#fff"],
-body.user-dark-theme .user-theme-root [class*="bg-slate-100"] {
-  background-color: #172036 !important;
-}
-
-body.user-dark-theme .user-theme-root [class*="shadow"] {
-  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35) !important;
-}
+/* ── Tables ────────────────────────────────────────────────────────────────── */
 
 body.user-dark-theme .user-theme-root table,
 body.user-dark-theme .user-theme-root tr,
 body.user-dark-theme .user-theme-root tbody,
 body.user-dark-theme .user-theme-root thead {
-  border-color: #243041 !important;
+  border-color: var(--udm-border) !important;
 }
+
+body.user-dark-theme .user-theme-root thead tr {
+  background-color: var(--udm-surface-raised) !important;
+}
+
+body.user-dark-theme .user-theme-root tbody tr:hover {
+  background-color: var(--udm-surface-raised) !important;
+}
+
+/* ── Shadows ───────────────────────────────────────────────────────────────── */
+
+body.user-dark-theme .user-theme-root [class*="shadow"] {
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.4) !important;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+
+body.user-dark-theme .user-theme-root button:not([class*="bg-[#273043]"]):not([class*="bg-[#9d0208]"]):not([class*="bg-[#071f3d]"]):not([class*="from-[#f1b300]"]):not([class*="from-[#273043]"]) {
+  color: var(--udm-text-primary);
+}
+
+/* ── Links ─────────────────────────────────────────────────────────────────── */
 
 body.user-dark-theme .user-theme-root a {
-  color: #f8fafc;
+  color: var(--udm-text-primary);
 }
 
+/* ── Status Badges ─────────────────────────────────────────────────────────── */
+
 body.user-dark-theme .user-theme-root .bg-rose-50,
+body.user-dark-theme .user-theme-root .bg-red-50,
+body.user-dark-theme .user-theme-root [class*="bg-[#fdf2f3]"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f5e6e7]"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f5e8e8]"] {
+  background-color: rgba(157, 2, 8, 0.12) !important;
+  border-color: rgba(157, 2, 8, 0.3) !important;
+}
+
 body.user-dark-theme .user-theme-root .bg-emerald-50,
-body.user-dark-theme .user-theme-root .bg-orange-50 {
-  background-color: #172036 !important;
+body.user-dark-theme .user-theme-root .bg-green-50,
+body.user-dark-theme .user-theme-root [class*="bg-[#d9ebe1]"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f4fbf7]"] {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+body.user-dark-theme .user-theme-root .bg-orange-50,
+body.user-dark-theme .user-theme-root .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+/* ── Modals & Dialogs ──────────────────────────────────────────────────────── */
+
+body.user-dark-theme .user-theme-root [role="dialog"],
+body.user-dark-theme .user-theme-root dialog {
+  background: var(--udm-surface) !important;
+  border-color: var(--udm-border) !important;
+  color: var(--udm-text-primary) !important;
+}
+
+/* ── Dropdown Menus ────────────────────────────────────────────────────────── */
+
+body.user-dark-theme .user-theme-root [role="menu"],
+body.user-dark-theme .user-theme-root [role="listbox"] {
+  background: var(--udm-surface-over) !important;
+  border-color: var(--udm-border) !important;
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.5) !important;
+}
+
+/* ── Extended Surface Raised (catches bg-[#f3f4f6], bg-[#f3f5ff], bg-[#f5f6fb]) */
+
+body.user-dark-theme .user-theme-root [class*="bg-[#f3f"],
+body.user-dark-theme .user-theme-root [class*="bg-[#f5f"] {
+  background-color: var(--udm-surface-raised) !important;
+}
+
+/* ── Extended Primary Text (dark browns, deep navies like #2b2321, #2f2725, #423633) */
+
+body.user-dark-theme .user-theme-root [class*="text-[#2b"],
+body.user-dark-theme .user-theme-root [class*="text-[#2f"],
+body.user-dark-theme .user-theme-root [class*="text-[#3"],
+body.user-dark-theme .user-theme-root [class*="text-[#4"] {
+  color: var(--udm-text-primary) !important;
+}
+
+/* ── Extended Secondary Text (muted blues like #5f6d93, #6f7b9d) */
+
+body.user-dark-theme .user-theme-root [class*="text-[#5"],
+body.user-dark-theme .user-theme-root [class*="text-[#6"] {
+  color: var(--udm-text-secondary) !important;
+}
+
+/* ── Active Conversation Item (pinkish gradient → dark tinted overlay) */
+
+body.user-dark-theme .user-theme-root [class*="rgba(255,240,241"] {
+  background: rgba(220, 38, 38, 0.1) !important;
+}
+
+/* ── ApexCharts in User Dark Mode ──────────────────────────────────────────── */
+
+body.user-dark-theme .apexcharts-canvas {
+  background: #111827 !important;
+}
+
+body.user-dark-theme .apexcharts-text tspan,
+body.user-dark-theme .apexcharts-xaxis-label tspan,
+body.user-dark-theme .apexcharts-yaxis-label tspan {
+  fill: #94a3b8 !important;
+}
+
+body.user-dark-theme .apexcharts-legend-text {
+  color: #cbd5e1 !important;
+}
+
+body.user-dark-theme .apexcharts-gridline {
+  stroke: #1e2d42 !important;
+}
+
+body.user-dark-theme .apexcharts-tooltip {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.user-dark-theme .apexcharts-tooltip-title {
+  background: #243041 !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.user-dark-theme .apexcharts-canvas svg {
+  background: transparent !important;
 }
 
 .admin-theme-root {

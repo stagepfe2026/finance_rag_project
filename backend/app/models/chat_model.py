@@ -57,6 +57,7 @@ class ChatMessageModel:
     feedback: str | None = None
     feedback_at: datetime | None = None
     feedback_user_id: str | None = None
+    status: str = "completed"  # "generating" | "completed" | "failed"
     id: str | None = None
 
     @classmethod
@@ -73,6 +74,7 @@ class ChatMessageModel:
             feedback=str(raw.get("feedback")) if raw.get("feedback") in {"like", "dislike"} else None,
             feedback_at=_as_utc_datetime(raw.get("feedbackAt")) if raw.get("feedbackAt") else None,
             feedback_user_id=str(raw.get("feedbackUserId")) if raw.get("feedbackUserId") else None,
+            status=str(raw.get("status", "completed")),  # default for old messages
         )
 
     def to_mongo_insert(self) -> dict[str, Any]:
@@ -85,4 +87,5 @@ class ChatMessageModel:
             "feedback": self.feedback,
             "feedbackAt": self.feedback_at,
             "feedbackUserId": self.feedback_user_id,
+            "status": self.status,
         }

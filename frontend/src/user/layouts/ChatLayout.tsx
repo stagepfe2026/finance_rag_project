@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 
 import type { ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../../models/chat";
 import {
@@ -13,11 +13,14 @@ import {
   restoreConversation,
   submitChatFeedback,
 } from "../../services/chat.service";
+import type { UserLayoutContextValue } from "./UserLayout";
 import ChatMain from "../components/chat/ChatMain";
 import ArchivedConversationsModal from "../components/chat/ArchivedConversationsModal";
 import ConversationActionModal from "../components/chat/ConversationActionModal";
 import ChatSidebar from "../components/chat/ChatSidebar";
 import Snackbar from "../components/chat/Snackbar";
+
+const POLL_INTERVAL_MS = 2500;
 
 function upsertConversation(list: Conversation[], nextConversation: Conversation) {
   const remaining = list.filter((item) => item._id !== nextConversation._id);
@@ -71,6 +74,7 @@ type ConversationModalState = {
 };
 
 export default function ChatLayout() {
+  const { registerGeneratingMessage } = useOutletContext<UserLayoutContextValue>();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialActionHandledRef = useRef(false);
 
@@ -93,18 +97,17 @@ export default function ChatLayout() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [restoringConversationId, setRestoringConversationId] = useState<string | null>(null);
 
+  // Stable ref to the current selected conversation id for use in async callbacks
+  const selectedConversationIdRef = useRef(selectedConversationId);
+  useEffect(() => { selectedConversationIdRef.current = selectedConversationId; }, [selectedConversationId]);
+
   useEffect(() => {
-    if (!snackbar.open) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setSnackbar((current) => ({ ...current, open: false }));
-    }, 3000);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
+    if (!snackbar.open) return;
+    const timer = window.setTimeout(
+      () => setSnackbar((current) => ({ ...current, open: false })),
+      3000,
+    );
+    return () => window.clearTimeout(timer);
   }, [snackbar.open, snackbar.message]);
 
   function showSnackbar(message: string, tone: SnackbarState["tone"] = "info") {
@@ -119,13 +122,13 @@ export default function ChatLayout() {
     setConversationModal({ mode: null, conversation: null, busy: false });
   }
 
+  // ── Load conversations on mount ─────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     async function loadConversations() {
       setIsLoadingConversations(true);
       setPageError("");
-
       try {
         const data = await fetchConversations();
         if (!cancelled) {
@@ -137,22 +140,17 @@ export default function ChatLayout() {
           setPageError(error instanceof Error ? error.message : "Erreur pendant le chargement des conversations.");
         }
       } finally {
-        if (!cancelled) {
-          setIsLoadingConversations(false);
-        }
+        if (!cancelled) setIsLoadingConversations(false);
       }
     }
 
     void loadConversations();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
+  // ── Handle ?new=1 / ?conversationId= query params ──────────────────────────
   useEffect(() => {
-    if (isLoadingConversations || initialActionHandledRef.current) {
-      return;
-    }
+    if (isLoadingConversations || initialActionHandledRef.current) return;
 
     const requestedConversationId = searchParams.get("conversationId");
     const wantsNewConversation = searchParams.get("new") === "1";
@@ -169,7 +167,6 @@ export default function ChatLayout() {
     }
 
     initialActionHandledRef.current = true;
-
     void (async () => {
       try {
         const conversation = await createConversation();
@@ -186,6 +183,7 @@ export default function ChatLayout() {
     })();
   }, [conversations, isLoadingConversations, searchParams, setSearchParams]);
 
+  // ── Load messages when selected conversation changes ───────────────────────
   useEffect(() => {
     if (!selectedConversationId) {
       setMessages([]);
@@ -198,42 +196,67 @@ export default function ChatLayout() {
     async function loadMessages() {
       setIsLoadingMessages(true);
       setPageError("");
-
       try {
         const data = await fetchConversationMessages(conversationId);
-        if (!cancelled) {
-          setMessages(data);
-        }
+        if (!cancelled) setMessages(data);
       } catch (error) {
         if (!cancelled) {
           setPageError(error instanceof Error ? error.message : "Erreur pendant le chargement des messages.");
         }
       } finally {
-        if (!cancelled) {
-          setIsLoadingMessages(false);
-        }
+        if (!cancelled) setIsLoadingMessages(false);
       }
     }
 
     void loadMessages();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedConversationId]);
 
+  // ── Local polling: refresh messages while any are generating ───────────────
+  const hasGenerating = messages.some(
+    (m) => m.role === "assistant" && (m.pending || m.status === "generating"),
+  );
+  useEffect(() => {
+    if (!hasGenerating || !selectedConversationId) return;
+
+    const conversationId = selectedConversationId;
+    let cancelled = false;
+
+    const timer = setInterval(async () => {
+      if (cancelled) return;
+      // Only poll the conversation the user is currently viewing
+      if (selectedConversationIdRef.current !== conversationId) {
+        clearInterval(timer);
+        return;
+      }
+      try {
+        const fresh = await fetchConversationMessages(conversationId);
+        if (!cancelled && selectedConversationIdRef.current === conversationId) {
+          setMessages(fresh);
+        }
+      } catch {
+        // silent
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [hasGenerating, selectedConversationId]);
+
+  // ── Derived state ───────────────────────────────────────────────────────────
   const filteredConversations = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) {
-      return conversations;
-    }
-
-    return conversations.filter((conversation) => conversation.summary.toLowerCase().includes(keyword));
+    if (!keyword) return conversations;
+    return conversations.filter((c) => c.summary.toLowerCase().includes(keyword));
   }, [conversations, search]);
 
-  const activeConversations = filteredConversations.filter((conversation) => !conversation.isArchived);
-  const archivedConversations = conversations.filter((conversation) => conversation.isArchived);
+  const activeConversations = filteredConversations.filter((c) => !c.isArchived);
+  const archivedConversations = conversations.filter((c) => c.isArchived);
   const selectedConversation = conversations.find((item) => item._id === selectedConversationId) ?? null;
 
+  // ── Handlers ────────────────────────────────────────────────────────────────
   async function handleCreateConversation() {
     try {
       setPageError("");
@@ -244,7 +267,7 @@ export default function ChatLayout() {
       setSearchParams({ conversationId: conversation._id }, { replace: true });
       showSnackbar("Conversation creee avec succes.", "success");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Impossible de creer une conversation.";
+      const message = error instanceof Error ? error.message : "Impossible de creer la conversation.";
       setPageError(message);
       showSnackbar(message, "error");
     }
@@ -283,9 +306,7 @@ export default function ChatLayout() {
   async function handleConversationModalConfirm(payload?: { summary: string }) {
     const conversation = conversationModal.conversation;
     const mode = conversationModal.mode;
-    if (!conversation || !mode) {
-      return;
-    }
+    if (!conversation || !mode) return;
 
     try {
       setConversationModal((current) => ({ ...current, busy: true }));
@@ -309,9 +330,7 @@ export default function ChatLayout() {
           const nextConversations = conversations.map((item) => (item._id === updated._id ? updated : item));
           const nextSelectedId = getNextSelectedConversationId(nextConversations, updated._id, selectedConversationId);
           setSelectedConversationId(nextSelectedId);
-          if (nextSelectedId) {
-            setSearchParams({ conversationId: nextSelectedId }, { replace: true });
-          }
+          if (nextSelectedId) setSearchParams({ conversationId: nextSelectedId }, { replace: true });
         }
         showSnackbar("Conversation archivee avec succes.", "success");
       }
@@ -322,12 +341,8 @@ export default function ChatLayout() {
         const nextSelectedId = getNextSelectedConversationId(remaining, conversation._id, selectedConversationId);
         setConversations(remaining);
         setSelectedConversationId(nextSelectedId);
-        if (selectedConversationId === conversation._id) {
-          setMessages([]);
-        }
-        if (nextSelectedId) {
-          setSearchParams({ conversationId: nextSelectedId }, { replace: true });
-        }
+        if (selectedConversationId === conversation._id) setMessages([]);
+        if (nextSelectedId) setSearchParams({ conversationId: nextSelectedId }, { replace: true });
         showSnackbar("Conversation supprimee avec succes.", "success");
       }
 
@@ -359,7 +374,10 @@ export default function ChatLayout() {
       id: `temp-assistant-${Date.now()}`,
       conversationId: baseConversationId,
       role: "assistant",
-      content: responseMode === "short" ? "L assistant prepare une reponse courte..." : "L assistant prepare une reponse detaillee...",
+      content:
+        responseMode === "short"
+          ? "L assistant prepare une reponse courte..."
+          : "L assistant prepare une reponse detaillee...",
       pending: true,
     });
 
@@ -375,26 +393,34 @@ export default function ChatLayout() {
         responseMode,
       });
 
+      // Register the generating assistant message with UserLayout for global notification
+      if (result.assistantMessage.status === "generating") {
+        registerGeneratingMessage(result.assistantMessage._id, result.conversation._id);
+      }
+
       setConversations((current) => upsertConversation(current, result.conversation));
-      setSelectedConversationId(result.conversation._id);
-      setSearchParams({ conversationId: result.conversation._id }, { replace: true });
+      // Only update selectedConversationId + URL if the user hasn't switched away
+      if (selectedConversationIdRef.current === selectedConversationId || !selectedConversationId) {
+        setSelectedConversationId(result.conversation._id);
+        setSearchParams({ conversationId: result.conversation._id }, { replace: true });
+      }
       setMessages((current) => {
         const withoutTemps = current.filter(
-          (message) => message._id !== tempUserMessage._id && message._id !== tempAssistantMessage._id,
+          (m) => m._id !== tempUserMessage._id && m._id !== tempAssistantMessage._id,
         );
-        return [...withoutTemps, result.userMessage, result.assistantMessage];
+        // Mark generating message as pending for the spinner
+        const assistantMsg =
+          result.assistantMessage.status === "generating"
+            ? { ...result.assistantMessage, pending: true }
+            : result.assistantMessage;
+        return [...withoutTemps, result.userMessage, assistantMsg];
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Impossible d envoyer le message.";
       setMessages((current) =>
         current.map((item) =>
           item._id === tempAssistantMessage._id
-            ? {
-                ...item,
-                content: message,
-                sources: [],
-                pending: false,
-              }
+            ? { ...item, content: message, sources: [], pending: false }
             : item,
         ),
       );
@@ -406,8 +432,13 @@ export default function ChatLayout() {
   }
 
   async function handleMessageFeedback(messageId: string, feedback: ChatFeedback) {
-    const targetMessage = messages.find((message) => message._id === messageId);
-    if (!targetMessage || targetMessage.role !== "assistant" || targetMessage.pending) {
+    const targetMessage = messages.find((m) => m._id === messageId);
+    if (
+      !targetMessage ||
+      targetMessage.role !== "assistant" ||
+      targetMessage.pending ||
+      targetMessage.status === "generating"
+    ) {
       return;
     }
 
@@ -415,18 +446,18 @@ export default function ChatLayout() {
     const nextFeedback = previousFeedback === feedback ? null : feedback;
 
     setMessages((current) =>
-      current.map((message) => (message._id === messageId ? { ...message, feedback: nextFeedback } : message)),
+      current.map((m) => (m._id === messageId ? { ...m, feedback: nextFeedback } : m)),
     );
 
     try {
       const updatedMessage = await submitChatFeedback(messageId, nextFeedback);
       setMessages((current) =>
-        current.map((message) => (message._id === messageId ? { ...message, ...updatedMessage } : message)),
+        current.map((m) => (m._id === messageId ? { ...m, ...updatedMessage } : m)),
       );
       showSnackbar(nextFeedback ? "Avis enregistre." : "Avis retire.", "success");
     } catch (error) {
       setMessages((current) =>
-        current.map((message) => (message._id === messageId ? { ...message, feedback: previousFeedback } : message)),
+        current.map((m) => (m._id === messageId ? { ...m, feedback: previousFeedback } : m)),
       );
       showSnackbar(error instanceof Error ? error.message : "Impossible d enregistrer l avis.", "error");
     }
@@ -435,10 +466,7 @@ export default function ChatLayout() {
   return (
     <>
       <div className="h-[calc(100vh-81px)] w-full overflow-hidden bg-slate-50 px-3 py-3 md:px-4">
-        <div
-         className="flex h-full min-h-0 gap-4 overflow-hidden"
-        >
-          
+        <div className="flex h-full min-h-0 gap-4 overflow-hidden">
           <ChatSidebar
             isOpen={isHistoryOpen}
             activeConversations={activeConversations}
@@ -450,9 +478,7 @@ export default function ChatLayout() {
             onSearchChange={setSearch}
             onSelectConversation={(conversationId) => {
               setSelectedConversationId(conversationId);
-              if (conversationId) {
-                setSearchParams({ conversationId }, { replace: true });
-              }
+              if (conversationId) setSearchParams({ conversationId }, { replace: true });
             }}
             onOpenArchiveModal={() => setIsArchiveModalOpen(true)}
             onCreateConversation={handleCreateConversation}
@@ -462,22 +488,22 @@ export default function ChatLayout() {
             onDeleteConversation={handleDeleteConversation}
           />
           <div className="min-w-0 flex-1">
-
-          <ChatMain
-            conversation={selectedConversation}
-            messages={messages}
-            isLoading={isLoadingMessages}
-            isSubmitting={isSubmitting}
-            error={pageError}
-            responseMode={responseMode}
-            onResponseModeChange={setResponseMode}
-            onSubmit={handleSendMessage}
-            onFeedback={handleMessageFeedback}
-            onNotify={showSnackbar}
-          />
+            <ChatMain
+              conversation={selectedConversation}
+              messages={messages}
+              isLoading={isLoadingMessages}
+              isSubmitting={isSubmitting}
+              error={pageError}
+              responseMode={responseMode}
+              onResponseModeChange={setResponseMode}
+              onSubmit={handleSendMessage}
+              onFeedback={handleMessageFeedback}
+              onNotify={showSnackbar}
+            />
+          </div>
         </div>
       </div>
-</div>
+
       <ConversationActionModal
         mode={conversationModal.mode}
         conversation={conversationModal.conversation}

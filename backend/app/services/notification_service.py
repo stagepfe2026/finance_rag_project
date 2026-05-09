@@ -103,6 +103,68 @@ class NotificationService:
         )
         await self._store_and_emit([notification])
 
+    async def notify_urgent_reclamation(self, reclamation: "ReclamationModel") -> None:
+        admins = self.users_repository.list_active_by_roles(["ADMIN"])
+        notifications = [
+            NotificationModel(
+                user_id=admin.id or "",
+                type="urgent_reclamation",
+                title="Reclamation urgente recue",
+                description=(
+                    f"Ticket {reclamation.ticket_number} — {reclamation.subject[:80]}"
+                ),
+                link="/admin/reclamations",
+                is_read=False,
+                created_at=reclamation.created_at,
+            )
+            for admin in admins
+            if admin.id
+        ]
+        await self._store_and_emit(notifications)
+
+    async def notify_indexation_failed(self, document_title: str, error: str) -> None:
+        admins = self.users_repository.list_active_by_roles(["ADMIN"])
+        now = datetime.now(timezone.utc)
+        notifications = [
+            NotificationModel(
+                user_id=admin.id or "",
+                type="indexation_failed",
+                title="Echec d indexation",
+                description=f"Le document « {document_title[:80]} » n a pas pu etre indexe : {error[:120]}",
+                link="/admin/documents",
+                is_read=False,
+                created_at=now,
+            )
+            for admin in admins
+            if admin.id
+        ]
+        await self._store_and_emit(notifications)
+
+    async def notify_document_deprecated_for_favorites(
+        self, deprecated_document: "DocumentModel", new_document_title: str
+    ) -> None:
+        """Notify users who favorited a document that has been replaced/abrogated."""
+        favorite_user_ids = list(deprecated_document.favorite_user_ids or [])
+        if not favorite_user_ids:
+            return
+        now = datetime.now(timezone.utc)
+        notifications = [
+            NotificationModel(
+                user_id=uid,
+                type="document_deprecated",
+                title="Document mis a jour",
+                description=(
+                    f"Le document « {deprecated_document.title[:60]} » que vous avez en favoris "
+                    f"a ete remplace par « {new_document_title[:60]} »."
+                ),
+                link="/user/documents/recherche",
+                is_read=False,
+                created_at=now,
+            )
+            for uid in favorite_user_ids
+        ]
+        await self._store_and_emit(notifications)
+
     def authenticate_websocket_user(self, websocket: WebSocket) -> dict | None:
         raw_token = websocket.cookies.get(settings.auth_session_cookie_name)
         if not raw_token:

@@ -193,6 +193,22 @@ export async function submitChatFeedback(messageId: string, feedback: ChatFeedba
   return (data as ApiEnvelope<ChatMessage>).data;
 }
 
+export async function fetchGeneratingMessages(): Promise<Array<{ _id: string; conversationId: string }>> {
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/v1/chat/messages/generating`, {
+      credentials: "include",
+    });
+    const data = await parseJson(response);
+    if (!response.ok) return [];
+    const items = (data as ApiEnvelope<ChatMessage[]> | null)?.data;
+    return Array.isArray(items)
+      ? items.map((m) => ({ _id: m._id, conversationId: m.conversationId }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function downloadChatSource(documentId: string, fileName: string) {
   const response = await fetch(`${apiBaseUrl}/api/v1/chat/sources/${documentId}/download`, {
     credentials: "include",

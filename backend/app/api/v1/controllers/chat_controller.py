@@ -1,6 +1,6 @@
 from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
 from app.schemas.chat_schema import ChatAskRequest, ChatConversationRenameRequest, ChatMessageFeedbackRequest
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
@@ -218,9 +218,25 @@ async def get_chat_feedback_stats(
     }
 
 
+@router.get("/messages/generating")
+async def get_generating_messages(
+    request: Request,
+    current_user: dict = Depends(require_finance_or_admin_user),
+):
+    service = getattr(request.app.state, "chat_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service chat non disponible.")
+
+    return {
+        "success": True,
+        "data": service.get_generating_messages(str(current_user.get("id", ""))),
+    }
+
+
 @router.post("/ask")
 async def ask_chat(
     payload: ChatAskRequest,
+    background_tasks: BackgroundTasks,
     request: Request,
     current_user: dict = Depends(require_finance_or_admin_user),
 ):
@@ -229,7 +245,7 @@ async def ask_chat(
         raise HTTPException(status_code=500, detail="Service chat non disponible.")
 
     try:
-        data = service.ask(
+        data = service.ask_pending(
             user_id=str(current_user.get("id", "")),
             content=payload.content or "",
             conversation_id=payload.conversation_id,
@@ -239,9 +255,17 @@ async def ask_chat(
     except ValueError as exc:
         _raise_chat_error(exc)
 
+    background_tasks.add_task(
+        service.run_rag_background,
+        assistant_message_id=data["assistantMessage"]["_id"],
+        content=payload.content or "",
+        response_mode=payload.response_mode,
+        query_mode=payload.query_mode.value,
+    )
+
     return {
         "success": True,
-        "message": "Reponse generee avec succes.",
+        "message": "Message recu, generation en cours.",
         "data": data,
     }
 

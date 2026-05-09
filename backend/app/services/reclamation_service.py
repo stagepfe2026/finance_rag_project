@@ -117,6 +117,10 @@ class ReclamationService:
         )
 
         created = self.repository.create(reclamation)
+
+        if normalized_priority == "URGENT" and self.notification_service is not None:
+            await self.notification_service.notify_urgent_reclamation(created)
+
         return self._serialize_reclamation(created)
 
     def list_reclamations(self, current_user: dict) -> dict:

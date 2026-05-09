@@ -1,11 +1,13 @@
 import { BellRing, Heart, LogOut, Moon, Sun, UserPen } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import cimfLogo from "../../assets/cimf-logo.png";
+import cimfLogoWhite from "../../assets/cimf-logo-white.png";
 import type { DocumentSearchItem } from "../../models/document";
 import type { NotificationItem } from "../../models/notification";
 import { searchDocuments, setDocumentFavorite } from "../../services/documents.service";
+import { fetchGeneratingMessages } from "../../services/chat.service";
 import {
   createNotificationsWebSocket,
   fetchNotifications,
@@ -14,6 +16,7 @@ import {
 import UserNotificationsModal from "../components/notifications/UserNotificationsModal";
 import RechercheDocumentFavoritesModal from "../components/rechercheDocument/RechercheDocumentFavoritesModal";
 import HelpCard from "../components/acceuil/HelpCard";
+import Snackbar from "../components/chat/Snackbar";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const USER_THEME_STORAGE_KEY = "user-layout-theme";
@@ -23,6 +26,7 @@ export type UserLayoutContextValue = {
   openFavoritesModal: () => void;
   toggleFavoriteDocument: (item: DocumentSearchItem) => Promise<boolean>;
   refreshFavoriteDocuments: () => Promise<void>;
+  registerGeneratingMessage: (messageId: string, conversationId: string) => void;
 };
 
 function navClassName(isActive: boolean) {
@@ -53,6 +57,14 @@ export default function UserLayout() {
     return storedTheme === "dark";
   });
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [chatSnackbar, setChatSnackbar] = useState<{ open: boolean; message: string; href?: string }>({ open: false, message: "" });
+
+  // messageId → conversationId for messages currently being generated
+  const pendingMessagesRef = useRef<Map<string, string>>(new Map());
+  // prevents showing the same notification twice
+  const notifiedMessageIdsRef = useRef<Set<string>>(new Set());
+  // stable ref to location so interval callbacks read the current route without re-subscribing
+  const locationRef = useRef(location);
 
   useEffect(() => {
     if (typeof document === "undefined") {
@@ -81,6 +93,52 @@ export default function UserLayout() {
       window.removeEventListener("scroll", updateHeaderState);
     };
   }, []);
+
+  // Keep locationRef current so polling callbacks always read the live route
+  useEffect(() => {
+    locationRef.current = location;
+  });
+
+  // Auto-dismiss chat snackbar after 5 s
+  useEffect(() => {
+    if (!chatSnackbar.open) return;
+    const timer = window.setTimeout(() => setChatSnackbar((s) => ({ ...s, open: false })), 5000);
+    return () => window.clearTimeout(timer);
+  }, [chatSnackbar.open, chatSnackbar.message]);
+
+  // Global polling: detect when background-generated messages finish
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const interval = window.setInterval(async () => {
+      if (pendingMessagesRef.current.size === 0) return;
+
+      const generating = await fetchGeneratingMessages();
+      const generatingIds = new Set(generating.map((m) => m._id));
+
+      for (const [messageId, conversationId] of pendingMessagesRef.current) {
+        if (generatingIds.has(messageId)) continue;
+        if (notifiedMessageIdsRef.current.has(messageId)) continue;
+
+        notifiedMessageIdsRef.current.add(messageId);
+        pendingMessagesRef.current.delete(messageId);
+
+        const currentPath = locationRef.current.pathname;
+        const currentConvId = new URLSearchParams(locationRef.current.search).get("conversationId");
+        const isOnThisConv = currentPath.startsWith("/user/chat") && currentConvId === conversationId;
+
+        setChatSnackbar({
+          open: true,
+          message: isOnThisConv
+            ? "Réponse générée dans votre discussion."
+            : "Une réponse est prête dans votre discussion.",
+          href: isOnThisConv ? undefined : `/user/chat?conversationId=${conversationId}`,
+        });
+      }
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [user?.id]);
 
   async function refreshFavoriteDocuments() {
     try {
@@ -198,12 +256,17 @@ export default function UserLayout() {
     setNotifications((current) => current.filter((item) => item.id !== notificationId));
   }
 
+  function registerGeneratingMessage(messageId: string, conversationId: string) {
+    pendingMessagesRef.current.set(messageId, conversationId);
+  }
+
   const outletContext = useMemo<UserLayoutContextValue>(
     () => ({
       favoriteDocuments,
       openFavoritesModal: () => setIsFavoritesModalOpen(true),
       toggleFavoriteDocument,
       refreshFavoriteDocuments,
+      registerGeneratingMessage,
     }),
     [favoriteDocuments],
   );
@@ -214,12 +277,18 @@ export default function UserLayout() {
       <div
         className={[
           "user-theme-root min-h-screen text-[#111827] transition-colors duration-300",
-          isDarkMode ? "bg-[#273043] text-slate-100" : "bg-slate-50",
+          isDarkMode ? "bg-[#0f172a] text-[#f3f4f6]" : "bg-slate-50",
         ].join(" ")}
       >
         <main className="h-screen w-full overflow-hidden">
           <Outlet context={outletContext} />
         </main>
+        <Snackbar
+          open={chatSnackbar.open}
+          message={chatSnackbar.message}
+          tone="success"
+          onClick={chatSnackbar.href ? () => { navigate(chatSnackbar.href!); setChatSnackbar((s) => ({ ...s, open: false })); } : undefined}
+        />
       </div>
     );
   }
@@ -228,18 +297,18 @@ export default function UserLayout() {
     <div
       className={[
         "user-theme-root min-h-screen text-[#111827] transition-colors duration-300",
-        isDarkMode ? "bg-[#273043] text-slate-100" : "bg-slate-50",
+        isDarkMode ? "bg-[#0f172a] text-[#f3f4f6]" : "bg-slate-50",
       ].join(" ")}
     >
       <header className={[
         "sticky top-0 z-40 border-b px-6 py-4 backdrop-blur transition-[background-color,border-color,box-shadow] duration-300",
         isHeaderScrolled ? "shadow-[0_8px_24px_rgba(15,23,42,0.08)]" : "shadow-sm",
-        isDarkMode ? "border-[#11116f] bg-[#273043]/95" : "border-slate-200 bg-white/95",
+        isDarkMode ? "border-[#1e2d42] bg-[#0f172a]/95" : "border-slate-200 bg-white/95",
       ].join(" ")}>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
           <div className="flex items-center gap-10">
             <img
-              src={cimfLogo}
+              src={isDarkMode ? cimfLogoWhite : cimfLogo}
               alt="Logo CIMF"
               className="h-10 w-auto object-contain"
             />
@@ -353,7 +422,7 @@ export default function UserLayout() {
               className={[
                 "relative inline-flex h-10 w-[92px] items-center rounded-xl border p-1 transition-all duration-300",
                 isDarkMode
-                  ? "border-[#e6cfd1] bg-[#f6ebec]"
+                  ? "border-[#334155] bg-[#1e293b]"
                   : "border-[#f1e2df] bg-[#fff7f6]",
               ].join(" ")}
             >
@@ -371,8 +440,8 @@ export default function UserLayout() {
               </span>
 
               <span className="pointer-events-none flex w-full items-center justify-between px-2">
-                <Sun size={18} className={isDarkMode ? "text-[#d8b4b8] opacity-35" : "text-[#9d0208] opacity-100"} />
-                <Moon size={18} className={isDarkMode ? "text-[#d9a5ab] opacity-100" : "text-[#d8b4b8] opacity-35"} />
+                <Sun size={18} className={isDarkMode ? "text-[#64748b] opacity-40" : "text-[#9d0208] opacity-100"} />
+                <Moon size={18} className={isDarkMode ? "text-[#60a5fa] opacity-90" : "text-[#94a3b8] opacity-35"} />
               </span>
             </button>
           </div>
@@ -404,6 +473,12 @@ export default function UserLayout() {
         onClose={() => setIsNotificationsModalOpen(false)}
         onDismiss={handleDismissNotification}
         onMarkAsRead={(notification) => void handleMarkNotificationAsRead(notification)}
+      />
+      <Snackbar
+        open={chatSnackbar.open}
+        message={chatSnackbar.message}
+        tone="success"
+        onClick={chatSnackbar.href ? () => { navigate(chatSnackbar.href!); setChatSnackbar((s) => ({ ...s, open: false })); } : undefined}
       />
     </div>
   );
