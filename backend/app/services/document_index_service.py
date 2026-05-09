@@ -1,7 +1,8 @@
 import os
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from app.core.config import settings
@@ -26,6 +27,8 @@ from fastapi import HTTPException, UploadFile
 
 
 class DocumentIndexService:
+    MAX_UPLOAD_SIZE = 20 * 1024 * 1024
+
     def __init__(
         self,
         embedding_service: EmbeddingService,
@@ -61,17 +64,32 @@ class DocumentIndexService:
     ) -> dict:
         extension = os.path.splitext(file.filename or "")[1].lower()
         content = await file.read()
-        stored_file_path = self._store_uploaded_file(
-            file.filename or "document", extension, content
-        )
+        if len(content) > self.MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=400, detail="Le fichier depasse la taille maximale autorisee.")
+
+        effective_date_publication = date_publication or datetime.now(UTC)
         prepared_legal_metadata = self.legal_metadata_service.prepare_metadata(
-            legal_status=legal_status,
+            legal_status=None,
             document_type=document_type,
-            date_publication=date_publication,
+            date_publication=effective_date_publication,
             date_entree_vigueur=date_entree_vigueur,
             version=version,
             relation_type=relation_type,
             related_document_id=related_document_id,
+        )
+        if self.document_repository.duplicate_exists(
+            title=title,
+            category=category,
+            document_type=str(prepared_legal_metadata["document_type"]),
+            version=str(prepared_legal_metadata["version"]),
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Un document avec le meme titre, categorie, type et version existe deja.",
+            )
+
+        stored_file_path = self._store_uploaded_file(
+            file.filename or "document", extension, content
         )
 
         document = DocumentModel.new_processing(
@@ -135,7 +153,7 @@ class DocumentIndexService:
                 if self.notification_service is not None:
                     await self.notification_service.notify_document_indexed(stored_document)
                     # Notify users who favorited a document that this new doc replaces/supersedes
-                    if related_document_id and relation_type in ("replaces", "supersedes", "abrogates"):
+                    if related_document_id and relation_type in ("remplace", "abroge"):
                         deprecated = self.document_repository.get_by_id(related_document_id)
                         if deprecated is not None:
                             await self.notification_service.notify_document_deprecated_for_favorites(
@@ -194,6 +212,79 @@ class DocumentIndexService:
             ],
             total=total,
         )
+
+    def activate_due_future_documents(self, audit_service: Any | None = None) -> int:
+        due_documents = self.document_repository.list_due_future_documents(now=datetime.now(UTC))
+        updated_count = 0
+        for document in due_documents:
+            if not document.id:
+                continue
+            previous_status = document.legal_status
+            updated_document = self.document_repository.update_legal_metadata(
+                document.id,
+                legal_status="actif",
+            )
+            if updated_document is None:
+                continue
+            updated_count += 1
+            related_before = (
+                self.document_repository.get_by_id(updated_document.related_document_id)
+                if updated_document.related_document_id
+                else None
+            )
+            self.document_relation_service.apply_relation_after_index(updated_document)
+            if audit_service is not None:
+                try:
+                    audit_service.record_system_activity(
+                        action_type="LEGAL_STATUS_AUTO_UPDATED",
+                        action_label="Statut juridique automatique",
+                        category="Gestion document",
+                        entity_type="DOCUMENT",
+                        entity_id=document.id,
+                        entity_label=document.title,
+                        summary=f"Statut juridique du document \"{document.title}\" mis a jour automatiquement.",
+                        metadata={
+                            "documentId": document.id,
+                            "ancienStatut": previous_status,
+                            "nouveauStatut": "actif",
+                            "dateEntreeVigueur": document.date_entree_vigueur.isoformat()
+                            if document.date_entree_vigueur
+                            else None,
+                            "raison": "activation automatique",
+                        },
+                    )
+                except Exception:
+                    pass
+                if related_before is not None and related_before.id:
+                    related_after = self.document_repository.get_by_id(related_before.id)
+                    if related_after is not None and related_after.legal_status != related_before.legal_status:
+                        try:
+                            audit_service.record_system_activity(
+                                action_type="LEGAL_STATUS_AUTO_UPDATED",
+                                action_label="Statut juridique automatique",
+                                category="Gestion document",
+                                entity_type="DOCUMENT",
+                                entity_id=related_before.id,
+                                entity_label=related_before.title,
+                                summary=(
+                                    f"Statut juridique du document \"{related_before.title}\" mis a jour "
+                                    f"par relation juridique."
+                                ),
+                                metadata={
+                                    "documentId": related_before.id,
+                                    "ancienStatut": related_before.legal_status,
+                                    "nouveauStatut": related_after.legal_status,
+                                    "dateEntreeVigueur": updated_document.date_entree_vigueur.isoformat()
+                                    if updated_document.date_entree_vigueur
+                                    else None,
+                                    "raison": "relation juridique",
+                                    "sourceDocumentId": updated_document.id,
+                                    "relationType": updated_document.relation_type,
+                                },
+                            )
+                        except Exception:
+                            pass
+        return updated_count
 
     def search_documents(
         self,

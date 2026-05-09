@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.repositories.document_repository import DocumentRepository
 from app.schemas import LegalDocumentType, LegalRelationType, LegalStatus
@@ -40,8 +40,21 @@ class LegalMetadataService:
         if normalized_related_document_id is not None:
             self.ensure_related_document_exists(normalized_related_document_id)
 
-        if legal_status is not None:
-            self._validate_legal_status(legal_status)
+        if date_publication is not None and date_publication.date() > datetime.now(UTC).date():
+            raise HTTPException(
+                status_code=400,
+                detail="La date de publication ne peut pas etre future.",
+            )
+        if date_entree_vigueur is None:
+            raise HTTPException(
+                status_code=400,
+                detail="La date d entree en vigueur est obligatoire.",
+            )
+        if date_publication is not None and date_entree_vigueur.date() < date_publication.date():
+            raise HTTPException(
+                status_code=400,
+                detail="La date d entree en vigueur doit etre posterieure ou egale a la date de publication.",
+            )
 
         normalized_legal_status = self.legal_status_service.compute_status_from_effective_date(
             date_entree_vigueur
@@ -86,10 +99,10 @@ class LegalMetadataService:
     @staticmethod
     def _validate_document_type(document_type: str) -> None:
         allowed = {item.value for item in LegalDocumentType}
-        if document_type not in allowed:
+        if document_type not in allowed or document_type == LegalDocumentType.autre.value:
             raise HTTPException(
                 status_code=400,
-                detail="documentType doit etre une valeur documentaire valide.",
+                detail="Le type de document est obligatoire.",
             )
 
     @staticmethod

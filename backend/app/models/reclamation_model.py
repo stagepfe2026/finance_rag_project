@@ -45,6 +45,10 @@ class ReclamationModel:
     deleted_by_user_id: str | None
     activity_log: list[dict[str, Any]]
     id: str | None = None
+    first_handled_at: datetime | None = None
+    taken_by_admin_id: str | None = None
+    taken_by_admin_name: str | None = None
+    sla_overdue_notified_at: datetime | None = None
 
     @classmethod
     def from_mongo(cls, raw: dict[str, Any]) -> "ReclamationModel":
@@ -76,6 +80,12 @@ class ReclamationModel:
             deleted_at=_as_utc_datetime(raw.get("deletedAt")) if raw.get("deletedAt") else None,
             deleted_by_user_id=_optional_str(raw.get("deletedByUserId")),
             activity_log=[item for item in raw.get("activityLog", []) if isinstance(item, dict)],
+            first_handled_at=_as_utc_datetime(raw.get("firstHandledAt")) if raw.get("firstHandledAt") else None,
+            taken_by_admin_id=_optional_str(raw.get("takenByAdminId")),
+            taken_by_admin_name=_optional_str(raw.get("takenByAdminName")),
+            sla_overdue_notified_at=(
+                _as_utc_datetime(raw.get("slaOverdueNotifiedAt")) if raw.get("slaOverdueNotifiedAt") else None
+            ),
         )
 
     def to_mongo_insert(self) -> dict[str, Any]:
@@ -104,4 +114,8 @@ class ReclamationModel:
             "deletedAt": self.deleted_at,
             "deletedByUserId": self.deleted_by_user_id,
             "activityLog": self.activity_log,
+            "firstHandledAt": self.first_handled_at,
+            "takenByAdminId": self.taken_by_admin_id,
+            "takenByAdminName": self.taken_by_admin_name,
+            "slaOverdueNotifiedAt": self.sla_overdue_notified_at,
         }

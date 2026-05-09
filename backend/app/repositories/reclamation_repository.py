@@ -102,6 +102,43 @@ class ReclamationRepository:
         )
         return result.modified_count > 0
 
+    def take_reclamation(self, reclamation_id: str, admin_id: str, admin_name: str) -> ReclamationModel | None:
+        if not ObjectId.is_valid(reclamation_id):
+            return None
+
+        now = datetime.now(UTC)
+        activity_item = {
+            "id": ObjectId().binary.hex(),
+            "description": f"Reclamation prise en charge par {admin_name}",
+            "actorName": admin_name,
+            "createdAt": now,
+        }
+        result = self.collection.update_one(
+            {"_id": ObjectId(reclamation_id), "deletedAt": None, "status": "PENDING"},
+            {
+                "$set": {
+                    "status": "IN_PROGRESS",
+                    "firstHandledAt": now,
+                    "takenByAdminId": admin_id,
+                    "takenByAdminName": admin_name,
+                    "updatedAt": now,
+                },
+                "$push": {"activityLog": activity_item},
+            },
+        )
+        if result.modified_count == 0:
+            return None
+        raw = self.collection.find_one({"_id": ObjectId(reclamation_id)})
+        return ReclamationModel.from_mongo(raw) if raw else None
+
+    def mark_sla_overdue_notified(self, reclamation_id: str | None) -> None:
+        if not reclamation_id or not ObjectId.is_valid(reclamation_id):
+            return
+        self.collection.update_one(
+            {"_id": ObjectId(reclamation_id)},
+            {"$set": {"slaOverdueNotifiedAt": datetime.now(UTC)}},
+        )
+
     def respond_as_admin(
         self,
         reclamation_id: str,

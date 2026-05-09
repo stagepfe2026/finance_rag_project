@@ -28,6 +28,8 @@ async def search_documents(
         raise HTTPException(status_code=500, detail="Service d indexation de document non disponible.")
 
     current_user = getattr(request.state, "current_user", None) or {}
+    audit_service = getattr(request.app.state, "audit_service", None)
+    service.activate_due_future_documents(audit_service=audit_service)
     result = service.search_documents(
         query=query,
         title=title,
@@ -40,7 +42,6 @@ async def search_documents(
         skip=skip,
         limit=limit,
     )
-    audit_service = getattr(request.app.state, "audit_service", None)
     if audit_service is not None:
         audit_service.record_document_activity(
             current_user=current_user,
@@ -134,8 +135,8 @@ async def add_document_to_favorites(request: Request, document_id: str):
     if audit_service is not None:
         audit_service.record_document_activity(
             current_user=current_user,
-            action_type="DOCUMENT_FAVORITE_ADD",
-            action_label="Favori document",
+            action_type="DOCUMENT_FAVORITE_ADDED",
+            action_label="Ajout favori",
             entity_type="DOCUMENT",
             entity_id=document_id,
             entity_label=result.data.title if result.data else document_id,
@@ -162,7 +163,7 @@ async def remove_document_from_favorites(request: Request, document_id: str):
     if audit_service is not None:
         audit_service.record_document_activity(
             current_user=current_user,
-            action_type="DOCUMENT_FAVORITE_REMOVE",
+            action_type="DOCUMENT_FAVORITE_REMOVED",
             action_label="Retrait favori",
             entity_type="DOCUMENT",
             entity_id=document_id,

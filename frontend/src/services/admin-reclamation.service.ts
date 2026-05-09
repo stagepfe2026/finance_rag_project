@@ -37,6 +37,20 @@ export async function fetchAdminReclamations(): Promise<Reclamation[]> {
   return (data as { data?: { items?: Reclamation[] } }).data?.items ?? [];
 }
 
+export async function takeReclamationAsAdmin(reclamationId: string): Promise<Reclamation> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}/take`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de prendre en charge la reclamation."));
+  }
+
+  return (data as { data: Reclamation }).data;
+}
+
 export async function resolveReclamationAsAdmin(
   reclamationId: string,
   adminReply: string,

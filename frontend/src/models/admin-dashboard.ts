@@ -60,6 +60,14 @@ export type AdminDashboardUrgentCase = {
   createdAt: string;
 };
 
+export type AdminDashboardSlaStats = {
+  overdueCount: number;
+  dueSoonCount: number;
+  urgentPendingCount: number;
+  respectRate: number;
+  avgHandleTimeMinutes: number;
+};
+
 export type AdminDashboard = {
   summary: AdminDashboardSummary;
   reclamationBreakdown: AdminDashboardReclamationBreakdown;
@@ -68,4 +76,5 @@ export type AdminDashboard = {
   recentIndexedDocuments: AdminDashboardIndexedDocument[];
   latestAccess: AdminDashboardLatestAccess[];
   urgentCases: AdminDashboardUrgentCase[];
+  slaStats?: AdminDashboardSlaStats;
 };

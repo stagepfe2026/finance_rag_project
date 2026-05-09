@@ -112,6 +112,41 @@ export default function DashboardPage() {
 
           {/* Right column */}
           <div className="space-y-4 min-w-0">
+            {dashboard.slaStats && (
+              <div className="rounded-lg border border-[#e5eaf2] bg-white p-4">
+                <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[#9d0208]">
+                  Indicateurs SLA
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded border border-[#f0f3f8] bg-[#f7f9fc] p-2">
+                    <p className="text-[10px] text-[#8a96ad]">En retard</p>
+                    <p className="mt-0.5 text-lg font-bold text-rose-600">{dashboard.slaStats.overdueCount}</p>
+                  </div>
+                  <div className="rounded border border-[#f0f3f8] bg-[#f7f9fc] p-2">
+                    <p className="text-[10px] text-[#8a96ad]">Urgentes en attente</p>
+                    <p className="mt-0.5 text-lg font-bold text-amber-600">{dashboard.slaStats.urgentPendingCount}</p>
+                  </div>
+                  <div className="rounded border border-[#f0f3f8] bg-[#f7f9fc] p-2">
+                    <p className="text-[10px] text-[#8a96ad]">Bientot en retard</p>
+                    <p className="mt-0.5 text-lg font-bold text-amber-500">{dashboard.slaStats.dueSoonCount}</p>
+                  </div>
+                  <div className="rounded border border-[#f0f3f8] bg-[#f7f9fc] p-2">
+                    <p className="text-[10px] text-[#8a96ad]">Respect SLA</p>
+                    <p className="mt-0.5 text-lg font-bold text-emerald-600">
+                      {Math.round(dashboard.slaStats.respectRate * 100)}%
+                    </p>
+                  </div>
+                  <div className="col-span-2 rounded border border-[#f0f3f8] bg-[#f7f9fc] p-2">
+                    <p className="text-[10px] text-[#8a96ad]">Temps moyen de prise en charge</p>
+                    <p className="mt-0.5 text-base font-bold text-[#071f3d]">
+                      {dashboard.slaStats.avgHandleTimeMinutes >= 60
+                        ? `${Math.round(dashboard.slaStats.avgHandleTimeMinutes / 60)}h`
+                        : `${dashboard.slaStats.avgHandleTimeMinutes}min`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <DashboardUrgentCasesCard items={dashboard.urgentCases} />
 
           <DashboardDonutCard

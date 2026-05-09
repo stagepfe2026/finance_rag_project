@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 
+from app.models.reclamation_model import ReclamationModel
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.reclamation_repository import ReclamationRepository
 from app.repositories.sessions_repository import SessionsRepository
@@ -9,6 +10,24 @@ from app.services.notification_service import NotificationService
 
 
 class DashboardService:
+    _SLA_MINUTES: dict[str, int] = {"URGENT": 240, "HIGH": 1440, "NORMAL": 4320, "LOW": 10080}
+    _DUE_SOON_MINUTES: dict[str, int] = {"URGENT": 60, "HIGH": 360, "NORMAL": 1080, "LOW": 2520}
+
+    @staticmethod
+    def _sla_status(rec: ReclamationModel, now: datetime) -> str:
+        sla_min = DashboardService._SLA_MINUTES.get(rec.priority, 4320)
+        deadline = rec.created_at + timedelta(minutes=sla_min)
+        first_handled = rec.first_handled_at
+        if first_handled is None and rec.status in ("IN_PROGRESS", "RESOLVED", "FAILED"):
+            first_handled = rec.updated_at
+        if first_handled is not None:
+            return "COMPLETED_ON_TIME" if first_handled <= deadline else "COMPLETED_LATE"
+        if now > deadline:
+            return "OVERDUE"
+        remaining = (deadline - now).total_seconds() / 60
+        due_soon = DashboardService._DUE_SOON_MINUTES.get(rec.priority, 1080)
+        return "DUE_SOON" if remaining <= due_soon else "ON_TIME"
+
     def __init__(self, notification_service: NotificationService):
         self.documents_repository = DocumentRepository()
         self.reclamation_repository = ReclamationRepository()
@@ -60,6 +79,26 @@ class DashboardService:
         in_progress_reclamations = [item for item in all_reclamations if item.status == "IN_PROGRESS"]
         resolved_reclamations = [item for item in all_reclamations if item.status == "RESOLVED"]
 
+        now = datetime.now(UTC)
+        sla_statuses = [self._sla_status(r, now) for r in all_reclamations]
+        sla_overdue_count = sum(1 for s in sla_statuses if s == "OVERDUE")
+        sla_due_soon_count = sum(1 for s in sla_statuses if s == "DUE_SOON")
+        urgent_pending_count = sum(
+            1 for r in all_reclamations if r.priority == "URGENT" and r.status == "PENDING"
+        )
+        completed_sla = [s for s in sla_statuses if s in ("COMPLETED_ON_TIME", "COMPLETED_LATE")]
+        sla_respect_rate = (
+            round(sum(1 for s in completed_sla if s == "COMPLETED_ON_TIME") / len(completed_sla), 2)
+            if completed_sla
+            else 0.0
+        )
+        handle_times = [
+            int((r.first_handled_at - r.created_at).total_seconds() / 60)
+            for r in all_reclamations
+            if r.first_handled_at is not None
+        ]
+        avg_handle_time_minutes = int(sum(handle_times) / len(handle_times)) if handle_times else 0
+
         access_by_user: dict[str, dict] = {}
         for session in recent_sessions:
             current = access_by_user.get(session.user_id)
@@ -89,7 +128,6 @@ class DashboardService:
         latest_access.sort(key=lambda item: item["lastActivityAt"], reverse=True)
 
         trend_buckets: dict[str, dict[str, int | str]] = defaultdict(lambda: {"label": "", "documents": 0, "reclamations": 0})
-        now = datetime.now(UTC)
         for offset in range(30, -1, -1):
             day = (now - timedelta(days=offset)).date()
             key = day.isoformat()
@@ -170,4 +208,11 @@ class DashboardService:
                 }
                 for item in urgent_reclamations[:5]
             ],
+            "slaStats": {
+                "overdueCount": sla_overdue_count,
+                "dueSoonCount": sla_due_soon_count,
+                "urgentPendingCount": urgent_pending_count,
+                "respectRate": sla_respect_rate,
+                "avgHandleTimeMinutes": avg_handle_time_minutes,
+            },
         }

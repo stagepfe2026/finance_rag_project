@@ -6,7 +6,6 @@ import type {
   FileMeta,
   LegalDocumentTypeValue,
   LegalRelationTypeValue,
-  LegalStatusValue,
   SelectOption,
 } from "../../../models/import-document";
 
@@ -19,8 +18,6 @@ type DocumentFormProps = {
   category: CategoryValue;
   categoryOptions: CategoryOption[];
   title: string;
-  legalStatus: LegalStatusValue;
-  legalStatusOptions: SelectOption[];
   documentType: LegalDocumentTypeValue;
   documentTypeOptions: SelectOption[];
   datePublication: string;
@@ -31,10 +28,10 @@ type DocumentFormProps = {
   relatedDocumentId: string;
   relatedDocumentOptions: RelatedDocumentOption[];
   relationSearch: string;
+  errors: Partial<Record<"title" | "documentType" | "datePublication" | "dateEntreeVigueur" | "relatedDocumentId", string>>;
   fileMeta: FileMeta | null;
   onCategoryChange: (value: CategoryValue) => void;
   onTitleChange: (value: string) => void;
-  onLegalStatusChange: (value: LegalStatusValue) => void;
   onDocumentTypeChange: (value: LegalDocumentTypeValue) => void;
   onDatePublicationChange: (value: string) => void;
   onDateEntreeVigueurChange: (value: string) => void;
@@ -42,20 +39,24 @@ type DocumentFormProps = {
   onRelationTypeChange: (value: LegalRelationTypeValue) => void;
   onRelatedDocumentIdChange: (value: string) => void;
   onRelationSearchChange: (value: string) => void;
+  onFieldBlur: (field: "title" | "documentType" | "datePublication" | "dateEntreeVigueur" | "relatedDocumentId") => void;
   onClearFile: () => void;
 };
 
 function FormField({
   label,
   children,
+  error,
 }: {
   label: string;
   children: ReactNode;
+  error?: string;
 }) {
   return (
     <div>
       <label className="mb-1.5 block text-[11px] font-semibold text-[#071f3d]">{label}</label>
       {children}
+      {error ? <p className="mt-1 text-[10px] font-semibold text-[#9d0208]">{error}</p> : null}
     </div>
   );
 }
@@ -64,8 +65,6 @@ export default function DocumentForm({
   category,
   categoryOptions,
   title,
-  legalStatus,
-  legalStatusOptions,
   documentType,
   documentTypeOptions,
   datePublication,
@@ -76,9 +75,9 @@ export default function DocumentForm({
   relatedDocumentId,
   relatedDocumentOptions,
   relationSearch,
+  errors,
   onCategoryChange,
   onTitleChange,
-  onLegalStatusChange,
   onDocumentTypeChange,
   onDatePublicationChange,
   onDateEntreeVigueurChange,
@@ -86,6 +85,7 @@ export default function DocumentForm({
   onRelationTypeChange,
   onRelatedDocumentIdChange,
   onRelationSearchChange,
+  onFieldBlur,
 }: DocumentFormProps) {
   const showRelatedDocument = relationType !== "none";
 
@@ -111,27 +111,15 @@ export default function DocumentForm({
         </FormField>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Type de document">
+          <FormField label="Type de document" error={errors.documentType}>
             <select
               value={documentType}
               onChange={(event) => onDocumentTypeChange(event.target.value as LegalDocumentTypeValue)}
+              onBlur={() => onFieldBlur("documentType")}
               className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             >
+              <option value="">Selectionnez un type</option>
               {documentTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="Statut juridique">
-            <select
-              value={legalStatus}
-              onChange={(event) => onLegalStatusChange(event.target.value as LegalStatusValue)}
-              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
-            >
-              {legalStatusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -140,31 +128,34 @@ export default function DocumentForm({
           </FormField>
         </div>
 
-        <FormField label="Titre">
+        <FormField label="Titre" error={errors.title}>
           <input
             type="text"
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
+            onBlur={() => onFieldBlur("title")}
             placeholder="Le titre sera rempli automatiquement"
             className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
           />
         </FormField>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Date de publication">
+          <FormField label="Date de publication" error={errors.datePublication}>
             <input
               type="date"
               value={datePublication}
               onChange={(event) => onDatePublicationChange(event.target.value)}
+              onBlur={() => onFieldBlur("datePublication")}
               className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             />
           </FormField>
 
-          <FormField label="Date d entree en vigueur">
+          <FormField label="Date d entree en vigueur" error={errors.dateEntreeVigueur}>
             <input
               type="date"
               value={dateEntreeVigueur}
               onChange={(event) => onDateEntreeVigueurChange(event.target.value)}
+              onBlur={() => onFieldBlur("dateEntreeVigueur")}
               className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
             />
           </FormField>
@@ -209,10 +200,11 @@ export default function DocumentForm({
                 />
               </FormField>
 
-              <FormField label="Document concerne">
+              <FormField label="Document concerne" error={errors.relatedDocumentId}>
                 <select
                   value={relatedDocumentId}
                   onChange={(event) => onRelatedDocumentIdChange(event.target.value)}
+                  onBlur={() => onFieldBlur("relatedDocumentId")}
                   className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
                 >
                   <option value="">Selectionnez un document</option>

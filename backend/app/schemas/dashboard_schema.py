@@ -71,6 +71,14 @@ class AdminDashboardUrgentCaseOut(BaseModel):
     createdAt: str
 
 
+class AdminDashboardSlaStatsOut(BaseModel):
+    overdueCount: int
+    dueSoonCount: int
+    urgentPendingCount: int
+    respectRate: float
+    avgHandleTimeMinutes: int
+
+
 class AdminDashboardOut(BaseModel):
     summary: AdminDashboardSummaryOut
     reclamationBreakdown: AdminDashboardReclamationBreakdownOut
@@ -79,3 +87,4 @@ class AdminDashboardOut(BaseModel):
     recentIndexedDocuments: list[AdminDashboardIndexedDocumentOut]
     latestAccess: list[AdminDashboardLatestAccessOut]
     urgentCases: list[AdminDashboardUrgentCaseOut]
+    slaStats: AdminDashboardSlaStatsOut | None = None

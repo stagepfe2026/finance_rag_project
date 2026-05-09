@@ -6,7 +6,10 @@ import AuditDetailPanel from "../components/audit/AuditDetailPanel";
 import AuditFiltersBar from "../components/audit/AuditFiltersBar";
 import AuditHeader from "../components/audit/AuditHeader";
 import AuditPagination from "../components/audit/AuditPagination";
-import AuditRecentActivityList from "../components/audit/AuditRecentActivityList";
+import AuditRecentActivityList, {
+  SENSITIVE_AUDIT_GROUPS,
+  type SensitiveAuditGroupId,
+} from "../components/audit/AuditRecentActivityList";
 import AuditStatsGrid from "../components/audit/AuditStatsGrid";
 import type { AuditActivitiesPayload, AuditStats, AuditTrendPoint } from "../../models/audit";
 import { fetchAuditActivities } from "../../services/audit.service";
@@ -35,6 +38,7 @@ export default function AuditPage() {
   const [search, setSearch] = useState("");
   const [userFilter, setUserFilter] = useState("ALL");
   const [actionFilter, setActionFilter] = useState("ALL");
+  const [sensitiveGroupFilter, setSensitiveGroupFilter] = useState<SensitiveAuditGroupId | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +51,7 @@ export default function AuditPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, userFilter, actionFilter]);
+  }, [search, userFilter, actionFilter, sensitiveGroupFilter]);
 
   async function loadAudit() {
     try {
@@ -62,7 +66,7 @@ export default function AuditPage() {
     }
   }
 
-  const filteredActivities = useMemo(() => {
+  const activitiesBeforeSensitiveFilter = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     return payload.items.filter((item) => {
       const matchesUser = userFilter === "ALL" || item.userId === userFilter;
@@ -81,6 +85,19 @@ export default function AuditPage() {
       return matchesUser && matchesAction && matchesSearch;
     });
   }, [actionFilter, payload.items, search, userFilter]);
+
+  const activeSensitiveGroup = useMemo(
+    () => SENSITIVE_AUDIT_GROUPS.find((group) => group.id === sensitiveGroupFilter) ?? null,
+    [sensitiveGroupFilter],
+  );
+
+  const filteredActivities = useMemo(() => {
+    if (!activeSensitiveGroup) {
+      return activitiesBeforeSensitiveFilter;
+    }
+    const activeTypes = new Set(activeSensitiveGroup.types);
+    return activitiesBeforeSensitiveFilter.filter((item) => activeTypes.has(item.actionType));
+  }, [activeSensitiveGroup, activitiesBeforeSensitiveFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredActivities.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -112,7 +129,9 @@ export default function AuditPage() {
       authActivities: filteredActivities.filter((item) => item.category === "Authentification").length,
       reclamationActivities: filteredActivities.filter((item) => item.category === "Reclamations").length,
       chatActivities: filteredActivities.filter((item) => item.category === "Chat").length,
-      documentSearchActivities: filteredActivities.filter((item) => item.category === "Recherche document").length,
+      documentSearchActivities: filteredActivities.filter((item) =>
+        item.category === "Recherche document" || item.category === "Gestion document",
+      ).length,
       last24Hours: filteredActivities.filter((item) => {
         const time = new Date(item.occurredAt).getTime();
         return Number.isFinite(time) && time >= Date.now() - 24 * 60 * 60 * 1000;
@@ -145,7 +164,7 @@ export default function AuditPage() {
           bucket.reclamations += 1;
         } else if (item.category === "Chat") {
           bucket.chat += 1;
-        } else if (item.category === "Recherche document") {
+        } else if (item.category === "Recherche document" || item.category === "Gestion document") {
           bucket.documentSearch += 1;
         }
       }
@@ -153,7 +172,49 @@ export default function AuditPage() {
     return Array.from(buckets.values());
   }, [filteredActivities, payload.trend]);
 
-  const recentActivities = useMemo(() => filteredActivities.slice(0, 5), [filteredActivities]);
+  // Action types derived from items matching the current user filter only (not action filter)
+  const availableActionTypes = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const item of payload.items) {
+      if (userFilter !== "ALL" && item.userId !== userFilter) continue;
+      if (!seen.has(item.actionType)) {
+        seen.set(item.actionType, item.actionLabel);
+      }
+    }
+    return Array.from(seen.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "fr"));
+  }, [payload.items, userFilter]);
+
+  // Auto-reset actionFilter when the selected type is no longer available
+  useEffect(() => {
+    if (actionFilter === "ALL") return;
+    if (!availableActionTypes.some((t) => t.value === actionFilter)) {
+      setActionFilter("ALL");
+    }
+  }, [availableActionTypes, actionFilter]);
+
+  function handleActionFilterChange(nextAction: string) {
+    setActionFilter(nextAction);
+    if (nextAction !== "ALL") {
+      setSensitiveGroupFilter(null);
+    }
+  }
+
+  function handleSensitiveGroupChange(nextGroupId: SensitiveAuditGroupId | null) {
+    setSensitiveGroupFilter(nextGroupId);
+    if (nextGroupId) {
+      setActionFilter("ALL");
+    }
+  }
+
+  function handleResetFilters() {
+    setSearch("");
+    setUserFilter("ALL");
+    setActionFilter("ALL");
+    setSensitiveGroupFilter(null);
+  }
+
   const exportPrefix = userFilter === "ALL" ? "audit-activites" : "audit-activites-user";
 
   return (
@@ -169,7 +230,11 @@ export default function AuditPage() {
           </div>
 
           <div className="min-w-0">
-            <AuditRecentActivityList items={recentActivities} />
+            <AuditRecentActivityList
+              items={activitiesBeforeSensitiveFilter}
+              activeGroupId={sensitiveGroupFilter}
+              onSelectGroup={handleSensitiveGroupChange}
+            />
           </div>
         </div>
 
@@ -179,12 +244,13 @@ export default function AuditPage() {
             userFilter={userFilter}
             actionFilter={actionFilter}
             users={payload.users}
-            actionTypes={payload.actionTypes}
+            actionTypes={availableActionTypes}
             filteredActivities={filteredActivities}
             exportPrefix={exportPrefix}
             onSearchChange={setSearch}
             onUserFilterChange={setUserFilter}
-            onActionFilterChange={setActionFilter}
+            onActionFilterChange={handleActionFilterChange}
+            onResetFilters={handleResetFilters}
           />
 
           <AuditActivitiesTable

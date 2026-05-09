@@ -338,11 +338,12 @@ export default function ReclamationPage() {
         tone: "success",
       });
     } catch (error) {
-      setPageError(
-        error instanceof Error
-          ? error.message
-          : "Impossible de supprimer la reclamation.",
-      );
+      setDeleteTarget(null);
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : "Impossible de supprimer la reclamation.",
+        tone: "error",
+      });
     } finally {
       setIsDeleting(false);
     }

@@ -19,7 +19,7 @@ async def list_reclamations(request: Request, current_user: dict = Depends(requi
         return {
             "success": True,
             "message": "Reclamations chargees avec succes.",
-            "data": service.list_reclamations(current_user),
+            "data": await service.list_reclamations(current_user),
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -117,6 +117,11 @@ async def delete_reclamation(
     except ValueError as exc:
         if str(exc) == "RECLAMATION_NOT_FOUND":
             raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        if str(exc) == "RECLAMATION_DELETE_NOT_ALLOWED":
+            raise HTTPException(
+                status_code=403,
+                detail="Cette reclamation ne peut plus etre supprimee car elle est deja prise en charge.",
+            ) from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -165,6 +170,36 @@ async def create_reclamation(
             "ATTACHMENT_TOO_LARGE": "La piece jointe ne doit pas depasser 5 Mo.",
         }
         raise HTTPException(status_code=400, detail=errors.get(str(exc), "Reclamation invalide.")) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/{reclamation_id}/take", status_code=status.HTTP_200_OK)
+async def take_reclamation(
+    request: Request,
+    reclamation_id: str,
+    current_user: dict = Depends(require_admin_user),
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        data = await service.take_reclamation(current_user, reclamation_id)
+        return {
+            "success": True,
+            "message": "Reclamation prise en charge avec succes.",
+            "data": data,
+        }
+    except ValueError as exc:
+        if str(exc) == "RECLAMATION_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Reclamation introuvable.") from exc
+        if str(exc) == "RECLAMATION_ALREADY_HANDLED":
+            raise HTTPException(
+                status_code=409,
+                detail="Cette reclamation est deja prise en charge ou cloturee.",
+            ) from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

@@ -60,11 +60,17 @@ def _session_error_message(code: str) -> str:
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(payload: LoginRequest):
+async def login(payload: LoginRequest, request: Request):
     try:
         result = auth_service.login_with_password(email=payload.email, password=payload.password)
     except ValueError as exc:
         if str(exc) == "INVALID_CREDENTIALS":
+            audit_service = getattr(request.app.state, "audit_service", None)
+            if audit_service is not None:
+                try:
+                    audit_service.record_login_failed(email=payload.email)
+                except Exception:
+                    pass
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"code": "INVALID_CREDENTIALS", "message": "Identifiants invalides."},

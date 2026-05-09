@@ -1,10 +1,8 @@
-import type { CategoryValue } from "../models/import-document";
+import type { CategoryValue, LegalDocumentTypeValue as ImportLegalDocumentTypeValue } from "../models/import-document";
 import type {
   DocumentCategoryValue,
   DocumentItem,
-  LegalDocumentTypeValue,
   LegalRelationTypeValue,
-  LegalStatusValue,
   DocumentPreview,
   DocumentSearchResponse,
   DocumentsListResponse,
@@ -16,8 +14,7 @@ type IndexDocumentInput = {
   file: File;
   category: CategoryValue;
   title: string;
-  legalStatus?: LegalStatusValue;
-  documentType?: LegalDocumentTypeValue;
+  documentType?: ImportLegalDocumentTypeValue;
   datePublication?: string;
   dateEntreeVigueur?: string;
   version?: string;
@@ -86,7 +83,6 @@ export async function indexDocument({
   file,
   category,
   title,
-  legalStatus,
   documentType,
   datePublication,
   dateEntreeVigueur,
@@ -98,9 +94,6 @@ export async function indexDocument({
   payload.append("file", file);
   payload.append("category", category);
   payload.append("title", title);
-  if (legalStatus) {
-    payload.append("legal_status", legalStatus);
-  }
   if (documentType) {
     payload.append("document_type", documentType);
   }

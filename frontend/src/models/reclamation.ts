@@ -22,6 +22,13 @@ export type ReclamationActivity = {
   createdAt: string;
 };
 
+export type ReclamationSlaStatus =
+  | "ON_TIME"
+  | "DUE_SOON"
+  | "OVERDUE"
+  | "COMPLETED_ON_TIME"
+  | "COMPLETED_LATE";
+
 export type Reclamation = {
   _id: string;
   ticketNumber: string;
@@ -44,6 +51,13 @@ export type Reclamation = {
   updatedAt: string;
   deletedAt: string | null;
   activityLog: ReclamationActivity[];
+  takenAt: string | null;
+  takenByAdminName: string | null;
+  slaDeadlineAt: string | null;
+  slaStatus: ReclamationSlaStatus;
+  slaRemainingMinutes: number | null;
+  slaDelayMinutes: number | null;
+  isSlaOverdue: boolean;
 };
 
 export type CreateReclamationInput = {

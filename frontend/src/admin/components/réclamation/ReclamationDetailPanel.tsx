@@ -1,9 +1,11 @@
-// ReclamationDetailPanel.tsx
 import { ExternalLink, Maximize2, Minimize2, X } from "lucide-react";
 import type { Reclamation } from "../../../models/reclamation";
 import {
   formatDate,
+  formatSlaRemaining,
   getPriorityLabel,
+  getSlaStatusClassName,
+  getSlaStatusLabel,
   getStatusClassName,
   getStatusLabel,
 } from "./reclamationHelpers";
@@ -17,10 +19,12 @@ type ReclamationDetailPanelProps = {
   adminReply: string;
   alreadyHandled: boolean;
   isSubmitting: boolean;
+  isTaking: boolean;
   onToggleExpanded: () => void;
   onClose: () => void;
   onReplyChange: (value: string) => void;
   onSubmitReply: () => void;
+  onTakeReclamation: () => void;
 };
 
 export default function ReclamationDetailPanel({
@@ -31,11 +35,15 @@ export default function ReclamationDetailPanel({
   adminReply,
   alreadyHandled,
   isSubmitting,
+  isTaking,
   onToggleExpanded,
   onClose,
   onReplyChange,
   onSubmitReply,
+  onTakeReclamation,
 }: ReclamationDetailPanelProps) {
+  const canTake = reclamation.status === "PENDING";
+
   return (
     <aside
       className={`flex h-full flex-col overflow-hidden border border-[#dde3ed] rounded rounded-lg bg-white ${
@@ -83,37 +91,80 @@ export default function ReclamationDetailPanel({
       {/* BODY */}
       <div className="flex-1 overflow-y-auto">
 
+        {/* TAKE ACTION BANNER */}
+        {canTake && (
+          <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-[#f0f3f8] bg-amber-50 px-3.5 py-2">
+            <p className="text-[11px] text-amber-800">
+              Cette reclamation est en attente de prise en charge.
+            </p>
+            <button
+              type="button"
+              onClick={onTakeReclamation}
+              disabled={isTaking}
+              className="shrink-0 rounded bg-[#9d0208] cursor-pointer px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-[#7b0206] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isTaking ? "En cours..." : "Prendre en charge"}
+            </button>
+          </div>
+        )}
+
         {/* METADATA */}
         <div className="border-b border-[#f0f3f8] px-3.5 py-2.5">
-          <p className="mb-2 text-xs font-bold uppercase  text-[#9d0208]">
+          <p className="mb-2 text-xs font-bold uppercase text-[#9d0208]">
             Informations
           </p>
-          <div className="grid grid-cols-3">
+          <div className="grid grid-cols-3 gap-y-2">
             <div>
-              <p className="text-[10px] text-[#8a96ad]">Priorité</p>
+              <p className="text-[10px] text-[#8a96ad]">Priorite</p>
               <p className="mt-0.5 text-[12px] font-semibold text-[#071f3d]">
                 {getPriorityLabel(reclamation.priority)}
               </p>
             </div>
             <div>
-              <p className="text-[10px] text-[#8a96ad]">Créé le</p>
+              <p className="text-[10px] text-[#8a96ad]">Cree le</p>
               <p className="mt-0.5 text-[12px] font-semibold text-[#071f3d]">
                 {formatDate(reclamation.createdAt)}
               </p>
             </div>
             <div>
-              <p className="text-[10px] text-[#8a96ad]">Assigné à</p>
+              <p className="text-[10px] text-[#8a96ad]">Pris en charge par</p>
               <p className="mt-0.5 truncate text-[12px] font-semibold text-[#071f3d]">
-                {reclamation.adminReplyBy ?? "—"}
+                {reclamation.takenByAdminName ?? reclamation.adminReplyBy ?? "—"}
               </p>
+            </div>
+            {reclamation.takenAt && (
+              <div>
+                <p className="text-[10px] text-[#8a96ad]">Prise en charge le</p>
+                <p className="mt-0.5 text-[12px] font-semibold text-[#071f3d]">
+                  {formatDate(reclamation.takenAt)}
+                </p>
+              </div>
+            )}
+            <div className="col-span-2">
+              <p className="text-[10px] text-[#8a96ad]">SLA</p>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${getSlaStatusClassName(reclamation.slaStatus)}`}>
+                  {getSlaStatusLabel(reclamation.slaStatus)}
+                </span>
+                {reclamation.slaRemainingMinutes !== null && reclamation.slaRemainingMinutes > 0 && (
+                  <span className="text-[10px] text-[#8a96ad]">
+                    {formatSlaRemaining(reclamation.slaRemainingMinutes)} restantes
+                  </span>
+                )}
+                {reclamation.isSlaOverdue && reclamation.slaDelayMinutes !== null && reclamation.slaDelayMinutes > 0 && (
+                  <span className="text-[10px] text-rose-600">
+                    +{formatSlaRemaining(reclamation.slaDelayMinutes)} de retard
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* DESCRIPTION + ATTACHMENT side by side */}
         <div className="border-b border-[#f0f3f8] px-3.5 py-2.5">
-          <p className="mb-2 text-xs font-bold uppercase  text-[#9d0208]">
-            Description {reclamation.attachment?.url && "& Pièce jointe"}
+          <p className="mb-2 text-xs font-bold uppercase text-[#9d0208]">
+            Description {reclamation.attachment?.url && "& Piece jointe"}
           </p>
           <div className={reclamation.attachment?.url ? "grid grid-cols-2 gap-3 items-start" : ""}>
             <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-[#4f5b76]">
@@ -137,7 +188,7 @@ export default function ReclamationDetailPanel({
 
         {/* HISTORY */}
         <div className="border-b border-[#f0f3f8] px-3.5 py-2.5">
-          <p className="mb-2 text-xs font-bold uppercase  text-[#9d0208]">
+          <p className="mb-2 text-xs font-bold uppercase text-[#9d0208]">
             Historique
           </p>
           <div>
@@ -157,8 +208,8 @@ export default function ReclamationDetailPanel({
 
         {/* REPLY */}
         <div className="px-3.5 py-2.5">
-          <p className="mb-2 text-xs font-bold uppercase  text-[#9d0208]">
-            Réponse administrative
+          <p className="mb-2 text-xs font-bold uppercase text-[#9d0208]">
+            Reponse administrative
           </p>
           <ReclamationReplyBox
             adminReply={adminReply}

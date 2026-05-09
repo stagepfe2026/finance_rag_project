@@ -8,6 +8,7 @@ from app.core.security import hash_session_token
 from app.models.document_model import DocumentModel
 from app.models.notification_model import NotificationModel
 from app.models.reclamation_model import ReclamationModel
+from app.repositories.audit_event_repository import AuditEventRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.sessions_repository import SessionsRepository
 from app.repositories.users_repository import UsersRepository
@@ -42,6 +43,7 @@ class NotificationService:
     def __init__(self, manager: NotificationConnectionManager):
         self.manager = manager
         self.repository = NotificationRepository()
+        self.audit_event_repository = AuditEventRepository()
         self.users_repository = UsersRepository()
         self.sessions_repository = SessionsRepository()
 
@@ -121,6 +123,52 @@ class NotificationService:
             if admin.id
         ]
         await self._store_and_emit(notifications)
+        self._record_notification_audit(
+            action_type="URGENT_RECLAMATION_NOTIFICATION_SENT",
+            action_label="Notification reclamation urgente",
+            entity_type="RECLAMATION",
+            entity_id=reclamation.id or "",
+            entity_label=reclamation.ticket_number,
+            summary=f"Notification de reclamation urgente envoyee pour {reclamation.ticket_number}.",
+            metadata={
+                "ticket": reclamation.ticket_number,
+                "priorite": reclamation.priority,
+                "destinataires": len(notifications),
+            },
+        )
+
+    async def notify_sla_overdue(self, reclamation: "ReclamationModel") -> None:
+        admins = self.users_repository.list_active_by_roles(["ADMIN"])
+        now = datetime.now(timezone.utc)
+        notifications = [
+            NotificationModel(
+                user_id=admin.id or "",
+                type="sla_overdue",
+                title="SLA depasse",
+                description=(
+                    f"SLA depasse pour la reclamation {reclamation.ticket_number} — {reclamation.subject[:60]}"
+                ),
+                link="/admin/reclamations",
+                is_read=False,
+                created_at=now,
+            )
+            for admin in admins
+            if admin.id
+        ]
+        await self._store_and_emit(notifications)
+        self._record_notification_audit(
+            action_type="SLA_OVERDUE_NOTIFICATION_SENT",
+            action_label="Notification SLA depasse",
+            entity_type="RECLAMATION",
+            entity_id=reclamation.id or "",
+            entity_label=reclamation.ticket_number,
+            summary=f"Notification SLA depasse envoyee pour la reclamation {reclamation.ticket_number}.",
+            metadata={
+                "ticket": reclamation.ticket_number,
+                "priorite": reclamation.priority,
+                "destinataires": len(notifications),
+            },
+        )
 
     async def notify_indexation_failed(self, document_title: str, error: str) -> None:
         admins = self.users_repository.list_active_by_roles(["ADMIN"])
@@ -139,6 +187,19 @@ class NotificationService:
             if admin.id
         ]
         await self._store_and_emit(notifications)
+        self._record_notification_audit(
+            action_type="INDEXATION_FAILED_NOTIFICATION_SENT",
+            action_label="Notification echec indexation",
+            entity_type="DOCUMENT",
+            entity_id="",
+            entity_label=document_title,
+            summary=f"Notification d echec d indexation envoyee pour {document_title}.",
+            metadata={
+                "titre": document_title,
+                "erreur": error[:200],
+                "destinataires": len(notifications),
+            },
+        )
 
     async def notify_document_deprecated_for_favorites(
         self, deprecated_document: "DocumentModel", new_document_title: str
@@ -164,6 +225,20 @@ class NotificationService:
             for uid in favorite_user_ids
         ]
         await self._store_and_emit(notifications)
+        self._record_notification_audit(
+            action_type="DOCUMENT_DEPRECATED_NOTIFICATION_SENT",
+            action_label="Notification document remplace",
+            entity_type="DOCUMENT",
+            entity_id=deprecated_document.id or "",
+            entity_label=deprecated_document.title,
+            summary=f"Notification de document favori remplace envoyee pour {deprecated_document.title}.",
+            metadata={
+                "documentId": deprecated_document.id or "",
+                "titre": deprecated_document.title,
+                "nouveauDocument": new_document_title,
+                "destinataires": len(notifications),
+            },
+        )
 
     def authenticate_websocket_user(self, websocket: WebSocket) -> dict | None:
         raw_token = websocket.cookies.get(settings.auth_session_cookie_name)
@@ -201,3 +276,32 @@ class NotificationService:
                     item.user_id,
                     {"event": "notification.created", "data": self.serialize_notification(item)},
                 )
+
+    def _record_notification_audit(
+        self,
+        *,
+        action_type: str,
+        action_label: str,
+        entity_type: str,
+        entity_id: str,
+        entity_label: str,
+        summary: str,
+        metadata: dict,
+    ) -> None:
+        try:
+            self.audit_event_repository.record(
+                user_id="system",
+                user_name="Systeme",
+                user_email="",
+                user_role="SYSTEM",
+                action_type=action_type,
+                action_label=action_label,
+                category="Notifications",
+                entity_type=entity_type,
+                entity_id=entity_id,
+                entity_label=entity_label,
+                summary=summary,
+                metadata=metadata,
+            )
+        except Exception:
+            pass

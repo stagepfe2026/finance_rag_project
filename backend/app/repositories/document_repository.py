@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, date, datetime, time
 
 from app.core.database import get_documents_collection
@@ -90,6 +91,24 @@ class DocumentRepository:
         cursor = self.collection.find({"_id": {"$in": id_values}})
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    def duplicate_exists(
+        self,
+        *,
+        title: str,
+        category: str,
+        document_type: str,
+        version: str,
+    ) -> bool:
+        normalized_title = " ".join(title.split()).strip()
+        query = {
+            "deletedAt": None,
+            "title": {"$regex": f"^{re.escape(normalized_title)}$", "$options": "i"},
+            "category": category,
+            "documentType": document_type,
+            "version": version.strip(),
+        }
+        return self.collection.count_documents(query, limit=1) > 0
+
     def list_documents(
         self,
         *,
@@ -113,6 +132,16 @@ class DocumentRepository:
 
     def list_recent_documents(self, *, limit: int = 8) -> list[DocumentModel]:
         cursor = self.collection.find({"deletedAt": None}).sort("createdAt", -1).limit(limit)
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
+
+    def list_due_future_documents(self, *, now: datetime) -> list[DocumentModel]:
+        cursor = self.collection.find(
+            {
+                "deletedAt": None,
+                "legalStatus": LegalStatus.futur.value,
+                "dateEntreeVigueur": {"$lte": now},
+            }
+        )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
     def count_documents(

@@ -67,6 +67,7 @@ class AuditService:
         entity_id: str,
         entity_label: str,
         summary: str,
+        category: str = "Recherche document",
         metadata: dict[str, Any] | None = None,
     ) -> None:
         full_name = " ".join(
@@ -81,7 +82,51 @@ class AuditService:
             user_role=str(current_user.get("role", "")),
             action_type=action_type,
             action_label=action_label,
-            category="Recherche document",
+            category=category,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            entity_label=entity_label,
+            summary=summary,
+            metadata=metadata,
+        )
+
+    def record_login_failed(self, *, email: str, reason: str = "INVALID_CREDENTIALS") -> None:
+        normalized_email = email.strip().lower()
+        self.audit_event_repository.record(
+            user_id="",
+            user_name=normalized_email or "Utilisateur inconnu",
+            user_email=normalized_email,
+            user_role="",
+            action_type="USER_LOGIN_FAILED",
+            action_label="Connexion echouee",
+            category="Authentification",
+            entity_type="AUTH",
+            entity_id=normalized_email,
+            entity_label="Tentative de connexion",
+            summary=f"Tentative de connexion echouee pour {normalized_email or 'un email vide'}.",
+            metadata={"raison": reason},
+        )
+
+    def record_system_activity(
+        self,
+        *,
+        action_type: str,
+        action_label: str,
+        category: str,
+        entity_type: str,
+        entity_id: str,
+        entity_label: str,
+        summary: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self.audit_event_repository.record(
+            user_id="system",
+            user_name="Systeme",
+            user_email="",
+            user_role="SYSTEM",
+            action_type=action_type,
+            action_label=action_label,
+            category=category,
             entity_type=entity_type,
             entity_id=entity_id,
             entity_label=entity_label,
@@ -380,7 +425,11 @@ class AuditService:
             "authActivities": sum(1 for item in items if item.get("category") == "Authentification"),
             "reclamationActivities": sum(1 for item in items if item.get("category") == "Reclamations"),
             "chatActivities": sum(1 for item in items if item.get("category") == "Chat"),
-            "documentSearchActivities": sum(1 for item in items if item.get("category") == "Recherche document"),
+            "documentSearchActivities": sum(
+                1
+                for item in items
+                if item.get("category") in {"Recherche document", "Gestion document"}
+            ),
             "last24Hours": sum(
                 1
                 for item in items
@@ -415,7 +464,7 @@ class AuditService:
                     buckets[day_key]["reclamations"] += 1
                 elif category == "Chat":
                     buckets[day_key]["chat"] += 1
-                elif category == "Recherche document":
+                elif category in {"Recherche document", "Gestion document"}:
                     buckets[day_key]["documentSearch"] += 1
 
         trend: list[dict[str, Any]] = []
@@ -535,6 +584,8 @@ class AuditService:
 
     def _map_reclamation_activity(self, description: str, status: str) -> tuple[str, str]:
         normalized = description.lower()
+        if "prise en charge" in normalized:
+            return "RECLAMATION_TAKEN", "Prise en charge reclamation"
         if "supprimee" in normalized:
             return "RECLAMATION_DELETED", "Suppression reclamation"
         if "mise a jour par l administrateur" in normalized:

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
@@ -6,16 +6,15 @@ import UploadZone from "../components/import-document/UploadZone";
 import DocumentForm from "../components/import-document/DocumentForm";
 import ProgressPanel from "../components/import-document/ProgressPanel";
 import PreviewPanel from "../components/import-document/PreviwPanel";
+import Snackbar from "../components/Snackbar";
 import {
   categoryOptions,
   legalDocumentTypeOptions,
   legalRelationTypeOptions,
-  legalStatusOptions,
   type CategoryValue,
   type FileMeta,
   type LegalDocumentTypeValue,
   type LegalRelationTypeValue,
-  type LegalStatusValue,
   type PreviewItem,
   type ProgressStep,
 } from "../../models/import-document";
@@ -25,6 +24,10 @@ import type { DocumentItem } from "../../models/document";
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const MAX_DOCUMENT_UPLOAD_SIZE = 20 * 1024 * 1024;
+
+type FieldName = "title" | "documentType" | "datePublication" | "dateEntreeVigueur" | "relatedDocumentId";
+type FieldErrors = Partial<Record<FieldName, string>>;
 
 function formatBytes(bytes: number) {
   if (!bytes) return "0 B";
@@ -47,7 +50,7 @@ async function buildPdfPreview(file: File) {
 
   for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: 0.45 });
+    const viewport = page.getViewport({ scale: 1.35 });
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
 
@@ -81,8 +84,7 @@ export default function ImportDocumentPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [category, setCategory] = useState<CategoryValue>("finance");
   const [title, setTitle] = useState("");
-  const [legalStatus, setLegalStatus] = useState<LegalStatusValue>("actif");
-  const [documentType, setDocumentType] = useState<LegalDocumentTypeValue>("autre");
+  const [documentType, setDocumentType] = useState<LegalDocumentTypeValue>("");
   const [datePublication, setDatePublication] = useState("");
   const [dateEntreeVigueur, setDateEntreeVigueur] = useState("");
   const [version, setVersion] = useState("");
@@ -96,9 +98,16 @@ export default function ImportDocumentPage() {
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", tone: "error" as "success" | "error" | "info" });
   const [isIndexed, setIsIndexed] = useState(false);
   const [titleTouched, setTitleTouched] = useState(false);
   const previewUrlsRef = useRef<string[]>([]);
+  const closeSnackbar = useCallback(() => setSnackbar((current) => ({ ...current, open: false })), []);
+
+  function showSnackbar(message: string, tone: "success" | "error" | "info" = "error") {
+    setSnackbar({ open: true, message, tone });
+  }
 
   useEffect(() => {
     return () => {
@@ -158,9 +167,81 @@ export default function ImportDocumentPage() {
     }
   }
 
+  function validateField(field: FieldName): string {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const publicationDate = datePublication ? new Date(`${datePublication}T00:00:00`) : null;
+    const effectiveDate = dateEntreeVigueur ? new Date(`${dateEntreeVigueur}T00:00:00`) : null;
+
+    if (field === "title" && !title.trim()) {
+      return "Le titre est obligatoire.";
+    }
+    if (field === "documentType" && !documentType) {
+      return "Le type de document est obligatoire.";
+    }
+    if (field === "datePublication" && publicationDate && publicationDate > today) {
+      return "La date de publication ne peut pas être future.";
+    }
+    if (field === "dateEntreeVigueur") {
+      if (!dateEntreeVigueur) {
+        return "La date d’entrée en vigueur est obligatoire.";
+      }
+      if (publicationDate && effectiveDate && effectiveDate < publicationDate) {
+        return "La date d’entrée en vigueur doit être postérieure ou égale à la date de publication.";
+      }
+    }
+    if (field === "relatedDocumentId" && relationType !== "none" && !relatedDocumentId) {
+      return "Sélectionnez le document concerné.";
+    }
+    return "";
+  }
+
+  function validateAllFields() {
+    const fields: FieldName[] = ["title", "documentType", "datePublication", "dateEntreeVigueur", "relatedDocumentId"];
+    const nextErrors: FieldErrors = {};
+    for (const field of fields) {
+      const error = validateField(field);
+      if (error) {
+        nextErrors[field] = error;
+      }
+    }
+    setFieldErrors(nextErrors);
+    return nextErrors;
+  }
+
+  function handleFieldBlur(field: FieldName) {
+    const error = validateField(field);
+    setFieldErrors((current) => {
+      const next = { ...current };
+      if (error) {
+        next[field] = error;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
+    if (error) {
+      showSnackbar(error);
+    }
+  }
+
   function handleFileSelect(file: File | null) {
     setSubmitError("");
     setIsIndexed(false);
+    setFieldErrors({});
+
+    if (file) {
+      const allowedFile = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf") || file.name.toLowerCase().endsWith(".docx");
+      if (!allowedFile) {
+        showSnackbar("Seuls les fichiers PDF et DOCX sont supportés.");
+        return;
+      }
+      if (file.size > MAX_DOCUMENT_UPLOAD_SIZE) {
+        showSnackbar("Le fichier dépasse la taille maximale autorisée.");
+        return;
+      }
+    }
+
     setSelectedFile(file);
     setRelationType("none");
     setRelatedDocumentId("");
@@ -169,8 +250,7 @@ export default function ImportDocumentPage() {
     if (!file) {
       setTitle("");
       setTitleTouched(false);
-      setLegalStatus("actif");
-      setDocumentType("autre");
+      setDocumentType("");
       setDatePublication("");
       setDateEntreeVigueur("");
       setVersion("");
@@ -191,7 +271,17 @@ export default function ImportDocumentPage() {
 
   async function handleSubmit() {
     if (!selectedFile) {
-      setSubmitError("Choisissez un document avant de lancer l indexation.");
+      const message = "Choisissez un document avant de lancer l’indexation.";
+      setSubmitError(message);
+      showSnackbar(message);
+      return;
+    }
+
+    const errors = validateAllFields();
+    const firstError = Object.values(errors)[0];
+    if (firstError) {
+      setSubmitError(firstError);
+      showSnackbar(firstError);
       return;
     }
 
@@ -201,7 +291,9 @@ export default function ImportDocumentPage() {
 
     try {
       if (relationType !== "none" && !relatedDocumentId) {
-        setSubmitError("Selectionnez le document concerne par la relation juridique.");
+        const message = "Sélectionnez le document concerné.";
+        setSubmitError(message);
+        showSnackbar(message);
         return;
       }
 
@@ -210,7 +302,6 @@ export default function ImportDocumentPage() {
         file: selectedFile,
         category,
         title,
-        legalStatus,
         documentType,
         datePublication: datePublication || undefined,
         dateEntreeVigueur: dateEntreeVigueur || undefined,
@@ -219,9 +310,11 @@ export default function ImportDocumentPage() {
         relatedDocumentId: relationType === "none" ? undefined : relatedDocumentId,
       });
       setIsIndexed(true);
+      showSnackbar("Document indexé avec succès.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erreur inconnue pendant l indexation.";
       setSubmitError(message);
+      showSnackbar(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -231,8 +324,7 @@ export default function ImportDocumentPage() {
     setSelectedFile(null);
     setCategory("finance");
     setTitle("");
-    setLegalStatus("actif");
-    setDocumentType("autre");
+    setDocumentType("");
     setDatePublication("");
     setDateEntreeVigueur("");
     setVersion("");
@@ -245,6 +337,7 @@ export default function ImportDocumentPage() {
     setIsGeneratingPreview(false);
     setIsSubmitting(false);
     setSubmitError("");
+    setFieldErrors({});
     setIsIndexed(false);
     setTitleTouched(false);
     previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
@@ -345,8 +438,6 @@ export default function ImportDocumentPage() {
                     category={category}
                     categoryOptions={categoryOptions}
                     title={title}
-                    legalStatus={legalStatus}
-                    legalStatusOptions={legalStatusOptions}
                     documentType={documentType}
                     documentTypeOptions={legalDocumentTypeOptions}
                     datePublication={datePublication}
@@ -358,15 +449,25 @@ export default function ImportDocumentPage() {
                     relatedDocumentOptions={relatedDocumentOptions}
                     relationSearch={relationSearch}
                     fileMeta={fileMeta}
+                    errors={fieldErrors}
                     onCategoryChange={setCategory}
                     onTitleChange={(value) => {
                       setTitleTouched(true);
                       setTitle(value);
+                      setFieldErrors((current) => ({ ...current, title: "" }));
                     }}
-                    onLegalStatusChange={setLegalStatus}
-                    onDocumentTypeChange={setDocumentType}
-                    onDatePublicationChange={setDatePublication}
-                    onDateEntreeVigueurChange={setDateEntreeVigueur}
+                    onDocumentTypeChange={(value) => {
+                      setDocumentType(value);
+                      setFieldErrors((current) => ({ ...current, documentType: "" }));
+                    }}
+                    onDatePublicationChange={(value) => {
+                      setDatePublication(value);
+                      setFieldErrors((current) => ({ ...current, datePublication: "" }));
+                    }}
+                    onDateEntreeVigueurChange={(value) => {
+                      setDateEntreeVigueur(value);
+                      setFieldErrors((current) => ({ ...current, dateEntreeVigueur: "" }));
+                    }}
                     onVersionChange={setVersion}
                     onRelationTypeChange={(value) => {
                       setRelationType(value);
@@ -374,8 +475,12 @@ export default function ImportDocumentPage() {
                         setRelatedDocumentId("");
                       }
                     }}
-                    onRelatedDocumentIdChange={setRelatedDocumentId}
+                    onRelatedDocumentIdChange={(value) => {
+                      setRelatedDocumentId(value);
+                      setFieldErrors((current) => ({ ...current, relatedDocumentId: "" }));
+                    }}
                     onRelationSearchChange={setRelationSearch}
+                    onFieldBlur={handleFieldBlur}
                     onClearFile={() => handleFileSelect(null)}
                   />
                 </div>
@@ -414,6 +519,12 @@ export default function ImportDocumentPage() {
               </div>
             </div>
           </main>
+          <Snackbar
+            open={snackbar.open}
+            message={snackbar.message}
+            tone={snackbar.tone}
+            onClose={closeSnackbar}
+          />
     </div>
   );
 }

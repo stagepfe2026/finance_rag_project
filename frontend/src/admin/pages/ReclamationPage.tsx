@@ -9,6 +9,7 @@ import type { Reclamation } from "../../models/reclamation";
 import {
   fetchAdminReclamations,
   resolveReclamationAsAdmin,
+  takeReclamationAsAdmin,
 } from "../../services/admin-reclamation.service";
 
 type StatusFilter = "ALL" | Extract<Reclamation["status"], "PENDING" | "IN_PROGRESS" | "RESOLVED">;
@@ -24,6 +25,7 @@ export default function ReclamationPage() {
   const [adminReply, setAdminReply] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTaking, setIsTaking] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", tone: "info" as "success" | "error" | "info" });
   const closeSnackbar = useCallback(() => setSnackbar((s) => ({ ...s, open: false })), []);
 
@@ -110,6 +112,20 @@ export default function ReclamationPage() {
     }
   }
 
+  async function handleTakeReclamation() {
+    if (!selectedReclamation) return;
+    try {
+      setIsTaking(true);
+      const updated = await takeReclamationAsAdmin(selectedReclamation._id);
+      setReclamations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
+      setSnackbar({ open: true, tone: "success", message: "Reclamation prise en charge avec succes." });
+    } catch (takeError) {
+      setSnackbar({ open: true, tone: "error", message: takeError instanceof Error ? takeError.message : "Impossible de prendre en charge la reclamation." });
+    } finally {
+      setIsTaking(false);
+    }
+  }
+
   function handleSelectReclamation(reclamation: Reclamation) {
     setSelectedId(reclamation._id);
     setShowPanel(true);
@@ -144,10 +160,12 @@ export default function ReclamationPage() {
             adminReply={adminReply}
             alreadyHandled={alreadyHandled}
             isSubmitting={isSubmitting}
+            isTaking={isTaking}
             onToggleExpanded={() => setIsPanelExpanded((current) => !current)}
             onClose={() => setShowPanel(false)}
             onReplyChange={setAdminReply}
             onSubmitReply={() => void handleSubmitReply()}
+            onTakeReclamation={() => void handleTakeReclamation()}
           />
         ) : null}
       </div>

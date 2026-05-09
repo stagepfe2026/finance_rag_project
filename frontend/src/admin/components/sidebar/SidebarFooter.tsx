@@ -1,5 +1,6 @@
 import { LogOut, Moon, Sun } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
+import AdminNotificationsBell from "../notifications/AdminNotificationsBell";
 
 type Props = {
   isCollapsed: boolean;
@@ -51,6 +52,9 @@ export default function SidebarFooter({ isCollapsed, isDarkMode, onToggleDarkMod
           )}
           {!isCollapsed && (isDarkMode ? "Mode clair" : "Mode sombre")}
         </button>
+
+        {/* Notifications bell */}
+        <AdminNotificationsBell isCollapsed={isCollapsed} />
 
         {/* Logout */}
         <button

@@ -2,7 +2,7 @@ import { documentCategoryLabels, type DocumentCategoryValue } from "./document";
 
 export type CategoryValue = DocumentCategoryValue;
 export type LegalStatusValue = "actif" | "futur" | "remplace" | "abroge";
-export type LegalDocumentTypeValue = "loi" | "decret" | "arrete" | "note" | "circulaire" | "autre";
+export type LegalDocumentTypeValue = "" | "loi" | "decret" | "arrete" | "note" | "circulaire";
 export type LegalRelationTypeValue = "none" | "remplace" | "abroge";
 
 export type CategoryOption = {
@@ -56,7 +56,6 @@ export const legalDocumentTypeOptions: SelectOption[] = [
   { value: "arrete", label: "Arrêté" },
   { value: "note", label: "Note" },
   { value: "circulaire", label: "Circulaire" },
-  { value: "autre", label: "Autre" },
 ];
 
 export const legalRelationTypeOptions: SelectOption[] = [

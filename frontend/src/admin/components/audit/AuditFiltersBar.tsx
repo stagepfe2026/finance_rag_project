@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 
 import type { AuditActionFilter, AuditActivity, AuditUserFilter } from "../../../models/audit";
 import AuditExportMenu from "./AuditExportMenu";
@@ -14,6 +14,7 @@ type AuditFiltersBarProps = {
   onSearchChange: (value: string) => void;
   onUserFilterChange: (value: string) => void;
   onActionFilterChange: (value: string) => void;
+  onResetFilters: () => void;
 };
 
 export default function AuditFiltersBar({
@@ -27,6 +28,7 @@ export default function AuditFiltersBar({
   onSearchChange,
   onUserFilterChange,
   onActionFilterChange,
+  onResetFilters,
 }: AuditFiltersBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-[#e5eaf2] px-4 py-3">
@@ -67,6 +69,15 @@ export default function AuditFiltersBar({
       </select>
 
       <div className="ml-auto flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onResetFilters}
+          className="inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-[#d8dee9] bg-white px-3 text-[11px] font-semibold text-[#071f3d] transition hover:border-[#071f3d] hover:bg-[#f7f9fc]"
+        >
+          <RotateCcw size={13} />
+          Réinitialiser
+        </button>
+
         <div className="hidden text-right md:block">
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700 ">Export</p>
          

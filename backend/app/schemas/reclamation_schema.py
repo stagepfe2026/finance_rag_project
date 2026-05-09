@@ -59,6 +59,13 @@ class ReclamationOut(BaseModel):
     updatedAt: str
     deletedAt: str | None = None
     activityLog: list[ReclamationActivityOut] = Field(default_factory=list)
+    takenAt: str | None = None
+    takenByAdminName: str | None = None
+    slaDeadlineAt: str = ""
+    slaStatus: str = "ON_TIME"
+    slaRemainingMinutes: int | None = None
+    slaDelayMinutes: int | None = None
+    isSlaOverdue: bool = False
 
 
 class ReclamationListResponse(BaseModel):

@@ -1,5 +1,5 @@
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -29,6 +29,21 @@ class ReclamationService:
         ".docx",
     }
     max_attachment_size = 5 * 1024 * 1024
+
+    # SLA deadlines in minutes (calendar time)
+    SLA_MINUTES: dict[str, int] = {
+        "URGENT": 4 * 60,        # 4h
+        "HIGH": 24 * 60,         # 1 day
+        "NORMAL": 3 * 24 * 60,   # 3 days
+        "LOW": 7 * 24 * 60,      # 7 days
+    }
+    # DUE_SOON threshold: URGENT = last hour, others = last quarter of delay
+    DUE_SOON_MINUTES: dict[str, int] = {
+        "URGENT": 60,
+        "HIGH": 360,
+        "NORMAL": 1080,
+        "LOW": 2520,
+    }
 
     def __init__(self, notification_service: NotificationService | None = None) -> None:
         self.repository = ReclamationRepository()
@@ -123,9 +138,16 @@ class ReclamationService:
 
         return self._serialize_reclamation(created)
 
-    def list_reclamations(self, current_user: dict) -> dict:
+    async def list_reclamations(self, current_user: dict) -> dict:
         if current_user.get("role") == "ADMIN":
             reclamations = self.repository.list_all()
+            if self.notification_service is not None:
+                for rec in reclamations:
+                    sla = self._compute_sla(rec)
+                    if sla["slaStatus"] == "OVERDUE" and rec.sla_overdue_notified_at is None:
+                        await self.notification_service.notify_sla_overdue(rec)
+                        self.repository.mark_sla_overdue_notified(rec.id)
+                        rec.sla_overdue_notified_at = datetime.now(UTC)
         else:
             user_id = str(current_user.get("id", "")).strip()
             reclamations = self.repository.list_for_user(user_id)
@@ -181,11 +203,33 @@ class ReclamationService:
         media_type = reclamation.attachment_content_type or "application/octet-stream"
         return file_path, media_type
 
+    async def take_reclamation(self, admin_user: dict, reclamation_id: str) -> dict:
+        admin_id = str(admin_user.get("id", "")).strip()
+        admin_name = " ".join(
+            part
+            for part in [str(admin_user.get("prenom", "")).strip(), str(admin_user.get("nom", "")).strip()]
+            if part
+        ).strip() or str(admin_user.get("email", "")).strip() or "Administrateur"
+
+        reclamation = self.repository.get_by_id(reclamation_id)
+        if reclamation is None or reclamation.deleted_at is not None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+        if reclamation.status != "PENDING":
+            raise ValueError("RECLAMATION_ALREADY_HANDLED")
+
+        updated = self.repository.take_reclamation(reclamation_id, admin_id, admin_name)
+        if updated is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+        return self._serialize_reclamation(updated)
+
     def delete_reclamation(self, current_user: dict, reclamation_id: str) -> None:
         user_id = str(current_user.get("id", "")).strip()
         reclamation = self.repository.get_for_user(reclamation_id, user_id)
         if reclamation is None:
             raise ValueError("RECLAMATION_NOT_FOUND")
+
+        if reclamation.status != "PENDING":
+            raise ValueError("RECLAMATION_DELETE_NOT_ALLOWED")
 
         deleted = self.repository.soft_delete_for_user(reclamation_id, user_id)
         if not deleted:
@@ -225,6 +269,51 @@ class ReclamationService:
 
         return self._serialize_reclamation(updated)
 
+    def _compute_sla(self, reclamation: ReclamationModel) -> dict:
+        sla_minutes = self.SLA_MINUTES.get(reclamation.priority, self.SLA_MINUTES["NORMAL"])
+        due_soon_minutes = self.DUE_SOON_MINUTES.get(reclamation.priority, self.DUE_SOON_MINUTES["NORMAL"])
+
+        deadline = reclamation.created_at + timedelta(minutes=sla_minutes)
+
+        # Backward compat: legacy docs without firstHandledAt already in progress/resolved/failed
+        first_handled = reclamation.first_handled_at
+        if first_handled is None and reclamation.status in ("IN_PROGRESS", "RESOLVED", "FAILED"):
+            first_handled = reclamation.updated_at
+
+        if first_handled is not None:
+            if first_handled <= deadline:
+                sla_status = "COMPLETED_ON_TIME"
+            else:
+                sla_status = "COMPLETED_LATE"
+            delay = max(0, int((first_handled - deadline).total_seconds() / 60))
+            return {
+                "slaDeadlineAt": deadline.isoformat(),
+                "slaStatus": sla_status,
+                "slaRemainingMinutes": None,
+                "slaDelayMinutes": delay,
+                "isSlaOverdue": sla_status == "COMPLETED_LATE",
+            }
+
+        now = datetime.now(UTC)
+        remaining_seconds = (deadline - now).total_seconds()
+        if remaining_seconds <= 0:
+            return {
+                "slaDeadlineAt": deadline.isoformat(),
+                "slaStatus": "OVERDUE",
+                "slaRemainingMinutes": 0,
+                "slaDelayMinutes": int(-remaining_seconds / 60),
+                "isSlaOverdue": True,
+            }
+        remaining_minutes = int(remaining_seconds / 60)
+        sla_status = "DUE_SOON" if remaining_minutes <= due_soon_minutes else "ON_TIME"
+        return {
+            "slaDeadlineAt": deadline.isoformat(),
+            "slaStatus": sla_status,
+            "slaRemainingMinutes": remaining_minutes,
+            "slaDelayMinutes": 0,
+            "isSlaOverdue": False,
+        }
+
     async def _store_attachment(self, attachment: UploadFile) -> dict:
         extension = Path(attachment.filename or "").suffix.lower()
         if extension not in self.allowed_attachment_types:
@@ -262,6 +351,8 @@ class ReclamationService:
                 "url": f"/api/v1/reclamations/{reclamation.id}/attachment" if reclamation.id else None,
             }
 
+        sla = self._compute_sla(reclamation)
+
         return {
             "_id": reclamation.id,
             "ticketNumber": reclamation.ticket_number,
@@ -294,6 +385,9 @@ class ReclamationService:
                 }
                 for item in reclamation.activity_log
             ],
+            "takenAt": reclamation.first_handled_at.isoformat() if reclamation.first_handled_at else None,
+            "takenByAdminName": reclamation.taken_by_admin_name,
+            **sla,
         }
 
     def _serialize_datetime(self, value: object) -> str:
