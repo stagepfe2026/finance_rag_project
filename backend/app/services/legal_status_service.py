@@ -45,6 +45,13 @@ class LegalStatusService:
     def is_future_document(self, document: DocumentModel) -> bool:
         return self._is_future_date(document.date_entree_vigueur)
 
+    def can_relation_source_update_target(
+        self,
+        source_document: DocumentModel,
+        target_document: DocumentModel,
+    ) -> bool:
+        return self._can_relation_source_update_target(source_document, target_document)
+
     def _collect_effective_relation_sources(self, document: DocumentModel) -> list[DocumentModel]:
         relation_sources: list[DocumentModel] = []
         seen_ids: set[str] = set()

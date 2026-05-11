@@ -40,12 +40,25 @@ class DocumentRelationService:
                     source_document.id,
                     legal_status=LegalStatus.futur.value,
                 )
+            effective_related_status = self.legal_status_service.compute_effective_legal_status(
+                related_document
+            )
+            if related_document.id:
+                self.document_repository.update_legal_metadata(
+                    related_document.id,
+                    legal_status=effective_related_status,
+                )
             return
 
-        related_document_status = self.legal_status_service.compute_effective_legal_status(
-            related_document
-        )
-        if related_document_status != LegalStatus.actif.value:
+        if not self.legal_status_service.can_relation_source_update_target(
+            source_document,
+            related_document,
+        ):
+            if source_document.id:
+                self.document_repository.update_legal_metadata(
+                    source_document.id,
+                    legal_status=LegalStatus.actif.value,
+                )
             return
 
         if source_document.id:

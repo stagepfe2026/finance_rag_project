@@ -241,6 +241,11 @@ class RagService:
         question_profile: str,
         query_mode: Literal["current", "future_preview", "comparison"],
     ) -> list[dict]:
+        if query_mode == "current" and question_profile not in {"historical", "comparative"}:
+            current_main_chunks = self._filter_current_applicable_chunks(main_relevant_chunks)
+            if current_main_chunks:
+                return self._dedupe_chunks(current_main_chunks)[: settings.final_top_k]
+
         is_comparison_context = query_mode == "comparison" or question_profile in {
             "historical",
             "comparative",
@@ -285,6 +290,14 @@ class RagService:
 
         merged_chunks.sort(key=lambda item: item["final_score"], reverse=True)
         return merged_chunks[: settings.final_top_k]
+
+    @staticmethod
+    def _filter_current_applicable_chunks(chunks: list[dict]) -> list[dict]:
+        return [
+            chunk
+            for chunk in chunks
+            if str(chunk.get("legal_status", "actif")).strip() == "actif"
+        ]
 
     def _probe_categories(
         self,

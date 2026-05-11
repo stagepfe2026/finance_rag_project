@@ -9,7 +9,6 @@ class PromptBuilderService:
             context_parts.append(
                 "\n".join(
                     [
-                        f"[Document {idx}]",
                         f"Titre: {chunk.get('document_title') or chunk.get('document_name') or 'Document'}",
                         f"Categorie: {chunk.get('category', '')}",
                         f"Type juridique: {chunk.get('document_type_label') or chunk.get('document_type', '')}",
@@ -18,15 +17,15 @@ class PromptBuilderService:
                         f"Date entree en vigueur: {self._format_value(chunk.get('date_entree_vigueur'))}",
                         f"Version: {self._format_value(chunk.get('version'))}",
                         f"Relation: {self._build_relation_label(chunk)}",
+                        f"Priorite d'application: {self._build_applicability_label(chunk)}",
                         self._build_future_warning(chunk),
-                        f"Source: {chunk.get('document_name', '')}",
-                        f"Chunk: {chunk.get('chunk_index', -1)}",
-                        f"Contenu: {chunk.get('text', '')}",
+                        f"Nom du texte: {chunk.get('document_name', '')}",
+                        f"Extrait juridique: {chunk.get('text', '')}",
                     ]
                 )
             )
 
-        return "\n\n".join(context_parts)
+        return "\n\n---\n\n".join(context_parts)
 
     def build_prompt(
         self,
@@ -83,6 +82,18 @@ class PromptBuilderService:
             "S il n y a aucune donnee numerique, fournis uniquement le tableau de comparaison."
         )
 
+        legal_priority_instruction = (
+            "Regles de priorite juridique obligatoires: "
+            "Avant de repondre, verifie le Statut juridique, la Date entree en vigueur, la Version et la Relation de chaque source. "
+            "Si une source active et une source remplacee traitent le meme sujet, reponds d abord avec la source active. "
+            "Ne commence jamais la reponse par une source remplacee si une source active pertinente existe. "
+            "Un texte remplace ou abroge ne doit jamais etre presente comme la regle actuellement applicable. "
+            "Utilise un texte remplace uniquement pour expliquer l historique ou la difference avec le texte actif. "
+            "Si tu utilises un texte remplace, indique clairement qu il n est plus la reference principale. "
+            "Si seules des sources remplacees ou abrogees sont disponibles, reponds prudemment et precise que l information ne vient pas d un texte actuellement applicable. "
+            "Pour une question sur la regle actuelle, formule d abord la reponse autour du texte actuellement applicable, puis mentionne l ancien texte seulement si c est utile."
+        )
+
         return f"""
 Tu es un assistant juridique specialise en recherche documentaire.
 Tu dois repondre uniquement a partir du contexte fourni.
@@ -91,6 +102,7 @@ N'ajoute aucune information absente du contexte.
 {profile_instruction}
 {query_mode_instruction}
 {comparison_and_stats_instruction}
+{legal_priority_instruction}
 Si une source est future, remplacee ou abrogee, signale-le explicitement.
 S il existe un conflit entre plusieurs textes, privilegie la source la plus pertinente juridiquement et explique ta prudence.
 Si l'information n'apparait pas clairement dans le contexte, reponds exactement :
@@ -117,12 +129,36 @@ Reponse:
         relation_type = str(chunk.get("relation_type", "none")).strip()
         related_document_id = str(chunk.get("related_document_id", "")).strip()
         related_document_title = str(chunk.get("related_document_title", "")).strip()
+        legal_status = str(chunk.get("legal_status", "actif")).strip()
 
         if relation_type in {"", "none"}:
             return "-"
 
         related_part = related_document_title or related_document_id or "document lie"
+        if relation_type == "remplace":
+            if legal_status == "remplace":
+                return f"Ce document est remplace par: {related_part}"
+            return f"Ce document remplace: {related_part}"
+
+        if relation_type == "abroge":
+            if legal_status == "abroge":
+                return f"Ce document est abroge par: {related_part}"
+            return f"Ce document abroge: {related_part}"
+
         return f"{relation_type} -> {related_part}"
+
+    @staticmethod
+    def _build_applicability_label(chunk: dict) -> str:
+        legal_status = str(chunk.get("legal_status", "actif")).strip()
+        if legal_status == "actif":
+            return "Texte actuellement applicable; utiliser en priorite pour la regle actuelle."
+        if legal_status == "remplace":
+            return "Ancien texte remplace; utiliser seulement comme historique si une source active existe."
+        if legal_status == "abroge":
+            return "Texte abroge; ne pas presenter comme regle actuelle."
+        if legal_status == "futur":
+            return "Texte futur; ne pas utiliser comme regle actuelle avant sa date d entree en vigueur."
+        return "Statut a verifier avant utilisation."
 
     @classmethod
     def _build_future_warning(cls, chunk: dict) -> str:
