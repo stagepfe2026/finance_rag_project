@@ -68,6 +68,20 @@ class DocumentRepository:
         )
         return self.get_by_id(document_id)
 
+    def mark_abrogated_deleted(self, document_id: str) -> DocumentModel | None:
+        now = datetime.now(UTC)
+        self.collection.update_one(
+            {**self._id_filter(document_id), "deletedAt": None},
+            {
+                "$set": {
+                    "legalStatus": LegalStatus.abroge.value,
+                    "deletedAt": now,
+                    "indexError": None,
+                }
+            },
+        )
+        return self.get_by_id(document_id)
+
     def get_by_id(self, document_id: str) -> DocumentModel | None:
         if not document_id.strip():
             return None
@@ -302,7 +316,7 @@ class DocumentRepository:
         category: str | None = None,
         status: str | None = None,
     ) -> dict:
-        query: dict = {"deletedAt": None}
+        query: dict = {}
 
         normalized_search = (search or "").strip()
         if normalized_search:

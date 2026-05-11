@@ -1,22 +1,24 @@
 import type { ChatFeedbackDistributionItem } from "../../../models/chat-feedback";
+import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
 
 const COLORS = ["#071f3d", "#9d0208", "#f06f80", "#8d7f83", "#d995a0"];
+const DARK_COLORS = ["#93c5fd", "#f87171", "#fb7185", "#cbd5e1", "#fbbf24"];
 
-function buildDistributionGradient(items: ChatFeedbackDistributionItem[]) {
+function buildDistributionGradient(items: ChatFeedbackDistributionItem[], colors: string[], emptyColor: string) {
   if (items.length === 0) {
-    return "#e5eaf2 0deg 360deg";
+    return `${emptyColor} 0deg 360deg`;
   }
 
   const nonZeroItems = items.filter((item) => item.count > 0);
   if (nonZeroItems.length === 1) {
     const index = items.indexOf(nonZeroItems[0]);
-    return `${COLORS[index % COLORS.length]} 0deg 360deg`;
+    return `${colors[index % colors.length]} 0deg 360deg`;
   }
 
   let start = -90;
   const segments = items.map((item, index) => {
     const end = start + (item.percentage / 100) * 360;
-    const segment = `${COLORS[index % COLORS.length]} ${start}deg ${end}deg`;
+    const segment = `${colors[index % colors.length]} ${start}deg ${end}deg`;
     start = end;
     return segment;
   });
@@ -37,6 +39,8 @@ export default function DistributionCard({
   selectedName,
   onSelectedNameChange,
 }: DistributionCardProps) {
+  const isDark = useAdminDarkMode();
+  const colors = isDark ? DARK_COLORS : COLORS;
   const selectedItem = distribution.find((item) => item.documentName === selectedName) ?? distribution[0] ?? null;
 
   return (
@@ -53,7 +57,7 @@ export default function DistributionCard({
               style={{
                 width: 96,
                 height: 96,
-                background: `conic-gradient(${buildDistributionGradient(distribution)})`,
+                background: `conic-gradient(${buildDistributionGradient(distribution, colors, isDark ? "#334155" : "#e5eaf2")})`,
               }}
             >
               <div
@@ -61,7 +65,7 @@ export default function DistributionCard({
                 style={{ width: "90%", height: "90%" }}
               >
                 <div className="text-center">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[#8a96ad]">Total</p>
+                  <p className={isDark ? "text-[9px] font-semibold uppercase tracking-[0.1em] text-[#cbd5e1]" : "text-[9px] font-semibold uppercase tracking-[0.1em] text-[#8a96ad]"}>Total</p>
                   <p className="mt-0.5 text-sm font-bold leading-none text-[#071f3d]">{total}</p>
                 </div>
               </div>
@@ -85,13 +89,13 @@ export default function DistributionCard({
                   <span className="flex min-w-0 items-center gap-2">
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      style={{ backgroundColor: colors[index % colors.length] }}
                     />
                     <span className="truncate text-[11px] font-medium">{item.documentName}</span>
                   </span>
 
                   <span className="flex shrink-0 items-center gap-2">
-                    <span className="text-[11px] text-[#8a96ad]">{item.percentage}%</span>
+                    <span className={isDark ? "text-[11px] text-[#cbd5e1]" : "text-[11px] text-[#8a96ad]"}>{item.percentage}%</span>
                     <span className="w-7 text-right text-[11px] font-bold text-[#071f3d]">{item.count}</span>
                   </span>
                 </button>

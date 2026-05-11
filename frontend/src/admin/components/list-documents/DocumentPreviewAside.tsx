@@ -1,7 +1,6 @@
 import { ExternalLink, FileText, RefreshCw, Trash2, X } from "lucide-react";
 import {
   documentCategoryLabels,
-  documentStatusLabels,
   legalDocumentTypeLabels,
   legalRelationTypeLabels,
   legalStatusLabels,

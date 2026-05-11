@@ -380,6 +380,67 @@ body.user-dark-theme .apexcharts-canvas svg {
   overflow: hidden !important;
 }
 
+.admin-theme-root .audit-control-card.audit-control-neutral {
+  background-color: #f7f9fc;
+  border-color: #d8dee9;
+  color: #071f3d;
+}
+
+.admin-theme-root .audit-control-card.audit-control-danger {
+  background-color: #fff5f5;
+  border-color: rgba(157, 2, 8, 0.25);
+  color: #9d0208;
+}
+
+.admin-theme-root.admin-dark-theme .audit-control-card.audit-control-neutral,
+.admin-theme-root.admin-dark-theme .audit-control-card.audit-control-danger {
+  background-color: #172036 !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.admin-theme-root.admin-dark-theme .audit-control-card.audit-control-danger {
+  border-color: rgba(248, 113, 113, 0.45) !important;
+  color: #fecaca !important;
+}
+
+.admin-theme-root.admin-dark-theme .audit-control-card p {
+  color: inherit !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-detail-panel,
+.admin-theme-root.admin-dark-theme .admin-reclamation-panel-header,
+.admin-theme-root.admin-dark-theme .admin-reclamation-email,
+.admin-theme-root.admin-dark-theme .admin-reclamation-attachment {
+  background-color: #111827 !important;
+  border-color: #243041 !important;
+  color: #f8fafc !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-email {
+  background-color: #172036 !important;
+  color: #94a3b8 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-attachment {
+  background-color: #172036 !important;
+  color: #94a3b8 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-attachment p {
+  color: #94a3b8 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-reply-input {
+  background-color: #172036 !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-reply-input::placeholder {
+  color: #8a96ad !important;
+}
+
 /* ApexCharts dark mode overrides */
 .admin-theme-root.admin-dark-theme .apexcharts-text tspan,
 .admin-theme-root.admin-dark-theme .apexcharts-xaxis-label tspan,
@@ -537,7 +598,7 @@ body.user-dark-theme .apexcharts-canvas svg {
 }
 
 .admin-theme-root.admin-dark-theme .admin-sidebar-link:not([class*="bg-[linear-gradient"]) {
-  color: #cbd5e1 !important;
+  color: #ffffff !important;
 }
 
 .admin-theme-root.admin-dark-theme .admin-sidebar-link:hover {

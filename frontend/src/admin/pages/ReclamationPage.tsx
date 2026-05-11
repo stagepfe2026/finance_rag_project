@@ -132,7 +132,7 @@ export default function ReclamationPage() {
   }
 
   return (
-    <ReclamationLayout stats={stats} urgentItems={urgentItems} onSelectUrgent={handleSelectReclamation}>
+    <ReclamationLayout stats={stats}>
       <div className="flex min-h-[620px] gap-4">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#e5eaf2] bg-white">
           <ReclamationFilters

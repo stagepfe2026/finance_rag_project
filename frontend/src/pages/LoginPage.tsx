@@ -6,7 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import loginImage from "../assets/login.png";
 
 function getHomePath(role: "ADMIN" | "FINANCE_USER"): string {
-  return role === "ADMIN" ? "/admin/documents/import" : "/user/accueil";
+  return role === "ADMIN" ? "/admin/dashboard" : "/user/accueil";
 }
 
 export default function LoginPage() {
@@ -37,7 +37,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const res = await login({ email, password });
-      const target = from.startsWith("/") ? from : res.redirectTo || getHomePath("FINANCE_USER");
+      const target = from.startsWith("/") ? from : res.redirectTo || getHomePath(res.user?.role ?? "FINANCE_USER");
       navigate(target, { replace: true });
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Identifiants invalides.");

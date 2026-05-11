@@ -46,12 +46,12 @@ export default function ReclamationDetailPanel({
 
   return (
     <aside
-      className={`flex h-full flex-col overflow-hidden border border-[#dde3ed] rounded rounded-lg bg-white ${
+      className={`admin-reclamation-detail-panel flex h-full flex-col overflow-hidden border border-[#dde3ed] rounded rounded-lg bg-white ${
         isExpanded ? "w-[580px]" : "w-[460px]"
       }`}
     >
       {/* HEADER */}
-      <div className="flex flex-shrink-0 items-center justify-between border-b border-[#dde3ed] bg-[#f8fafc] px-3.5 py-2.5">
+      <div className="admin-reclamation-panel-header flex flex-shrink-0 items-center justify-between border-b border-[#dde3ed] bg-[#f8fafc] px-3.5 py-2.5">
         <div>
           <p className="text-[11px] font-bold tracking-wide text-[#071f3d]">
             #{reclamation.ticketNumber}
@@ -84,7 +84,7 @@ export default function ReclamationDetailPanel({
       </div>
 
       {/* EMAIL */}
-      <div className="flex-shrink-0 border-b border-[#f0f3f8] bg-[#fcfdfe] px-3.5 py-1 text-[10px] text-[#8a96ad]">
+      <div className="admin-reclamation-email flex-shrink-0 border-b border-[#f0f3f8] bg-[#fcfdfe] px-3.5 py-1 text-[10px] text-[#8a96ad]">
         {reclamation.userEmail}
       </div>
 
@@ -141,7 +141,7 @@ export default function ReclamationDetailPanel({
               </div>
             )}
             <div className="col-span-2">
-              <p className="text-[10px] text-[#8a96ad]">SLA</p>
+              <p className="text-[10px] text-[#8a96ad]">Delai de traitement</p>
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${getSlaStatusClassName(reclamation.slaStatus)}`}>
                   {getSlaStatusLabel(reclamation.slaStatus)}
@@ -171,7 +171,7 @@ export default function ReclamationDetailPanel({
               {reclamation.description}
             </p>
             {reclamation.attachment?.url && (
-              <div className="rounded border border-[#eef2f7] bg-[#fafbfd] p-2.5">
+              <div className="admin-reclamation-attachment rounded border border-[#eef2f7] bg-[#fafbfd] p-2.5">
                 <p className="mb-1.5 text-[10px] text-[#8a96ad]">Fichier joint</p>
                 <a
                   href={`${apiBaseUrl}${reclamation.attachment.url}`}

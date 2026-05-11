@@ -125,6 +125,10 @@ export default function ListDocumentPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<DocumentItem | null>(null);
+  const [isDeletingDocument, setIsDeletingDocument] = useState(false);
+  const [documentToReindex, setDocumentToReindex] = useState<DocumentItem | null>(null);
+  const [isReindexingDocument, setIsReindexingDocument] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -229,38 +233,68 @@ export default function ListDocumentPage() {
   };
 
   async function handleDeleteFromIndex(document: DocumentItem) {
+    setDocumentToDelete(document);
+  }
+
+  async function handleConfirmDeleteDocument() {
+    if (!documentToDelete) {
+      return;
+    }
+
     try {
+      setIsDeletingDocument(true);
       closeSnackbar();
       const result = await deleteDocumentFromIndex({
         apiBaseUrl,
-        documentId: document.id,
+        documentId: documentToDelete.id,
       });
       if (result.data) {
         setDocuments((current) =>
-          current.map((item) => (item.id === document.id ? result.data ?? item : item)),
+          current.map((item) => (item.id === documentToDelete.id ? result.data ?? item : item)),
+        );
+        setSelectedDocument((current) =>
+          current?.id === documentToDelete.id ? result.data ?? current : current,
         );
       }
-      setSnackbar({ open: true, tone: "success", message: result.message });
+      setDocumentToDelete(null);
+      setSnackbar({ open: true, tone: "success", message: "Document supprimé avec succès." });
     } catch (actionError) {
-      setSnackbar({ open: true, tone: "error", message: actionError instanceof Error ? actionError.message : "Erreur pendant la suppression de l'index du document." });
+      setSnackbar({ open: true, tone: "error", message: "Impossible de supprimer le document. Veuillez réessayer." });
+    } finally {
+      setIsDeletingDocument(false);
     }
   }
 
   async function handleReindex(document: DocumentItem) {
+    setDocumentToReindex(document);
+  }
+
+  async function handleConfirmReindexDocument() {
+    if (!documentToReindex) {
+      return;
+    }
+
     try {
+      setIsReindexingDocument(true);
       closeSnackbar();
       const result = await reindexDocument({
         apiBaseUrl,
-        documentId: document.id,
+        documentId: documentToReindex.id,
       });
       if (result.data) {
         setDocuments((current) =>
-          current.map((item) => (item.id === document.id ? result.data ?? item : item)),
+          current.map((item) => (item.id === documentToReindex.id ? result.data ?? item : item)),
+        );
+        setSelectedDocument((current) =>
+          current?.id === documentToReindex.id ? result.data ?? current : current,
         );
       }
-      setSnackbar({ open: true, tone: "success", message: result.message });
+      setDocumentToReindex(null);
+      setSnackbar({ open: true, tone: "success", message: "Document réindexé avec succès." });
     } catch (actionError) {
-      setSnackbar({ open: true, tone: "error", message: actionError instanceof Error ? actionError.message : "Erreur pendant la réindexation du document." });
+      setSnackbar({ open: true, tone: "error", message: "Impossible de réindexer le document. Veuillez réessayer." });
+    } finally {
+      setIsReindexingDocument(false);
     }
   }
 
@@ -497,13 +531,91 @@ function handleExportExcel() {
                     previewError={previewError}
                     apiBaseUrl={apiBaseUrl}
                     onClose={handleClosePreview}
-                    onReindex={() => handleReindex(selectedDocument)}
-                    onDeleteFromIndex={() => handleDeleteFromIndex(selectedDocument)}
+                    onReindex={
+                      selectedDocument.legalStatus === "actif" || selectedDocument.legalStatus === "remplace"
+                        ? () => handleReindex(selectedDocument)
+                        : undefined
+                    }
+                    onDeleteFromIndex={
+                      selectedDocument.legalStatus === "actif" || selectedDocument.legalStatus === "remplace"
+                        ? () => handleDeleteFromIndex(selectedDocument)
+                        : undefined
+                    }
                   />
                 ) : null}
               </div>
             </div>
           </section>
+      {documentToDelete ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+          <div className="w-full max-w-md rounded-lg border border-[#e5eaf2] bg-white shadow-xl">
+            <div className="border-b border-[#e5eaf2] px-5 py-4">
+              <h2 className="text-sm font-bold text-[#071f3d]">Confirmer la suppression</h2>
+            </div>
+            <div className="space-y-3 px-5 py-4">
+              <p className="text-[13px] leading-6 text-[#3f4960]">
+                Voulez-vous vraiment supprimer ce document ? Il ne sera plus utilisé dans les réponses, mais restera conservé dans l’historique.
+              </p>
+              <p className="line-clamp-2 rounded border border-[#e5eaf2] bg-[#f7f9fc] px-3 py-2 text-[12px] font-semibold text-[#071f3d]">
+                {documentToDelete.title}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-[#e5eaf2] px-5 py-3">
+              <button
+                type="button"
+                disabled={isDeletingDocument}
+                onClick={() => setDocumentToDelete(null)}
+                className="rounded border border-[#e5eaf2] bg-white px-3 py-2 text-[12px] font-semibold text-[#071f3d] hover:bg-[#f7f9fc] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingDocument}
+                onClick={() => void handleConfirmDeleteDocument()}
+                className="rounded border border-[#9d0208] bg-[#9d0208] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#7f0106] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeletingDocument ? "Suppression..." : "Confirmer la suppression"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {documentToReindex ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+          <div className="w-full max-w-md rounded-lg border border-[#e5eaf2] bg-white shadow-xl">
+            <div className="border-b border-[#e5eaf2] px-5 py-4">
+              <h2 className="text-sm font-bold text-[#071f3d]">Confirmer la réindexation</h2>
+            </div>
+            <div className="space-y-3 px-5 py-4">
+              <p className="text-[13px] leading-6 text-[#3f4960]">
+                Voulez-vous vraiment réindexer ce document ?
+              </p>
+              <p className="line-clamp-2 rounded border border-[#e5eaf2] bg-[#f7f9fc] px-3 py-2 text-[12px] font-semibold text-[#071f3d]">
+                {documentToReindex.title}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-[#e5eaf2] px-5 py-3">
+              <button
+                type="button"
+                disabled={isReindexingDocument}
+                onClick={() => setDocumentToReindex(null)}
+                className="rounded border border-[#e5eaf2] bg-white px-3 py-2 text-[12px] font-semibold text-[#071f3d] hover:bg-[#f7f9fc] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={isReindexingDocument}
+                onClick={() => void handleConfirmReindexDocument()}
+                className="rounded border border-[#071f3d] bg-[#071f3d] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0a2d59] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isReindexingDocument ? "Réindexation..." : "Confirmer la réindexation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <Snackbar
         open={snackbar.open}
         message={snackbar.message}

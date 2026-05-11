@@ -40,7 +40,7 @@ export default function AdminSidebar({
       ].join(" ")}
     >
       <SidebarHeader isCollapsed={isCollapsed} isDarkMode={isDarkMode} onToggleCollapsed={onToggleCollapsed} />
-      <div className="flex-1 overflow-y-auto px-2">
+      <div className="flex-1 overflow-visible px-2">
         <SidebarMenu items={menuItems} isCollapsed={isCollapsed} />
       </div>
       <SidebarFooter

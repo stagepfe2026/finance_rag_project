@@ -15,6 +15,7 @@ from app.schemas import (
     DocumentListResponse,
     DocumentPreviewOut,
     DocumentSearchResponse,
+    LegalStatus,
 )
 from app.services.document_parser_service import DocumentParserService
 from app.services.document_relation_service import DocumentRelationService
@@ -386,13 +387,14 @@ class DocumentIndexService:
 
     def delete_document_from_index(self, document_id: str) -> DocumentActionResponse:
         document = self._require_document(document_id)
+        effective_legal_status = self.legal_status_service.compute_effective_legal_status(document)
+        if effective_legal_status not in {LegalStatus.actif.value, LegalStatus.remplace.value}:
+            raise HTTPException(status_code=400, detail="Ce document ne peut pas etre supprime.")
+
         self.qdrant_repository.delete_document_chunks(document.category, document_id)
-        updated_document = self.document_repository.mark_failed(
-            document_id,
-            "Document retire de l index Qdrant. Reindexation necessaire pour la recherche.",
-        )
+        updated_document = self.document_repository.mark_abrogated_deleted(document_id)
         return DocumentActionResponse(
-            message="Document supprime de l index Qdrant.",
+            message="Document supprime avec succes.",
             data=self._with_effective_legal_status(updated_document).to_out_schema()
             if updated_document
             else None,

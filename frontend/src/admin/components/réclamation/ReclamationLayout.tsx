@@ -1,6 +1,4 @@
 import type { ReactNode } from "react";
-import type { Reclamation } from "../../../models/reclamation";
-import ReclamationMessages from "./ReclamationMessages";
 import ReclamationStats from "./ReclamationStats";
 
 type ReclamationLayoutProps = {
@@ -11,16 +9,12 @@ type ReclamationLayoutProps = {
     resolved: number;
     urgent: number;
   };
-  urgentItems: Reclamation[];
   children: ReactNode;
-  onSelectUrgent: (reclamation: Reclamation) => void;
 };
 
 export default function ReclamationLayout({
   stats,
-  urgentItems,
   children,
-  onSelectUrgent,
 }: ReclamationLayoutProps) {
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
@@ -42,7 +36,6 @@ export default function ReclamationLayout({
         </div>
 
         <ReclamationStats stats={stats} />
-        <ReclamationMessages urgentItems={urgentItems} onSelect={onSelectUrgent} />
       </header>
 
       <main className="px-2 py-1">{children}</main>

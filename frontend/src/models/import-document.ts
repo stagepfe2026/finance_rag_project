@@ -47,7 +47,6 @@ export const legalStatusOptions: SelectOption[] = [
   { value: "actif", label: "Actif" },
   { value: "futur", label: "Futur" },
   { value: "remplace", label: "Remplacé" },
-  { value: "abroge", label: "Abrogé" },
 ];
 
 export const legalDocumentTypeOptions: SelectOption[] = [
@@ -61,5 +60,4 @@ export const legalDocumentTypeOptions: SelectOption[] = [
 export const legalRelationTypeOptions: SelectOption[] = [
   { value: "none", label: "Aucune" },
   { value: "remplace", label: "Remplace" },
-  { value: "abroge", label: "Abroge" },
 ];

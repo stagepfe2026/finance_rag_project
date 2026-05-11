@@ -15,6 +15,9 @@ class LegalStatusService:
         self.document_repository = document_repository or DocumentRepository()
 
     def compute_effective_legal_status(self, document: DocumentModel) -> str:
+        if document.deleted_at is not None and document.legal_status == LegalStatus.abroge.value:
+            return LegalStatus.abroge.value
+
         if self.is_future_document(document):
             return LegalStatus.futur.value
 

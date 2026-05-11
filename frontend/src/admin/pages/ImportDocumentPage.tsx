@@ -215,7 +215,7 @@ export default function ImportDocumentPage() {
       const next = { ...current };
       if (error) {
         next[field] = error;
-      } else {
+      } else {  
         delete next[field];
       }
       return next;

@@ -323,7 +323,7 @@ class AuthService:
 
     @staticmethod
     def _get_home_path(role: str) -> str:
-        return "/admin/documents/import" if role == UserRole.ADMIN.value else "/user/accueil"
+        return "/admin/dashboard" if role == UserRole.ADMIN.value else "/user/accueil"
 
     @staticmethod
     def _to_auth_user(user: dict[str, Any]) -> dict[str, Any]:

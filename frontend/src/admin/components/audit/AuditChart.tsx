@@ -28,6 +28,7 @@ export default function AuditChart({ trend }: { trend: AuditTrendPoint[] }) {
 
   const options = useMemo<ApexOptions>(() => {
     const theme = buildChartTheme(isDark);
+    const baseYAxis = Array.isArray(theme.yaxis) ? theme.yaxis[0] : theme.yaxis;
 
     return {
       chart: {
@@ -50,10 +51,10 @@ export default function AuditChart({ trend }: { trend: AuditTrendPoint[] }) {
       legend: theme.legend,
       xaxis: { ...theme.xaxis, categories },
       yaxis: {
-        ...theme.yaxis,
+        ...baseYAxis,
         max: Math.max(maxCount, 4),
         labels: {
-          ...theme.yaxis!.labels,
+          ...baseYAxis?.labels,
           formatter: (value: number) => String(Math.round(value)),
         },
       },

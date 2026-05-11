@@ -96,28 +96,39 @@ async def delete_document_from_index(request: Request, document_id: str):
     audit_service = getattr(request.app.state, "audit_service", None)
     current_user = getattr(request.state, "current_user", None) or {}
 
+    document_before = service.document_repository.get_by_id(document_id)
+    old_legal_status = (
+        service.legal_status_service.compute_effective_legal_status(document_before)
+        if document_before is not None
+        else ""
+    )
+
     result = service.delete_document_from_index(document_id)
 
     if audit_service:
         doc = result.data
         doc_title = getattr(doc, "title", None) or document_id
         doc_category = getattr(doc, "category", None) or ""
-        doc_status = getattr(doc, "status", None) or "failed"
+        new_legal_status = getattr(doc, "legalStatus", None) or "abroge"
+        deleted_at = getattr(doc, "deletedAt", None)
         try:
             audit_service.record_document_activity(
                 current_user=current_user,
-                action_type="DOCUMENT_REMOVED_FROM_INDEX",
-                action_label="Retrait de l index",
+                action_type="DOCUMENT_DELETED_LOGICALLY",
+                action_label="Suppression document",
                 category="Gestion document",
                 entity_type="DOCUMENT",
                 entity_id=document_id,
                 entity_label=doc_title,
-                summary=f"Document \"{doc_title}\" retire de l index vectoriel.",
+                summary=f"Document \"{doc_title}\" supprime et marque comme abroge.",
                 metadata={
                     "documentId": document_id,
                     "titre": doc_title,
                     "categorie": doc_category,
-                    "statutApres": doc_status,
+                    "ancienStatut": old_legal_status,
+                    "nouveauStatut": str(new_legal_status),
+                    "deletedAt": deleted_at.isoformat() if deleted_at else None,
+                    "resultat": "success",
                 },
             )
         except Exception:

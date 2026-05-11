@@ -11,7 +11,7 @@ export const LIGHT = {
 } as const;
 
 export const DARK = {
-  navy:  "#60a5fa",   // lighter blue, readable on dark bg
+  navy:  "#93c5fd",   // brighter blue, readable on dark bg
   red:   "#f87171",   // brighter red, WCAG-safe on dark
   rose:  "#fb7185",   // lighter rose
   black: "#e5e7eb",   // replaces near-black text with light slate

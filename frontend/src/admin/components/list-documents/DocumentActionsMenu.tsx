@@ -6,6 +6,7 @@ type DocumentActionsMenuProps = {
   onDeleteFromIndex: () => void;
   onReindex: () => void;
   isBusy: boolean;
+  canManage: boolean;
 };
 
 export default function DocumentActionsMenu({
@@ -13,6 +14,7 @@ export default function DocumentActionsMenu({
   onDeleteFromIndex,
   onReindex,
   isBusy,
+  canManage,
 }: DocumentActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -39,16 +41,18 @@ export default function DocumentActionsMenu({
         <Eye size={16} />
       </button>
 
-      <button
-        type="button"
-        title="Plus d actions"
-        onClick={() => setIsOpen((value) => !value)}
-        className="rounded-lg p-2 text-[#8a8a8a] hover:bg-[#f7f3f3] hover:text-[#1f1f1f]"
-      >
-        <MoreHorizontal size={16} />
-      </button>
+      {canManage ? (
+        <button
+          type="button"
+          title="Plus d actions"
+          onClick={() => setIsOpen((value) => !value)}
+          className="rounded-lg p-2 text-[#8a8a8a] hover:bg-[#f7f3f3] hover:text-[#1f1f1f]"
+        >
+          <MoreHorizontal size={16} />
+        </button>
+      ) : null}
 
-      {isOpen ? (
+      {isOpen && canManage ? (
         <div className="absolute right-0 top-10 z-20 min-w-[160px] rounded-xl border border-[#ede7e5] bg-white p-1.5 shadow-lg">
           <button
             type="button"

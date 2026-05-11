@@ -26,25 +26,25 @@ export const SENSITIVE_AUDIT_GROUPS: Array<{
 }> = [
   {
     id: "failed_logins",
-    label: "Connexions echouees",
-    hint: "Acces a verifier",
-    tone: "border-[#d8dee9] bg-[#f7f9fc] text-[#071f3d]",
+    label: "Connexions refusees",
+    hint: "Tentatives a verifier",
+    tone: "audit-control-neutral",
     types: ["USER_LOGIN_FAILED"],
     matches: (item) => item.actionType === "USER_LOGIN_FAILED",
   },
   {
     id: "sla_overdue",
-    label: "SLA depasses",
-    hint: "Alertes envoyees",
-    tone: "border-[#9d0208]/25 bg-[#fff5f5] text-[#9d0208]",
+    label: "Reclamations en retard",
+    hint: "Delai de traitement depasse",
+    tone: "audit-control-danger",
     types: ["SLA_OVERDUE_NOTIFICATION_SENT"],
     matches: (item) => item.actionType === "SLA_OVERDUE_NOTIFICATION_SENT",
   },
   {
     id: "indexation_failed",
-    label: "Echecs indexation",
-    hint: "Documents a revoir",
-    tone: "border-[#9d0208]/35 bg-white text-[#9d0208]",
+    label: "Documents non traites",
+    hint: "Traitement a relancer",
+    tone: "audit-control-danger",
     types: ["DOCUMENT_INDEXATION_FAILED", "INDEXATION_FAILED_NOTIFICATION_SENT"],
     matches: (item) =>
       item.actionType === "DOCUMENT_INDEXATION_FAILED" ||
@@ -52,17 +52,19 @@ export const SENSITIVE_AUDIT_GROUPS: Array<{
   },
   {
     id: "index_removed",
-    label: "Retraits index",
-    hint: "Impact RAG",
-    tone: "border-[#d8dee9] bg-[#f3f4f6] text-[#111827]",
-    types: ["DOCUMENT_REMOVED_FROM_INDEX"],
-    matches: (item) => item.actionType === "DOCUMENT_REMOVED_FROM_INDEX",
+    label: "Suppressions",
+    hint: "Documents retires de l usage",
+    tone: "audit-control-neutral",
+    types: ["DOCUMENT_REMOVED_FROM_INDEX", "DOCUMENT_DELETED_LOGICALLY"],
+    matches: (item) =>
+      item.actionType === "DOCUMENT_REMOVED_FROM_INDEX" ||
+      item.actionType === "DOCUMENT_DELETED_LOGICALLY",
   },
   {
     id: "reclamations_handled",
     label: "Reclamations traitees",
-    hint: "Actions admin",
-    tone: "border-[#071f3d]/20 bg-white text-[#071f3d]",
+    hint: "Demandes prises en charge",
+    tone: "audit-control-neutral",
     types: ["RECLAMATION_TAKEN", "RECLAMATION_RESOLVED", "RECLAMATION_UPDATED"],
     matches: (item) =>
       item.actionType === "RECLAMATION_TAKEN" ||
@@ -125,7 +127,7 @@ export default function AuditRecentActivityList({
               type="button"
               onClick={() => onSelectGroup(isActive ? null : item.id)}
               className={[
-                "cursor-pointer rounded border px-3 py-2 text-left transition hover:-translate-y-px hover:shadow-sm",
+                "audit-control-card cursor-pointer rounded border px-3 py-2 text-left transition hover:-translate-y-px hover:shadow-sm",
                 item.tone,
                 isActive ? "ring-2 ring-[#071f3d]/15" : "",
               ].join(" ")}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { documentCategoryLabels, type DocumentItem } from "../../../models/document";
+import { documentCategoryLabels, legalStatusLabels, type DocumentItem } from "../../../models/document";
 import DocumentStatusBadge from "./DocumentStatusBadge";
 import DocumentActionsMenu from "./DocumentActionsMenu";
 
@@ -30,6 +30,7 @@ function formatDocumentDate(document: DocumentItem) {
 
 export default function DocumentRow({ document, onConsult, onDeleteFromIndex, onReindex }: DocumentRowProps) {
   const [isBusy, setIsBusy] = useState(false);
+  const canManage = document.legalStatus === "actif" || document.legalStatus === "remplace";
 
   async function handleDeleteFromIndex() {
     setIsBusy(true);
@@ -54,6 +55,9 @@ export default function DocumentRow({ document, onConsult, onDeleteFromIndex, on
       <td className="px-4 py-3">
         <div className="max-w-[420px]">
           <p className="truncate text-xs font-semibold leading-5 text-[#071f3d]">{document.title}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a96ad]">
+            {legalStatusLabels[document.legalStatus]}
+          </p>
         </div>
       </td>
 
@@ -75,6 +79,7 @@ export default function DocumentRow({ document, onConsult, onDeleteFromIndex, on
           onDeleteFromIndex={handleDeleteFromIndex}
           onReindex={handleReindex}
           isBusy={isBusy}
+          canManage={canManage}
         />
       </td>
     </tr>

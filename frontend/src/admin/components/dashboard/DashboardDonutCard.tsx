@@ -1,20 +1,42 @@
+import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
+
 type DonutItem = { label: string; value: number; color: string };
 
 type Props = { title: string; items: DonutItem[] };
 
+const DARK_COLOR_MAP: Record<string, string> = {
+  "#071f3d": "#93c5fd",
+  "#111827": "#e5e7eb",
+  "#991b1b": "#f87171",
+  "#9d0208": "#f87171",
+  "#ef4444": "#fb7185",
+  "#6b7280": "#cbd5e1",
+  "#8a96ad": "#cbd5e1",
+  "#2563eb": "#60a5fa",
+};
+
+function resolveColor(color: string, isDark: boolean) {
+  return isDark ? DARK_COLOR_MAP[color.toLowerCase()] ?? color : color;
+}
+
 export default function DashboardDonutCard({ title, items }: Props) {
-  const total = items.reduce((s, i) => s + i.value, 0);
+  const isDark = useAdminDarkMode();
+  const displayItems = items.map((item) => ({
+    ...item,
+    color: resolveColor(item.color, isDark),
+  }));
+  const total = displayItems.reduce((s, i) => s + i.value, 0);
   const chartTotal = Math.max(total, 1);
 
   // handle zero + single value cases
-  const nonZeroItems = items.filter(i => i.value > 0);
+  const nonZeroItems = displayItems.filter(i => i.value > 0);
 
   const segments =
     total === 0
-      ? ["#e5eaf2 0deg 360deg"]
+      ? [`${isDark ? "#334155" : "#e5eaf2"} 0deg 360deg`]
       : nonZeroItems.length === 1
       ? [`${nonZeroItems[0].color} 0deg 360deg`]
-      : items.reduce<{ angle: number; acc: string[] }>(
+      : displayItems.reduce<{ angle: number; acc: string[] }>(
           ({ angle, acc }, item) => {
             const deg = (item.value / chartTotal) * 360;
             return {
@@ -53,7 +75,7 @@ export default function DashboardDonutCard({ title, items }: Props) {
               }}
             >
               <div className="text-center">
-                <p className="text-[9px] uppercase tracking-[0.1em] text-[#8a96ad] font-semibold">
+                <p className={isDark ? "text-[9px] uppercase tracking-[0.1em] text-[#cbd5e1] font-semibold" : "text-[9px] uppercase tracking-[0.1em] text-[#8a96ad] font-semibold"}>
                   Total
                 </p>
                 <p className="mt-0.5 text-sm font-bold leading-none text-[#071f3d]">
@@ -66,7 +88,7 @@ export default function DashboardDonutCard({ title, items }: Props) {
 
         {/* Legend */}
         <div className="flex-1 space-y-2">
-          {items.map(item => {
+          {displayItems.map(item => {
             const pct = total === 0 ? 0 : Math.round((item.value / total) * 100);
 
             return (
@@ -85,7 +107,7 @@ export default function DashboardDonutCard({ title, items }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-[#8a96ad]">
+                  <span className={isDark ? "text-[11px] text-[#cbd5e1]" : "text-[11px] text-[#8a96ad]"}>
                     {pct}%
                   </span>
                   <span className="w-7 text-right text-[11px] font-bold text-[#071f3d]">

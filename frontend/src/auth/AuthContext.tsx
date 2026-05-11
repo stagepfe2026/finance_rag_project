@@ -23,7 +23,7 @@ type AuthContextValue = {
   loading: boolean;
   isAuthenticated: boolean;
   authMessage: string | null;
-  login: (payload: { email: string; password: string }) => Promise<{ redirectTo: string }>;
+  login: (payload: { email: string; password: string }) => Promise<{ redirectTo: string; user: AuthUser | null }>;
   logout: () => Promise<void>;
   clearAuthMessage: () => void;
   beginProviderLogin: () => Promise<void>;
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(response.session?.authenticated ? response.session : null);
     setAuthMessage(null);
     lastActivityRef.current = Date.now();
-    return { redirectTo: response.redirect_to || "/" };
+    return { redirectTo: response.redirect_to || "/", user: response.user };
   }
 
   async function refreshSession() {

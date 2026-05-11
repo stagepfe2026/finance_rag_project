@@ -22,7 +22,7 @@ export function RequireAuth({ allowedRoles }: { allowedRoles: Array<"ADMIN" | "F
   }
 
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to={user.role === "ADMIN" ? "/admin/documents/import" : "/user/accueil"} replace />;
+    return <Navigate to={user.role === "ADMIN" ? "/admin/dashboard" : "/user/accueil"} replace />;
   }
 
   return <Outlet />;
@@ -36,7 +36,7 @@ export function PublicOnlyRoute() {
   }
 
   if (isAuthenticated && user) {
-    return <Navigate to={user.role === "ADMIN" ? "/admin/documents/import" : "/user/accueil"} replace />;
+    return <Navigate to={user.role === "ADMIN" ? "/admin/dashboard" : "/user/accueil"} replace />;
   }
 
   return <Outlet />;
@@ -53,5 +53,5 @@ export function RoleHomeRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to={user.role === "ADMIN" ? "/admin/documents/import" : "/user/accueil"} replace />;
+  return <Navigate to={user.role === "ADMIN" ? "/admin/dashboard" : "/user/accueil"} replace />;
 }

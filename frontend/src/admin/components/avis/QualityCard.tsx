@@ -1,8 +1,12 @@
 import type { ChatFeedbackStats } from "../../../models/chat-feedback";
+import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
 
 const NAVY = "#071f3d";
 const RED = "#9d0208";
 const GRAY = "#6b7280";
+const DARK_NAVY = "#93c5fd";
+const DARK_RED = "#f87171";
+const DARK_GRAY = "#cbd5e1";
 
 type QualityItem = {
   label: string;
@@ -10,13 +14,13 @@ type QualityItem = {
   color: string;
 };
 
-function buildSegments(items: QualityItem[]) {
+function buildSegments(items: QualityItem[], emptyColor: string) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const chartTotal = Math.max(total, 1);
   const nonZeroItems = items.filter((item) => item.value > 0);
 
   if (total === 0) {
-    return ["#e5eaf2 0deg 360deg"];
+    return [`${emptyColor} 0deg 360deg`];
   }
 
   if (nonZeroItems.length === 1) {
@@ -36,13 +40,14 @@ function buildSegments(items: QualityItem[]) {
 }
 
 export default function QualityCard({ quality }: { quality: ChatFeedbackStats["quality"] }) {
+  const isDark = useAdminDarkMode();
   const items: QualityItem[] = [
-    { label: "Likes", value: quality.likes, color: NAVY },
-    { label: "Dislikes", value: quality.dislikes, color: RED },
-    { label: "Sans source", value: quality.dislikesWithoutSource ?? 0, color: GRAY },
+    { label: "Likes", value: quality.likes, color: isDark ? DARK_NAVY : NAVY },
+    { label: "Dislikes", value: quality.dislikes, color: isDark ? DARK_RED : RED },
+    { label: "Sans source", value: quality.dislikesWithoutSource ?? 0, color: isDark ? DARK_GRAY : GRAY },
   ];
   const total = items.reduce((sum, item) => sum + item.value, 0);
-  const segments = buildSegments(items);
+  const segments = buildSegments(items, isDark ? "#334155" : "#e5eaf2");
 
   return (
     <section className="rounded-lg border border-[#e5eaf2] bg-white">
@@ -66,7 +71,7 @@ export default function QualityCard({ quality }: { quality: ChatFeedbackStats["q
             >
               <div className="text-center">
                 <p className="text-sm font-bold leading-none text-[#071f3d]">{quality.satisfactionRate}%</p>
-                <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#8a96ad]">
+                <p className={isDark ? "mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#cbd5e1]" : "mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#8a96ad]"}>
                   Satisfaction
                 </p>
               </div>
@@ -86,7 +91,7 @@ export default function QualityCard({ quality }: { quality: ChatFeedbackStats["q
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-[#8a96ad]">{pct}%</span>
+                  <span className={isDark ? "text-[11px] text-[#cbd5e1]" : "text-[11px] text-[#8a96ad]"}>{pct}%</span>
                   <span className="w-7 text-right text-[11px] font-bold text-[#071f3d]">{item.value}</span>
                 </div>
               </div>

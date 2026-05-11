@@ -16,10 +16,10 @@ const SNACKBAR_MESSAGES: Record<string, string> = {
 };
 
 type Props = {
-  isCollapsed: boolean;
+  tooltipPosition?: string;
 };
 
-export default function AdminNotificationsBell({ isCollapsed }: Props) {
+export default function AdminNotificationsBell({ tooltipPosition = "bottom-full left-1/2 mb-2 -translate-x-1/2" }: Props) {
   const [items, setItems]         = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]         = useState("");
@@ -72,24 +72,27 @@ export default function AdminNotificationsBell({ isCollapsed }: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setPanelOpen((v) => !v)}
-        aria-label="Notifications"
-        className={[
-          "relative flex h-8 items-center  rounded-md text-[11px] font-medium cursor-pointer transition-all duration-200",
-          isCollapsed ? "w-8 justify-center" : "gap-1.5 px-2",
-          "text-[#5f6680] hover:bg-[#f7f9fc] hover:text-[#071f3d]",
-        ].join(" ")}
-      >
-        <Bell size={14} />
-        {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#9d0208] px-0.5 text-[9px] font-bold leading-none text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
+      <div className="group relative">
+        <button
+          type="button"
+          onClick={() => setPanelOpen((v) => !v)}
+          aria-label="Notifications"
+          className={[
+            "relative flex h-9 w-9 items-center justify-center rounded-md cursor-pointer transition-all duration-200",
+            "text-[#5f6680] hover:bg-[#f7f9fc] hover:text-[#071f3d]",
+          ].join(" ")}
+        >
+          <Bell size={14} />
+          {unreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#9d0208] px-0.5 text-[9px] font-bold leading-none text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
+        <span className={`pointer-events-none absolute z-50 whitespace-nowrap rounded border border-[#e5eaf2] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#071f3d] opacity-0 shadow-lg transition group-hover:opacity-100 ${tooltipPosition}`}>
+          Notifications
           </span>
-        )}
-        {!isCollapsed && "Notifications"}
-      </button>
+      </div>
 
       <AdminNotificationsPanel
         open={panelOpen}
