@@ -28,10 +28,13 @@ function buildOptions(kind: StatsChartKind, labels: string[], isDark: boolean, t
 
   return {
     chart: {
+      id: `chat-stats-${kind}-${isDark ? "dark" : "light"}`,
       background: bgColor,
       fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
       toolbar: { show: false },
       zoom: { enabled: false },
+      redrawOnParentResize: true,
+      redrawOnWindowResize: true,
     },
     colors,
     dataLabels: {
@@ -89,6 +92,8 @@ function buildOptions(kind: StatsChartKind, labels: string[], isDark: boolean, t
       kind === "pie"
         ? undefined
         : {
+            min: 0,
+            forceNiceScale: true,
             labels: {
               style: { colors: labelColor, fontSize: "10px" },
             },
@@ -107,10 +112,18 @@ export default function StatsChart({ data, title = "Visualisation statistique", 
   const labels = cleanData.map((point) => point.label);
   const values = cleanData.map((point) => point.value);
   const options = buildOptions(kind, labels, isDark, title);
+  const chartKey = [
+    kind,
+    isDark ? "dark" : "light",
+    title,
+    labels.join("|"),
+    values.join("|"),
+  ].join("-");
 
   return (
     <div className="rounded-md border border-[#d1d5db] bg-white px-3 py-3">
       <ReactApexChart
+        key={chartKey}
         options={options}
         series={kind === "pie" ? values : [{ name: title, data: values }]}
         type={kind}
