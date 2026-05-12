@@ -1,4 +1,6 @@
 from datetime import UTC, datetime
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
@@ -52,6 +54,46 @@ async def list_documents(
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/preview-word")
+async def preview_word_document(
+    request: Request,
+    file: Annotated[UploadFile, File(...)],
+):
+    if not file.filename or not file.filename.lower().endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Seuls les fichiers DOCX peuvent etre previsualises en texte.")
+
+    content = await file.read()
+    if len(content) > MAX_DOCUMENT_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="Le fichier depasse la taille maximale autorisee.")
+
+    index_service = getattr(request.app.state, "document_index_service", None)
+    parser_service = getattr(index_service, "parser_service", None)
+    if parser_service is None:
+        raise HTTPException(status_code=500, detail="Service de parsing document non disponible.")
+
+    temp_path: Path | None = None
+    try:
+        with NamedTemporaryFile(delete=False, suffix=".docx") as temp_file:
+            temp_file.write(content)
+            temp_path = Path(temp_file.name)
+
+        text = parser_service.parse_document(str(temp_path), ".docx")
+        normalized_text = text.strip()
+        return {
+            "success": True,
+            "message": "Apercu texte genere avec succes.",
+            "data": {
+                "content": normalized_text,
+                "wordCount": len(normalized_text.split()) if normalized_text else 0,
+            },
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Impossible de lire le contenu du document Word: {exc}") from exc
+    finally:
+        if temp_path is not None and temp_path.exists():
+            temp_path.unlink(missing_ok=True)
 
 
 @router.get("/{document_id}/file")

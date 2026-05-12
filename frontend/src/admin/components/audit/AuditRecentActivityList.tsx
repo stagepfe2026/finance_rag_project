@@ -100,7 +100,7 @@ export default function AuditRecentActivityList({
     <div className="rounded-lg border border-[#e5eaf2] bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-[#e5eaf2] px-4 py-2">
         <div>
-          <h2 className="mt-0.5 text-[13px] font-bold text-[#071f3d]">Contrôle interne</h2>
+          <h2 className="mt-0.5 text-[13px] font-bold text-[#071f3d]">Filtres rapides</h2>
           <p className="mt-0.5 text-[10px] text-[#8a96ad]">Cliquez pour filtrer la table</p>
         </div>
         {activeGroupId ? (

@@ -235,6 +235,66 @@ class ReclamationService:
         if not deleted:
             raise ValueError("RECLAMATION_NOT_FOUND")
 
+    async def update_reclamation(
+        self,
+        *,
+        current_user: dict,
+        reclamation_id: str,
+        subject: str,
+        description: str,
+        problem_type: str,
+        custom_problem_type: str | None,
+        priority: str,
+        attachment: UploadFile | None,
+    ) -> dict:
+        user_id = str(current_user.get("id", "")).strip()
+        reclamation = self.repository.get_for_user(reclamation_id, user_id)
+        if reclamation is None:
+            raise ValueError("RECLAMATION_NOT_FOUND")
+        if reclamation.status != "PENDING":
+            raise ValueError("RECLAMATION_UPDATE_NOT_ALLOWED")
+
+        normalized_subject = " ".join(subject.split()).strip()
+        normalized_description = description.strip()
+        normalized_problem_type = problem_type.strip().upper()
+        normalized_custom_problem_type = " ".join((custom_problem_type or "").split()).strip() or None
+        normalized_priority = priority.strip().upper()
+
+        if len(normalized_subject) < 3:
+            raise ValueError("SUBJECT_TOO_SHORT")
+        if len(normalized_subject) > 160:
+            raise ValueError("SUBJECT_TOO_LONG")
+        if len(normalized_description) < 10:
+            raise ValueError("DESCRIPTION_TOO_SHORT")
+        if len(normalized_description) > 3000:
+            raise ValueError("DESCRIPTION_TOO_LONG")
+        if normalized_problem_type not in self.allowed_problem_types:
+            raise ValueError("INVALID_PROBLEM_TYPE")
+        if normalized_priority not in self.allowed_priorities:
+            raise ValueError("INVALID_PRIORITY")
+        if normalized_problem_type == "AUTRE" and not normalized_custom_problem_type:
+            raise ValueError("CUSTOM_PROBLEM_TYPE_REQUIRED")
+        if normalized_problem_type != "AUTRE":
+            normalized_custom_problem_type = None
+
+        attachment_payload = None
+        if attachment and attachment.filename:
+            attachment_payload = await self._store_attachment(attachment)
+
+        updated = self.repository.update_pending_for_user(
+            reclamation_id,
+            user_id,
+            subject=normalized_subject,
+            description=normalized_description,
+            problem_type=normalized_problem_type,
+            custom_problem_type=normalized_custom_problem_type,
+            priority=normalized_priority,
+            attachment_payload=attachment_payload,
+        )
+        if updated is None:
+            raise ValueError("RECLAMATION_UPDATE_NOT_ALLOWED")
+        return self._serialize_reclamation(updated)
+
     async def resolve_reclamation(self, reclamation_id: str, *, admin_user: dict, admin_reply: str, status: str) -> dict:
         normalized_reply = admin_reply.strip()
         normalized_status = status.strip().upper()

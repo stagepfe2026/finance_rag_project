@@ -14,6 +14,7 @@ import {
   deleteReclamation,
   fetchReclamations,
   markReclamationReplyAsRead,
+  updateReclamation,
 } from "../../services/reclamation.service";
 import Snackbar from "../components/chat/Snackbar";
 import ReclamationForm from "../components/reclamation/create/ReclamationForm";
@@ -75,6 +76,7 @@ export default function ReclamationPage() {
   const [readFilter, setReadFilter] = useState<ReclamationReadFilter>("ALL");
   const [selectedReclamation, setSelectedReclamation] = useState<Reclamation | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingReclamation, setEditingReclamation] = useState<Reclamation | null>(null);
   const [page, setPage] = useState(1);
   const [pageError, setPageError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -315,6 +317,41 @@ export default function ReclamationPage() {
     }
   }
 
+  async function handleUpdateSubmit() {
+    if (!editingReclamation || !validateForm()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const payload: CreateReclamationInput = {
+        subject: formValues.subject.trim(),
+        description: formValues.description.trim(),
+        problemType: formValues.problemType as ReclamationProblemType,
+        customProblemType: formValues.problemType === "AUTRE" ? formValues.customProblemType.trim() : "",
+        priority: formValues.priority as ReclamationPriority,
+        attachment: formValues.attachment,
+      };
+      const updated = await updateReclamation(editingReclamation._id, payload);
+      setReclamations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
+      setSelectedReclamation((current) => (current?._id === updated._id ? updated : current));
+      closeCreateModal();
+      setSnackbar({
+        open: true,
+        message: "Reclamation modifiee avec succes.",
+        tone: "success",
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : "Impossible de modifier la reclamation.",
+        tone: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!deleteTarget) {
       return;
@@ -350,6 +387,9 @@ export default function ReclamationPage() {
   }
 
   function openCreateModal() {
+    setEditingReclamation(null);
+    setFormValues(initialValues);
+    setFormErrors({});
     setIsCreating(true);
     setSelectedReclamation(null);
     setSearchParams((current) => {
@@ -361,11 +401,38 @@ export default function ReclamationPage() {
 
   function closeCreateModal() {
     setIsCreating(false);
+    setEditingReclamation(null);
+    setFormValues(initialValues);
+    setFormErrors({});
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.delete("new");
       return next;
     }, { replace: true });
+  }
+
+  function openEditModal(reclamation: Reclamation) {
+    if (reclamation.status !== "PENDING") {
+      setSnackbar({
+        open: true,
+        message: "Seules les reclamations en attente peuvent etre modifiees.",
+        tone: "error",
+      });
+      return;
+    }
+
+    setEditingReclamation(reclamation);
+    setSelectedReclamation(null);
+    setFormValues({
+      subject: reclamation.subject,
+      description: reclamation.description,
+      problemType: reclamation.problemType,
+      customProblemType: reclamation.customProblemType ?? "",
+      priority: reclamation.priority,
+      attachment: null,
+    });
+    setFormErrors({});
+    setIsCreating(true);
   }
 
   return (
@@ -385,8 +452,14 @@ export default function ReclamationPage() {
         onSearchChange={setSearch}
         onStatusChange={setStatusFilter}
         onReadFilterChange={setReadFilter}
+        onResetFilters={() => {
+          setSearch("");
+          setStatusFilter("ALL");
+          setReadFilter("ALL");
+        }}
         onPageChange={setPage}
         onSelect={handleConsult}
+        onEdit={openEditModal}
         onDelete={handleAskDelete}
         onRefresh={() => void loadReclamations()}
         onCreate={openCreateModal}
@@ -405,9 +478,9 @@ export default function ReclamationPage() {
             successMessage=""
             isSubmitting={isSubmitting}
             onChange={updateField}
-            onSubmit={() => void handleCreateSubmit()}
+            onSubmit={() => void (editingReclamation ? handleUpdateSubmit() : handleCreateSubmit())}
             onClose={closeCreateModal}
-            modeLabel="Nouvelle reclamation"
+            modeLabel={editingReclamation ? "Modifier reclamation" : "Nouvelle reclamation"}
           />
         )}
       />

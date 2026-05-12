@@ -6,6 +6,7 @@ type Props = {
   selectedId: string | null;
   isLoading: boolean;
   onSelect: (reclamation: Reclamation) => void;
+  onEdit: (reclamation: Reclamation) => void;
   onDelete: (reclamation: Reclamation) => void;
 };
 
@@ -14,6 +15,7 @@ export default function ReclamationTableBody({
   selectedId,
   isLoading,
   onSelect,
+  onEdit,
   onDelete,
 }: Props) {
   if (reclamations.length === 0) {
@@ -27,13 +29,14 @@ export default function ReclamationTableBody({
   return (
     <div>
       {reclamations.map((reclamation) => (
-        <ReclamationTableRow
-          key={reclamation._id}
-          reclamation={reclamation}
-          active={selectedId === reclamation._id}
-          onSelect={onSelect}
-          onDelete={onDelete}
-        />
+          <ReclamationTableRow
+            key={reclamation._id}
+            reclamation={reclamation}
+            active={selectedId === reclamation._id}
+            onSelect={onSelect}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
       ))}
     </div>
   );

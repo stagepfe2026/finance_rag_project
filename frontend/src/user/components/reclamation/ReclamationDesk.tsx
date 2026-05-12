@@ -20,8 +20,10 @@ type Props = {
   onSearchChange: (value: string) => void;
   onStatusChange: (value: ReclamationStatus | "ALL") => void;
   onReadFilterChange: (value: ReclamationReadFilter) => void;
+  onResetFilters: () => void;
   onPageChange: (page: number) => void;
   onSelect: (reclamation: Reclamation) => void;
+  onEdit: (reclamation: Reclamation) => void;
   onDelete: (reclamation: Reclamation) => void;
   onRefresh: () => void;
   onCreate: () => void;
@@ -50,8 +52,10 @@ export default function ReclamationDesk({
   onSearchChange,
   onStatusChange,
   onReadFilterChange,
+  onResetFilters,
   onPageChange,
   onSelect,
+  onEdit,
   onDelete,
   onRefresh,
   onCreate,
@@ -86,7 +90,7 @@ export default function ReclamationDesk({
   return (
     <>
       <div className="h-[calc(100vh-73px)] overflow-hidden bg-slate-50">
-        <div className="mx-auto flex h-full w-full flex-col px-4 py-3">
+        <div className="mx-auto flex h-full w-full flex-col px-4 py-4">
           {pageError ? (
             <div className="mb-3 shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
               {pageError}
@@ -95,7 +99,7 @@ export default function ReclamationDesk({
 
           <div
             className={[
-              "grid min-h-0 flex-1 gap-3",
+              "grid min-h-0 flex-1 gap-4",
               showDetailsPanel ? "xl:grid-cols-[minmax(0,1fr)_340px]" : "grid-cols-1",
             ].join(" ")}
           >
@@ -114,8 +118,10 @@ export default function ReclamationDesk({
                 onSearchChange={onSearchChange}
                 onStatusChange={onStatusChange}
                 onReadFilterChange={onReadFilterChange}
+                onResetFilters={onResetFilters}
                 onPageChange={onPageChange}
                 onSelect={onSelect}
+                onEdit={onEdit}
                 onDelete={onDelete}
                 onRefresh={onRefresh}
                 onCreate={onCreate}

@@ -40,6 +40,8 @@ export default function UserLayout() {
   const { logout, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const normalizedPathname = location.pathname.replace(/\/+$/, "");
+  const isHomePage = normalizedPathname === "/user" || normalizedPathname === "/user/accueil";
   const isChatPage = location.pathname.startsWith("/user/chat");
   const isGuidePage = location.pathname.startsWith("/user/guide");
   const [favoriteDocuments, setFavoriteDocuments] = useState<DocumentSearchItem[]>([]);
@@ -452,7 +454,7 @@ export default function UserLayout() {
         <Outlet context={outletContext} />
       </main>
 
-      <HelpCard />
+      {isHomePage ? <HelpCard /> : null}
 
       <RechercheDocumentFavoritesModal
         open={isFavoritesModalOpen}

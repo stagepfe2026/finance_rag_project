@@ -17,21 +17,21 @@ export default function ChatInput({ value, onChange, onSubmit, disabled }: ChatI
   }
 
   return (
-    <div className="flex items-end gap-3 rounded-xl bg-slate-100 px-3 py-2.5">
+    <div className="flex items-end gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
       <textarea
         rows={1}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Posez votre question..."
-        className="min-h-9 max-h-24 flex-1 resize-none bg-transparent text-[13px] leading-6 text-[#26356f] outline-none placeholder:text-[#8790ad]"
+        className="min-h-8 max-h-24 flex-1 resize-none bg-transparent text-[13px] leading-6 text-[#273043] outline-none placeholder:text-slate-400"
       />
 
       <button
         type="button"
         onClick={onSubmit}
         disabled={disabled || !value.trim()}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#9d0208] text-white transition hover:bg-[#9f000d] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#9d0208] text-white transition hover:bg-[#7f0106] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Envoyer la question"
       >
         <SendHorizontal size={15} />

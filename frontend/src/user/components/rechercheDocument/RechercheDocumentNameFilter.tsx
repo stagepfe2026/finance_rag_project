@@ -9,14 +9,14 @@ export default function RechercheDocumentNameFilter({
 }: Props) {
   return (
     <section>
-      <h3 className="text-xs font-semibold text-[#1d1d1d]">Nom du document</h3>
+      <h3 className="text-xs font-semibold text-[#273043]">Nom du document</h3>
 
       <input
         type="text"
         value={titleFilter}
         onChange={(event) => onTitleChange(event.target.value)}
         placeholder="Nom du document"
-        className="mt-2 h-10 w-full rounded-xl border border-[#e9ddda] bg-[#fcfaf9] px-3 text-[13px] text-[#393332] outline-none placeholder:text-[#a19490] focus:border-[#9d0208]"
+        className="mt-2 h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-[12px] text-[#273043] outline-none placeholder:text-slate-400 transition focus:border-[#9d0208] focus:bg-white"
       />
     </section>
   );

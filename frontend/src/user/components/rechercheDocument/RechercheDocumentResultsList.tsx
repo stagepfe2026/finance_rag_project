@@ -22,7 +22,7 @@ export default function RechercheDocumentResultsList({
 }: Props) {
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white p-5 text-[13px] text-[#7d6c68]">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-[13px] text-slate-500">
         Chargement des documents...
       </div>
     );
@@ -30,22 +30,22 @@ export default function RechercheDocumentResultsList({
 
   if (!hasActiveSearch) {
     return (
-      <div className="rounded-xl border border-dashed border-[#efe3e1] bg-[#fcfaf9] p-5 text-[13px] text-[#7d6c68]">
-        Faire des recherches dans les documents juridique et  financiers  pour afficher les resultats.
+      <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-[13px] text-slate-500">
+        Lancez une recherche ou utilisez les filtres pour afficher les documents juridiques et financiers.
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="rounded-xl bg-white p-5 text-[13px] text-[#7d6c68]">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-[13px] text-slate-500">
         Aucun document trouvé.
       </div>
     );
   }
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {items.map((item) => (
         <RechercheDocumentResultCard
           key={item.id}

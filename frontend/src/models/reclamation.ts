@@ -68,3 +68,19 @@ export type CreateReclamationInput = {
   priority: ReclamationPriority;
   attachment?: File | null;
 };
+
+export type UpdateReclamationInput = CreateReclamationInput;
+
+export const reclamationProblemTypeLabels: Record<ReclamationProblemType, string> = {
+  BUG_TECHNIQUE: "Bug technique",
+  PROBLEME_JURIDIQUE: "Probleme juridique",
+  ERREUR_REPONSE_CHATBOT: "Erreur reponse chatbot",
+  AUTRE: "Autre",
+};
+
+export const reclamationPriorityLabels: Record<ReclamationPriority, string> = {
+  LOW: "Faible",
+  NORMAL: "Normale",
+  HIGH: "Elevee",
+  URGENT: "Urgente",
+};

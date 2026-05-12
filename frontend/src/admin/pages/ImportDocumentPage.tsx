@@ -18,7 +18,7 @@ import {
   type PreviewItem,
   type ProgressStep,
 } from "../../models/import-document";
-import { fetchDocuments, indexDocument } from "../../services/documents.service";
+import { fetchDocuments, indexDocument, previewWordDocument } from "../../services/documents.service";
 import type { DocumentItem } from "../../models/document";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -93,6 +93,8 @@ export default function ImportDocumentPage() {
   const [relationSearch, setRelationSearch] = useState("");
   const [availableDocuments, setAvailableDocuments] = useState<DocumentItem[]>([]);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
+  const [textPreview, setTextPreview] = useState("");
+  const [wordCount, setWordCount] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [previewError, setPreviewError] = useState<string>("");
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
@@ -143,25 +145,36 @@ export default function ImportDocumentPage() {
     previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     previewUrlsRef.current = [];
     setPreviewItems([]);
+    setTextPreview("");
+    setWordCount(null);
     setPageCount(null);
     setPreviewError("");
     setIsGeneratingPreview(true);
 
-    if (file.type !== "application/pdf") {
-      setPageCount(null);
-      setIsGeneratingPreview(false);
-      setPreviewError("La prévisualisation détaillée est disponible pour les PDF.");
-      return;
-    }
-
     try {
-      const preview = await buildPdfPreview(file);
-      previewUrlsRef.current = preview.previewItems.map((item) => item.imageUrl);
-      setPreviewItems(preview.previewItems);
-      setPageCount(preview.pageCount);
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      const isDocx = file.name.toLowerCase().endsWith(".docx");
+
+      if (isPdf) {
+        const preview = await buildPdfPreview(file);
+        previewUrlsRef.current = preview.previewItems.map((item) => item.imageUrl);
+        setPreviewItems(preview.previewItems);
+        setPageCount(preview.pageCount);
+        return;
+      }
+
+      if (isDocx) {
+        const preview = await previewWordDocument({ apiBaseUrl, file });
+        setTextPreview(preview.content || "Aucun texte lisible trouve dans ce document Word.");
+        setWordCount(preview.wordCount);
+        setPageCount(null);
+        return;
+      }
+
+      setPreviewError("La prévisualisation est disponible pour les PDF et DOCX.");
     } catch (error) {
       console.error(error);
-      setPreviewError("Impossible de générer la prévisualisation du PDF.");
+      setPreviewError(error instanceof Error ? error.message : "Impossible de generer la previsualisation.");
     } finally {
       setIsGeneratingPreview(false);
     }
@@ -257,6 +270,8 @@ export default function ImportDocumentPage() {
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       previewUrlsRef.current = [];
       setPreviewItems([]);
+      setTextPreview("");
+      setWordCount(null);
       setPageCount(null);
       setPreviewError("");
       return;
@@ -332,6 +347,8 @@ export default function ImportDocumentPage() {
     setRelatedDocumentId("");
     setRelationSearch("");
     setPreviewItems([]);
+    setTextPreview("");
+    setWordCount(null);
     setPageCount(null);
     setPreviewError("");
     setIsGeneratingPreview(false);
@@ -355,11 +372,13 @@ export default function ImportDocumentPage() {
       sizeLabel: formatBytes(selectedFile.size),
       pageCountLabel: pageCount
         ? `${pageCount} pages`
+        : wordCount !== null
+          ? `${wordCount} mots`
         : previewError
           ? "Prévisualisation limitée"
           : "Analyse en cours",
     };
-  }, [pageCount, previewError, selectedFile]);
+  }, [pageCount, previewError, selectedFile, wordCount]);
 
   const steps: ProgressStep[] = [
     {
@@ -494,6 +513,8 @@ export default function ImportDocumentPage() {
                     pageCount={pageCount}
                     fileSizeLabel={fileMeta?.sizeLabel ?? "0 B"}
                     previewItems={previewItems}
+                    textPreview={textPreview}
+                    wordCount={wordCount}
                     isLoading={isGeneratingPreview}
                     message={previewError}
                   />

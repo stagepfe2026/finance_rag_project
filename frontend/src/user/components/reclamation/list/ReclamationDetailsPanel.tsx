@@ -116,8 +116,8 @@ type FieldProps = {
 function DetailField({ label, children }: FieldProps) {
   return (
     <div>
-      <p className="text-[11px] font-semibold text-slate-500">{label}</p>
-      <div className="mt-2 text-[12px] leading-5 text-[#273043]">{children}</div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">{label}</p>
+      <div className="mt-1 text-[12px] leading-5 text-[#273043]">{children}</div>
     </div>
   );
 }
@@ -135,15 +135,15 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
 
   return (
     <aside className="sticky top-[88px] h-[calc(100vh-104px)] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 pb-4 pt-5">
-        <h2 className="text-[15px] font-semibold text-[#273043]">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+        <h2 className="text-sm font-semibold text-[#273043]">
           Detail de la reclamation
         </h2>
 
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#9d0208]"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-[#9d0208]"
           aria-label="Fermer le detail de la reclamation"
           title="Fermer"
         >
@@ -151,11 +151,11 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
         </button>
       </div>
 
-      <div className="space-y-5 px-5 py-5">
+      <div className="space-y-4 px-4 py-4">
         <div>
           <span
             className={[
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
               unread ? "bg-red-50 text-[#9d0208]" : "bg-slate-100 text-slate-600",
             ].join(" ")}
           >
@@ -183,7 +183,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
           <ReclamationStatusBadge status={reclamation.status} />
         </DetailField>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <DetailField label="Date de creation">
             {formatDate(reclamation.createdAt)}
           </DetailField>
@@ -201,21 +201,21 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
         </DetailField>
 
         <DetailField label="Description">
-          <div className="min-h-[56px] whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-3 text-slate-600">
+          <div className="min-h-[48px] whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-600">
             {reclamation.description}
           </div>
         </DetailField>
 
         {reclamation.attachment ? (
           <DetailField label="Piece jointe">
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <span className="min-w-0 truncate">{reclamation.attachment.name}</span>
               {attachmentUrl ? (
                 <a
                   href={attachmentUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-white hover:text-[#9d0208]"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-white hover:text-[#9d0208]"
                   title="Ouvrir la piece jointe"
                 >
                   <ExternalLink size={14} />
@@ -226,7 +226,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
         ) : null}
 
         <DetailField label="Derniere reponse du systeme">
-          <div className="rounded-xl bg-emerald-50 px-3 py-3 text-emerald-700">
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-emerald-700">
             <p className="whitespace-pre-wrap">
               {reclamation.adminReply || "Aucune reponse pour le moment."}
             </p>
@@ -240,7 +240,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
 
         <div>
           <p className="text-[11px] font-semibold text-slate-500">Historique</p>
-          <div className="mt-3 space-y-4">
+          <div className="mt-3 space-y-3">
             {historyItems.map((item, index) => {
               const isSuccess = item.tone === "success";
               const isInfo = item.tone === "info";
@@ -253,7 +253,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
 
                   <span
                     className={[
-                      "relative z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-white",
+                      "relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-white",
                       isSuccess
                         ? "border-emerald-200 text-emerald-600"
                         : isInfo

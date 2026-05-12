@@ -42,11 +42,11 @@ export default function ChatSidebar({
 }: ChatSidebarProps) {
   if (!isOpen) {
     return (
-      <aside className="flex h-full min-h-0 items-center justify-between gap-2 overflow-hidden rounded-xl border border-[#ece1de] bg-white px-3 shadow-sm lg:flex-col lg:justify-start lg:px-0 lg:py-4">
+      <aside className="flex h-full min-h-0 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-2 lg:flex-col lg:justify-start lg:px-0 lg:py-3">
         <button
           type="button"
           onClick={onToggle}
-          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[#273043] transition hover:bg-slate-100"
+          className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-[#273043] transition hover:bg-slate-100"
           aria-label="Ouvrir l historique des conversations"
           title="Ouvrir l historique"
         >
@@ -56,7 +56,7 @@ export default function ChatSidebar({
           <button
             type="button"
             onClick={onCreateConversation}
-            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-[#273043] text-white transition hover:bg-[#10106f]"
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md bg-[#273043] text-white transition hover:bg-[#1f2636]"
             aria-label="Nouvelle conversation"
             title="Nouvelle conversation"
           >
@@ -65,7 +65,7 @@ export default function ChatSidebar({
           <button
             type="button"
             onClick={onOpenArchiveModal}
-            className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[#273043] transition hover:bg-slate-100"
+            className="relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-[#273043] transition hover:bg-slate-100"
             aria-label={`Ouvrir les archives (${archivedCount})`}
             title="Archiver"
           >
@@ -80,16 +80,16 @@ export default function ChatSidebar({
   }
 
   return (
-      <aside className="flex h-full w-[280px] flex-col overflow-hidden rounded-xl border border-[#ece1de] bg-white shadow-sm">
-        <div className="px-5 pb-4 pt-5">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-bold text-[#273043]">Historique des conversations</h2>
+    <aside className="flex h-full w-[248px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 px-3.5 py-3">
+        <div className="mb-2.5 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-[#273043]">Historique</h2>
           <div className="flex items-center gap-2">
             
             <button
               type="button"
               onClick={onToggle}
-              className=" cursor-pointer flex h-9 w-9 shrink-0 items-center justify-center"
+              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-[#273043] transition hover:bg-slate-100"
               aria-label="Fermer l historique des conversations"
               title="Fermer l historique"
             >
@@ -103,17 +103,17 @@ export default function ChatSidebar({
         <button
           type="button"
           onClick={onOpenArchiveModal}
-          className="mt-4 flex cursor-pointer h-8 w-full items-center justify-center gap-3 rounded-xl border border-[#edf0f7] bg-white px-3 text-[13px] font-semibold text-[#273043] shadow-[0_8px_20px_rgba(39,48,67,0.03)] transition hover:border-[#d8def0] hover:bg-[#fbfcff]"
+          className="mt-2.5 flex h-8 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-[12px] font-semibold text-[#273043] transition hover:border-[#9d0208] hover:bg-white"
           aria-label={`Ouvrir les archives (${archivedCount})`}
         >
-          <Archive size={16} className="text-[#273043]" />
-          Archiver
+          <Archive size={14} className="text-[#273043]" />
+          Archives
         </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
-          <p className="px-5 py-4 text-[12px] text-[#8790ad]">Chargement des conversations...</p>
+          <p className="px-4 py-3 text-[12px] text-slate-500">Chargement des conversations...</p>
         ) : (
           <div className="pb-2">
             <ConversationList
@@ -130,7 +130,7 @@ export default function ChatSidebar({
         )}
       </div>
 
-      <div className="p-5 pt-4">
+      <div className="border-t border-slate-200 bg-slate-50 p-3">
         <NewConversationButton onClick={onCreateConversation} />
       </div>
     </aside>

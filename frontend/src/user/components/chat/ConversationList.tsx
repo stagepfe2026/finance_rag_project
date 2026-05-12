@@ -27,15 +27,15 @@ export default function ConversationList({
   return (
     <section>
       {title ? (
-        <div className="px-5 py-2.5">
-          <h2 className="text-[14px] font-semibold text-[#273043]">{title}</h2>
+        <div className="px-3.5 py-2">
+          <h2 className="text-xs font-semibold text-[#273043]">{title}</h2>
         </div>
       ) : null}
 
       {conversations.length === 0 ? (
-        <p className="px-5 py-4 text-[12px] leading-5 text-[#8790ad]">{emptyMessage}</p>
+        <p className="px-3.5 py-3 text-[12px] leading-5 text-slate-500">{emptyMessage}</p>
       ) : (
-        <div className="divide-y divide-[#edf0f7]">
+        <div className="divide-y divide-slate-100">
           {conversations.map((conversation) => (
             <ConversationItem
               key={conversation._id}

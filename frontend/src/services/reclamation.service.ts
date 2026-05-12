@@ -1,4 +1,4 @@
-import type { CreateReclamationInput, Reclamation } from "../models/reclamation";
+import type { CreateReclamationInput, Reclamation, UpdateReclamationInput } from "../models/reclamation";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -93,6 +93,35 @@ export async function createReclamation(input: CreateReclamationInput): Promise<
 
   if (!response.ok) {
     throw new Error(readErrorMessage(data, "Impossible d envoyer la reclamation."));
+  }
+
+  return (data as ApiEnvelope<Reclamation>).data;
+}
+
+export async function updateReclamation(reclamationId: string, input: UpdateReclamationInput): Promise<Reclamation> {
+  const formData = new FormData();
+  formData.append("subject", input.subject);
+  formData.append("description", input.description);
+  formData.append("problem_type", input.problemType);
+  formData.append("priority", input.priority);
+
+  if (input.customProblemType) {
+    formData.append("custom_problem_type", input.customProblemType);
+  }
+
+  if (input.attachment) {
+    formData.append("attachment", input.attachment);
+  }
+
+  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}`, {
+    method: "PUT",
+    credentials: "include",
+    body: formData,
+  });
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de modifier la reclamation."));
   }
 
   return (data as ApiEnvelope<Reclamation>).data;

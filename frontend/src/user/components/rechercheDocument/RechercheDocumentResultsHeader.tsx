@@ -10,9 +10,9 @@ export default function RechercheDocumentResultsHeader({
   error,
 }: Props) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#f1e7e5] pb-2">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
       <div>
-        <p className="text-[12px] text-[#7d6c68]">
+        <p className="text-[12px] text-slate-500">
           {total} résultat{total > 1 ? "s" : ""}
           {query.trim() ? (
             <>

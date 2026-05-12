@@ -53,14 +53,14 @@ export default function MessageBubble({ message, searchQuery = "", onFeedback }:
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`flex max-w-[96%] flex-col ${isUser ? "items-end" : "items-start"}`}>
+      <div className={`flex max-w-[92%] flex-col ${isUser ? "items-end" : "items-start"}`}>
         <div
           className={[
-            "rounded-xl px-3 py-2 text-[12px] leading-5 shadow-sm",
+            "rounded-lg px-3 py-2 text-[12px] leading-5 shadow-sm",
             isUser
-              ? "bg-[linear-gradient(135deg,#cf4338_0%,#b82f29_100%)] text-white"
-              : "border border-[#ece3e1] bg-white text-[#2b2321]",
-            isPendingAssistant ? "italic text-[#7a706d]" : "",
+              ? "bg-[#9d0208] text-white"
+              : "border border-slate-200 bg-white text-[#273043]",
+            isPendingAssistant ? "italic text-slate-500" : "",
           ].join(" ")}
         >
           {isUser || isPendingAssistant ? (
@@ -74,12 +74,12 @@ export default function MessageBubble({ message, searchQuery = "", onFeedback }:
           )}
         </div>
 
-        <div className="mt-0.5 px-1 text-[10px] text-[#958885]">
+        <div className="mt-0.5 px-1 text-[10px] text-slate-400">
           {isPendingAssistant ? "En attente..." : formatTime(message.createdAt)}
         </div>
 
         {!isUser && !isPendingAssistant ? (
-          <div className="mt-1 w-full max-w-[min(100%,52rem)]">
+          <div className="mt-1 w-full max-w-[min(100%,48rem)]">
             <MessageActions
               content={message.content}
               sources={message.sources}

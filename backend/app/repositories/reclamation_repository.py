@@ -102,6 +102,59 @@ class ReclamationRepository:
         )
         return result.modified_count > 0
 
+    def update_pending_for_user(
+        self,
+        reclamation_id: str,
+        user_id: str,
+        *,
+        subject: str,
+        description: str,
+        problem_type: str,
+        custom_problem_type: str | None,
+        priority: str,
+        attachment_payload: dict | None = None,
+    ) -> ReclamationModel | None:
+        if not ObjectId.is_valid(reclamation_id):
+            return None
+
+        now = datetime.now(UTC)
+        activity_item = {
+            "id": ObjectId().binary.hex(),
+            "description": "Reclamation modifiee par l utilisateur",
+            "actorName": user_id,
+            "createdAt": now,
+        }
+        update_fields = {
+            "subject": subject,
+            "description": description,
+            "problemType": problem_type,
+            "customProblemType": custom_problem_type,
+            "priority": priority,
+            "updatedAt": now,
+        }
+        if attachment_payload is not None:
+            update_fields.update(
+                {
+                    "attachmentName": attachment_payload["name"],
+                    "attachmentPath": attachment_payload["path"],
+                    "attachmentSize": attachment_payload["size"],
+                    "attachmentContentType": attachment_payload["content_type"],
+                }
+            )
+
+        result = self.collection.update_one(
+            {"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None, "status": "PENDING"},
+            {
+                "$set": update_fields,
+                "$push": {"activityLog": activity_item},
+            },
+        )
+        if result.modified_count == 0:
+            return None
+
+        raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None})
+        return ReclamationModel.from_mongo(raw) if raw else None
+
     def take_reclamation(self, reclamation_id: str, admin_id: str, admin_name: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None

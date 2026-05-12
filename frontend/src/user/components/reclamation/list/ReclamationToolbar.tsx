@@ -1,4 +1,4 @@
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { Plus, RefreshCw, RotateCcw, Search } from "lucide-react";
 
 import type { ReclamationReadFilter, ReclamationStatus } from "../../../../models/reclamation";
 
@@ -13,6 +13,7 @@ type Props = {
   onSearchChange: (value: string) => void;
   onStatusChange: (value: ReclamationStatus | "ALL") => void;
   onReadFilterChange: (value: ReclamationReadFilter) => void;
+  onResetFilters: () => void;
   onRefresh: () => void;
   onCreate: () => void;
 };
@@ -34,14 +35,17 @@ export default function ReclamationToolbar({
   onSearchChange,
   onStatusChange,
   onReadFilterChange,
+  onResetFilters,
   onRefresh,
   onCreate,
 }: Props) {
+  const hasFilters = Boolean(search.trim()) || statusFilter !== "ALL" || readFilter !== "ALL";
+
   return (
-    <div className="shrink-0 px-6 py-3">
+    <div className="shrink-0 border-b border-slate-200 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex h-9 w-[260px] items-center gap-2 rounded-xl border border-[#d8d3d0] bg-white px-3 text-[13px]">
+          <div className="flex h-9 w-[250px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[13px] transition focus-within:border-[#9d0208] focus-within:bg-white">
             <Search size={14} className="shrink-0 text-slate-400" />
             <input
               type="text"
@@ -52,12 +56,12 @@ export default function ReclamationToolbar({
             />
           </div>
 
-          <div className="flex h-9 items-center gap-1.5 rounded-xl border border-[#d8d3d0] bg-white px-3 text-[13px]">
+          <div className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px]">
             <span className="font-medium text-slate-700">Statut :</span>
             <select
               value={statusFilter}
               onChange={(event) => onStatusChange(event.target.value as ReclamationStatus | "ALL")}
-              className="cursor-pointer bg-transparent text-[13px] text-slate-500 outline-none"
+              className="cursor-pointer bg-transparent text-[12px] text-slate-500 outline-none"
             >
               <option value="ALL">Tous</option>
               <option value="PENDING">En attente</option>
@@ -66,7 +70,7 @@ export default function ReclamationToolbar({
             </select>
           </div>
 
-          <div className="flex h-9 items-center gap-1 rounded-xl border border-[#d8d3d0] bg-white p-1 text-[12px]">
+          <div className="flex h-9 items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-[12px]">
             <span className="px-2 font-medium text-slate-700">Lecture :</span>
             {readFilterOptions.map((option) => {
               const isActive = readFilter === option.value;
@@ -78,7 +82,7 @@ export default function ReclamationToolbar({
                   onClick={() => onReadFilterChange(option.value)}
                   aria-pressed={isActive}
                   className={[
-                    "inline-flex h-7 cursor-pointer items-center rounded-lg px-2.5 text-[12px] font-semibold transition",
+                    "inline-flex h-7 cursor-pointer items-center rounded-md px-2.5 text-[12px] font-semibold transition",
                     isActive
                       ? "bg-[#9d0208] text-white shadow-sm"
                       : "text-slate-500 hover:bg-slate-50 hover:text-[#273043]",
@@ -89,6 +93,16 @@ export default function ReclamationToolbar({
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={onResetFilters}
+            disabled={!hasFilters}
+            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-600 transition hover:border-[#9d0208] hover:text-[#273043] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            <RotateCcw size={13} />
+            Reinitialiser
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -99,7 +113,7 @@ export default function ReclamationToolbar({
           <button
             type="button"
             onClick={onCreate}
-            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-[#273043] px-3.5 text-[13px] font-semibold text-white transition hover:bg-[#273043]"
+            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#273043] px-3 text-[12px] font-semibold text-white transition hover:bg-[#1f2636]"
           >
             <Plus size={14} />
             Nouvelle reclamation
@@ -108,9 +122,10 @@ export default function ReclamationToolbar({
           <button
             type="button"
             onClick={onRefresh}
-            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-[#d8d3d0] bg-white text-slate-400 transition hover:text-[#273043]"
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 transition hover:border-[#9d0208] hover:text-[#273043]"
+            title="Actualiser"
           >
-            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+            <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>

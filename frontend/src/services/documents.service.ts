@@ -50,6 +50,15 @@ type DocumentActionResult = {
   data: DocumentItem | null;
 };
 
+type WordPreviewResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    content: string;
+    wordCount: number;
+  };
+};
+
 async function parseJson(response: Response) {
   return response.json().catch(() => null);
 }
@@ -126,6 +135,30 @@ export async function indexDocument({
   }
 
   return data;
+}
+
+export async function previewWordDocument({
+  apiBaseUrl,
+  file,
+}: {
+  apiBaseUrl: string;
+  file: File;
+}): Promise<{ content: string; wordCount: number }> {
+  const payload = new FormData();
+  payload.append("file", file);
+
+  const response = await fetch(`${apiBaseUrl}/api/v1/documents/preview-word`, {
+    method: "POST",
+    credentials: "include",
+    body: payload,
+  });
+  const data = (await parseJson(response)) as WordPreviewResponse | { detail?: string } | null;
+
+  if (!response.ok) {
+    throw new Error(readErrorMessage(data, "Impossible de generer l apercu texte du document Word."));
+  }
+
+  return (data as WordPreviewResponse).data;
 }
 
 export async function fetchDocuments({

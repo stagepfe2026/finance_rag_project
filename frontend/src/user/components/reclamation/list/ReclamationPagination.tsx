@@ -18,8 +18,8 @@ export default function ReclamationPagination({
   onPageChange,
 }: Props) {
   return (
-    <div className="shrink-0 flex items-center justify-between border-t border-[#f0e8e5] px-6 py-3">
-      <span className="text-[13px] text-slate-500">
+    <div className="flex shrink-0 items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2.5">
+      <span className="text-[12px] text-slate-500">
         {start}-{end} sur {totalResults} resultats
       </span>
 
@@ -28,12 +28,12 @@ export default function ReclamationPagination({
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="rounded-xl border border-[#e2d8d5] bg-[#faf7f6] px-4 py-1.5 text-[13px] text-slate-600 transition hover:border-[#cfc0bb] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] text-slate-600 transition hover:border-[#9d0208] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Precedent
         </button>
 
-        <span className="rounded-xl bg-[#273043] px-3.5 py-1.5 text-[13px] font-semibold text-white">
+        <span className="rounded-lg bg-[#273043] px-3 py-1.5 text-[12px] font-semibold text-white">
           {page}
         </span>
 
@@ -41,7 +41,7 @@ export default function ReclamationPagination({
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-[#e2d8d5] bg-[#faf7f6] px-4 py-1.5 text-[13px] text-slate-600 transition hover:border-[#cfc0bb] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] text-slate-600 transition hover:border-[#9d0208] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Suivant
           <ChevronRight size={13} />

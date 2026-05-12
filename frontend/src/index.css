@@ -24,6 +24,21 @@ body {
   transition: background-color 300ms ease, color 300ms ease;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--cimf-red);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(157, 2, 8, 0.12);
+}
+
 /* ── User Dark Mode: Color Tokens ─────────────────────────────────────────── */
 
 body.user-dark-theme {

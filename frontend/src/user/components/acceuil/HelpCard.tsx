@@ -1,4 +1,4 @@
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function HelpCard() {
@@ -6,16 +6,25 @@ export default function HelpCard() {
     <Link
       to="/user/guide"
       aria-label="Ouvrir le guide utilisateur"
-      className="group fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-full bg-[#273043] p-2 pr-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.22)] transition hover:-translate-y-0.5 hover:bg-[#1f2636]"
+      className="group fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:shadow-md hover:bg-red-50"
     >
-      <span className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#9d0208]">
-        <span className="absolute inset-0 rounded-full bg-[#9d0208]/10 opacity-0 transition group-hover:scale-125 group-hover:opacity-100" />
-        <CircleHelp size={22} className="relative" />
+      <span className="flex h-8 w-8 items-center justify-center rounded-full text-[#b00020]">
+        <CircleHelp size={17} strokeWidth={2.3} />
       </span>
-      <span className="leading-tight">
-        <span className="block text-[12px] font-bold">Besoin d aide ?</span>
-        <span className="block text-[11px] text-slate-200">Voir le guide</span>
-      </span>
+
+      <div className="flex flex-col">
+        <span className="text-xs font-semibold text-gray-800">
+          Besoin d’aide ?
+        </span>
+
+        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          Voir le guide
+          <ChevronRight
+            size={12}
+            className="text-[#b00020] transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </span>
+      </div>
     </Link>
   );
 }

@@ -107,46 +107,46 @@ export default function MessageActions({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         {hasSources ? (
           <div className="relative" ref={panelRef}>
             <button
               type="button"
               onClick={() => setIsSourcesOpen((value) => !value)}
-              className="flex items-center gap-2 rounded-xl border border-[#ddd3d0] bg-white px-3 py-1.5 text-[12px] text-[#5f5652] transition hover:bg-[#faf7f6]"
+              className="flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-50 hover:text-[#273043]"
               aria-expanded={isSourcesOpen}
             >
-              <Download size={14} />
+              <Download size={13} />
               Sources utilisees
               <ChevronDown
-                size={14}
+                size={13}
                 className={`transition ${isSourcesOpen ? "rotate-180" : ""}`}
               />
             </button>
 
             {isSourcesOpen ? (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-20 min-w-[320px] max-w-[440px] rounded-xl border border-[#e7ddda] bg-white p-2 shadow-[0_12px_40px_rgba(28,18,15,0.12)]">
-                <div className="max-h-[280px] overflow-y-auto">
+              <div className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[300px] max-w-[420px] rounded-lg border border-slate-200 bg-white p-1.5 shadow-[0_12px_30px_rgba(39,48,67,0.12)]">
+                <div className="max-h-[250px] overflow-y-auto">
                   {sources.map((source, index) => (
                     <div
                       key={`${source.document_id || source.document_name}-${index}`}
-                      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 transition hover:bg-[#faf7f6]"
+                      className="flex items-center justify-between gap-3 rounded-md px-2.5 py-2 transition hover:bg-slate-50"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-[12px] font-medium text-[#2f2725]">
+                        <p className="truncate text-[12px] font-medium text-[#273043]">
                           {source.document_name}
                         </p>
-                        <p className="text-[11px] text-[#8b7d79]">
+                        <p className="text-[11px] text-slate-500">
                           {source.document_type || source.category}
                           {source.version ? ` · v${source.version}` : ""}
                         </p>
-                        <p className="text-[11px] text-[#8b7d79]">
+                        <p className="text-[11px] text-slate-500">
                           {getLegalStatusLabel(source.legal_status)}
                           {source.date_publication ? ` · publié le ${formatDate(source.date_publication)}` : ""}
                         </p>
                         {source.relation_type && source.relation_type !== "none" ? (
-                          <p className="text-[11px] text-[#8b7d79]">
+                          <p className="text-[11px] text-slate-500">
                             {getRelationLabel(source.relation_type)}
                             {source.related_document_title ? ` ${source.related_document_title}` : ""}
                           </p>
@@ -155,7 +155,7 @@ export default function MessageActions({
                       <button
                         type="button"
                         onClick={() => void handleSourceDownload(source)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#5f5652] transition hover:bg-[#f4efed]"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-[#273043]"
                         title={`Telecharger ${source.document_name}`}
                         aria-label={`Telecharger ${source.document_name}`}
                       >
@@ -171,46 +171,46 @@ export default function MessageActions({
         <button
           type="button"
           onClick={() => void handleCopy()}
-          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-xl"
+          className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-100 hover:text-[#273043]"
         >
-          <Copy size={14} />
+          <Copy size={13} />
         </button>
         <button
           type="button"
           onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#5f5652] transition cursor-pointer hover:bg-[#E1DEDD] rounded-xl"
+          className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-100 hover:text-[#273043]"
         >
-          <Download size={14} />
+          <Download size={13} />
         </button>
         <button
           type="button"
           onClick={() => onFeedback("like")}
           className={[
-            "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12px] transition cursor-pointer",
+            "flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition",
             feedback === "like"
               ? "bg-[#eef4ff] text-[#273043]"
-              : "text-[#5f5652] hover:bg-[#E1DEDD]",
+              : "text-slate-600 hover:bg-slate-100 hover:text-[#273043]",
           ].join(" ")}
           title="Reponse utile"
           aria-label="Marquer la reponse comme utile"
           aria-pressed={feedback === "like"}
         >
-          <ThumbsUp size={14} />
+          <ThumbsUp size={13} />
         </button>
         <button
           type="button"
           onClick={() => onFeedback("dislike")}
           className={[
-            "flex items-center gap-2 rounded-xl px-3 py-1.5 text-[12px] transition cursor-pointer",
+            "flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition",
             feedback === "dislike"
               ? "bg-[#fff0f1] text-[#9d0208]"
-              : "text-[#5f5652] hover:bg-[#E1DEDD]",
+              : "text-slate-600 hover:bg-slate-100 hover:text-[#273043]",
           ].join(" ")}
           title="Reponse a corriger"
           aria-label="Marquer la reponse comme a corriger"
           aria-pressed={feedback === "dislike"}
         >
-          <ThumbsDown size={14} />
+          <ThumbsDown size={13} />
         </button>
       </div>
 

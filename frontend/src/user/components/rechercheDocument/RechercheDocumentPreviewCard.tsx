@@ -16,13 +16,13 @@ export default function RechercheDocumentPreviewCard({
   error,
 }: Props) {
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-xl border border-[#efe3e1] bg-[#fcfaf9] p-3.5">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d6c68]">
+    <div className="flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
         <FileText size={13} />
         Contenu du document
       </div>
 
-      <div className="mt-2.5 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap pr-2 text-[12.5px] leading-6 text-[#383130]">
+      <div className="mt-2 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap pr-2 text-[12px] leading-6 text-[#273043]">
         {isLoading ? (
           "Chargement du contenu..."
         ) : error ? (

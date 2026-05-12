@@ -15,15 +15,15 @@ export default function MessageList({ messages, isLoading, searchQuery = "", onF
     : messages;
 
   if (isLoading) {
-    return <p className="text-[11px] text-[#7f7673]">Chargement des messages...</p>;
+    return <p className="text-[11px] text-slate-500">Chargement des messages...</p>;
   }
 
   if (messages.length === 0) {
     return (
-      <div className="flex min-h-[calc(100vh-290px)] items-center justify-center px-2 py-6 text-center">
-        <div className="w-full max-w-[620px]">
-          <h2 className="text-base font-semibold text-[#273043]">Demarrez une conversation</h2>
-          <p className="mt-2 text-sm leading-7 text-slate-500 ">
+      <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-2 py-5 text-center">
+        <div className="w-full max-w-[520px]">
+          <h2 className="text-sm font-semibold text-[#273043]">Demarrez une conversation</h2>
+          <p className="mt-1.5 text-[12px] leading-5 text-slate-500">
             Posez vos questions juridiques et obtenez des reponses instantanees
           </p>
         </div>
@@ -33,9 +33,9 @@ export default function MessageList({ messages, isLoading, searchQuery = "", onF
 
   if (normalizedQuery && filteredMessages.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[#e5dbd8] bg-white/70 px-4 py-5 text-center">
-        <p className="text-[12px] font-medium text-[#403633]">Aucun resultat dans cette conversation</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#857976]">
+      <div className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-4 text-center">
+        <p className="text-[12px] font-medium text-[#273043]">Aucun resultat dans cette conversation</p>
+        <p className="mt-1 text-[11px] leading-5 text-slate-500">
           Essayez un autre mot-cle pour retrouver une information dans les messages utilisateur et assistant.
         </p>
       </div>

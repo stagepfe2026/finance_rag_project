@@ -127,6 +127,60 @@ async def delete_reclamation(
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@router.put("/{reclamation_id}")
+async def update_reclamation(
+    request: Request,
+    reclamation_id: str,
+    current_user: dict = Depends(require_finance_or_admin_user),
+    subject: Annotated[str, Form(...) ] = "",
+    description: Annotated[str, Form(...) ] = "",
+    problem_type: Annotated[str, Form(...) ] = "",
+    custom_problem_type: Annotated[str | None, Form()] = None,
+    priority: Annotated[str, Form(...) ] = "",
+    attachment: Annotated[UploadFile | None, File()] = None,
+):
+    service = getattr(request.app.state, "reclamation_service", None)
+    if service is None:
+        raise HTTPException(status_code=500, detail="Service de reclamation non disponible.")
+
+    try:
+        data = await service.update_reclamation(
+            current_user=current_user,
+            reclamation_id=reclamation_id,
+            subject=subject,
+            description=description,
+            problem_type=problem_type,
+            custom_problem_type=custom_problem_type,
+            priority=priority,
+            attachment=attachment,
+        )
+        return {
+            "success": True,
+            "message": "Reclamation modifiee avec succes.",
+            "data": data,
+        }
+    except ValueError as exc:
+        errors = {
+            "RECLAMATION_NOT_FOUND": "Reclamation introuvable.",
+            "RECLAMATION_UPDATE_NOT_ALLOWED": "Seules les reclamations en attente peuvent etre modifiees.",
+            "SUBJECT_TOO_SHORT": "Le sujet doit contenir au moins 3 caracteres.",
+            "SUBJECT_TOO_LONG": "Le sujet ne doit pas depasser 160 caracteres.",
+            "DESCRIPTION_TOO_SHORT": "La description doit contenir au moins 10 caracteres.",
+            "DESCRIPTION_TOO_LONG": "La description ne doit pas depasser 3000 caracteres.",
+            "INVALID_PROBLEM_TYPE": "Type de probleme invalide.",
+            "CUSTOM_PROBLEM_TYPE_REQUIRED": "Veuillez preciser le type de probleme.",
+            "INVALID_PRIORITY": "Priorite invalide.",
+            "INVALID_ATTACHMENT_TYPE": "Format de piece jointe non supporte.",
+            "ATTACHMENT_TOO_LARGE": "La piece jointe ne doit pas depasser 5 Mo.",
+        }
+        status_code = 404 if str(exc) == "RECLAMATION_NOT_FOUND" else 400
+        if str(exc) == "RECLAMATION_UPDATE_NOT_ALLOWED":
+            status_code = 403
+        raise HTTPException(status_code=status_code, detail=errors.get(str(exc), "Reclamation invalide.")) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @router.post("")
 async def create_reclamation(
     request: Request,

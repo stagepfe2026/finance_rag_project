@@ -21,6 +21,7 @@ type Props = {
   reclamation: Reclamation;
   active: boolean;
   onSelect: (reclamation: Reclamation) => void;
+  onEdit: (reclamation: Reclamation) => void;
   onDelete: (reclamation: Reclamation) => void;
 };
 
@@ -28,6 +29,7 @@ export default function ReclamationTableRow({
   reclamation,
   active,
   onSelect,
+  onEdit,
   onDelete,
 }: Props) {
   const unread = Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
@@ -49,12 +51,12 @@ export default function ReclamationTableRow({
         }
       }}
       className={[
-        "grid min-h-[78px] cursor-pointer grid-cols-[1.15fr_2.25fr_0.95fr_1.1fr_1.1fr_0.75fr] gap-4 border-b border-[#eef0f3] px-6 py-3 text-[13px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#9d0208]",
-        active ? "bg-slate-50" : "bg-white hover:bg-slate-50",
+        "grid min-h-[66px] cursor-pointer grid-cols-[1.1fr_2.3fr_0.9fr_1fr_1fr_0.75fr] gap-3 border-b border-slate-100 px-4 py-2.5 text-[12px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#9d0208]",
+        active ? "bg-red-50/20" : "bg-white hover:bg-slate-50",
       ].join(" ")}
     >
       <div className="flex items-center">
-        <p className="truncate rounded-xl bg-[#f3efee] px-2.5 py-1 text-[11px] font-semibold text-[#6d6662]">
+        <p className="truncate rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
           {reclamation.ticketNumber}
         </p>
       </div>
@@ -62,7 +64,7 @@ export default function ReclamationTableRow({
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           {unread ? <span className="h-2 w-2 shrink-0 rounded-full bg-[#9d0208]" /> : null}
-          <p className={`truncate text-[13px] ${unread ? "font-semibold text-[#273043]" : "font-medium text-[#4b4745]"}`}>
+          <p className={`truncate text-[12px] ${unread ? "font-semibold text-[#273043]" : "font-medium text-[#273043]"}`}>
             {reclamation.subject}
           </p>
         </div>
@@ -73,10 +75,10 @@ export default function ReclamationTableRow({
           </span>
         ) : null}
 
-        <p className="mt-1 truncate text-[12px] text-slate-500">
+        <p className="mt-0.5 truncate text-[11px] text-slate-500">
           {reclamation.adminReply ? "Nouvelle reponse du systeme" : "Demande envoyee"}
         </p>
-        <p className="mt-0.5 text-[11px] text-slate-500">
+        <p className="mt-0.5 text-[10px] text-slate-500">
           le {formatDate(activityDate)} a {formatTime(activityDate)}
         </p>
       </div>
@@ -85,18 +87,19 @@ export default function ReclamationTableRow({
         <ReclamationStatusBadge status={reclamation.status} />
       </div>
 
-      <div className="flex flex-col justify-center text-[13px] text-slate-500">
+      <div className="flex flex-col justify-center text-[12px] text-slate-500">
         <span>{formatDate(reclamation.createdAt)}</span>
         <span>{formatTime(reclamation.createdAt)}</span>
       </div>
 
-      <div className="flex flex-col justify-center text-[13px] text-slate-500">
+      <div className="flex flex-col justify-center text-[12px] text-slate-500">
         <span>{formatDate(reclamation.updatedAt)}</span>
         <span>{formatTime(reclamation.updatedAt)}</span>
       </div>
 
       <ReclamationRowActions
         onView={() => onSelect(reclamation)}
+        onEdit={reclamation.status === "PENDING" ? () => onEdit(reclamation) : undefined}
         onDelete={() => onDelete(reclamation)}
       />
     </div>

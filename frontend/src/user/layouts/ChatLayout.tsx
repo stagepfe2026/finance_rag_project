@@ -5,7 +5,6 @@ import type { ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../.
 import {
   archiveConversation,
   askChatQuestion,
-  createConversation,
   deleteConversation,
   fetchConversationMessages,
   fetchConversations,
@@ -167,20 +166,9 @@ export default function ChatLayout() {
     }
 
     initialActionHandledRef.current = true;
-    void (async () => {
-      try {
-        const conversation = await createConversation();
-        setConversations((current) => upsertConversation(current, conversation));
-        setSelectedConversationId(conversation._id);
-        setMessages([]);
-        setSearchParams({ conversationId: conversation._id }, { replace: true });
-        showSnackbar("Conversation creee avec succes.", "success");
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Impossible de creer une conversation.";
-        setPageError(message);
-        showSnackbar(message, "error");
-      }
-    })();
+    setSelectedConversationId(null);
+    setMessages([]);
+    setPageError("");
   }, [conversations, isLoadingConversations, searchParams, setSearchParams]);
 
   // ── Load messages when selected conversation changes ───────────────────────
@@ -257,20 +245,11 @@ export default function ChatLayout() {
   const selectedConversation = conversations.find((item) => item._id === selectedConversationId) ?? null;
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  async function handleCreateConversation() {
-    try {
-      setPageError("");
-      const conversation = await createConversation();
-      setConversations((current) => upsertConversation(current, conversation));
-      setSelectedConversationId(conversation._id);
-      setMessages([]);
-      setSearchParams({ conversationId: conversation._id }, { replace: true });
-      showSnackbar("Conversation creee avec succes.", "success");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Impossible de creer la conversation.";
-      setPageError(message);
-      showSnackbar(message, "error");
-    }
+  function handleCreateConversation() {
+    setPageError("");
+    setSelectedConversationId(null);
+    setMessages([]);
+    setSearchParams({ new: "1" }, { replace: true });
   }
 
   function handleRenameConversation(conversation: Conversation) {
@@ -465,8 +444,8 @@ export default function ChatLayout() {
 
   return (
     <>
-      <div className="h-[calc(100vh-81px)] w-full overflow-hidden bg-slate-50 px-3 py-3 md:px-4">
-        <div className="flex h-full min-h-0 gap-4 overflow-hidden">
+      <div className="h-[calc(100vh-81px)] w-full overflow-hidden bg-slate-50 px-3 py-3">
+        <div className="flex h-full min-h-0 gap-3 overflow-hidden">
           <ChatSidebar
             isOpen={isHistoryOpen}
             activeConversations={activeConversations}

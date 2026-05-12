@@ -19,8 +19,10 @@ type ReclamationTableProps = {
   onSearchChange: (value: string) => void;
   onStatusChange: (value: ReclamationStatus | "ALL") => void;
   onReadFilterChange: (value: ReclamationReadFilter) => void;
+  onResetFilters: () => void;
   onPageChange: (page: number) => void;
   onSelect: (reclamation: Reclamation) => void;
+  onEdit: (reclamation: Reclamation) => void;
   onDelete: (reclamation: Reclamation) => void;
   onRefresh: () => void;
   onCreate: () => void;
@@ -40,8 +42,10 @@ export default function ReclamationTable({
   onSearchChange,
   onStatusChange,
   onReadFilterChange,
+  onResetFilters,
   onPageChange,
   onSelect,
+  onEdit,
   onDelete,
   onRefresh,
   onCreate,
@@ -50,7 +54,7 @@ export default function ReclamationTable({
   const end = Math.min(page * pageSize, totalResults);
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#ece4e1] bg-white shadow-sm">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <ReclamationPageHeader total={totalResults} />
 
       <ReclamationToolbar
@@ -64,6 +68,7 @@ export default function ReclamationTable({
         onSearchChange={onSearchChange}
         onStatusChange={onStatusChange}
         onReadFilterChange={onReadFilterChange}
+        onResetFilters={onResetFilters}
         onRefresh={onRefresh}
         onCreate={onCreate}
       />
@@ -75,6 +80,7 @@ export default function ReclamationTable({
           selectedId={selectedId}
           isLoading={isLoading}
           onSelect={onSelect}
+          onEdit={onEdit}
           onDelete={onDelete}
         />
       </div>

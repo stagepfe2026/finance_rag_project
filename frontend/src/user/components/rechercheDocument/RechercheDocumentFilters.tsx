@@ -51,13 +51,13 @@ export default function RechercheDocumentFilters({
   );
 
   return (
-    <aside className="flex h-full min-h-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-sm font-bold text-[#273043]">Filtres</h2>
-      
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 px-4 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9d0208]">Recherche</p>
+        <h2 className="mt-1 text-sm font-semibold text-[#273043]">Filtres</h2>
       </div>
 
-      <div className="flex-1 min-h-0 space-y-5 overflow-y-auto px-5 py-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <RechercheDocumentCategoryFilter
           selectedCategories={selectedCategories}
           categoryCounts={categoryCounts}
@@ -77,11 +77,11 @@ export default function RechercheDocumentFilters({
         />
       </div>
 
-      <div className="border-t border-slate-100 p-4">
+      <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
         <button
           type="button"
           onClick={onReset}
-          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-[#273043] transition hover:border-[#273043] hover:bg-white"
+          className="h-9 w-full rounded-lg border border-slate-200 bg-white text-xs font-semibold text-[#273043] transition hover:border-[#9d0208]"
         >
           Réinitialiser
         </button>

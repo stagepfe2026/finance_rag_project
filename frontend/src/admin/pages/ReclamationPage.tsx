@@ -5,7 +5,7 @@ import ReclamationDetailPanel from "../components/réclamation/ReclamationDetail
 import ReclamationFilters from "../components/réclamation/ReclamationFilters";
 import ReclamationLayout from "../components/réclamation/ReclamationLayout";
 import ReclamationList from "../components/réclamation/ReclamationList";
-import type { Reclamation } from "../../models/reclamation";
+import type { Reclamation, ReclamationPriority, ReclamationProblemType } from "../../models/reclamation";
 import {
   fetchAdminReclamations,
   resolveReclamationAsAdmin,
@@ -13,6 +13,8 @@ import {
 } from "../../services/admin-reclamation.service";
 
 type StatusFilter = "ALL" | Extract<Reclamation["status"], "PENDING" | "IN_PROGRESS" | "RESOLVED">;
+type CategoryFilter = "ALL" | ReclamationProblemType;
+type PriorityFilter = "ALL" | ReclamationPriority;
 
 export default function ReclamationPage() {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -20,6 +22,8 @@ export default function ReclamationPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("ALL");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [adminReply, setAdminReply] = useState("");
@@ -70,9 +74,11 @@ export default function ReclamationPage() {
         item.ticketNumber.toLowerCase().includes(normalizedSearch) ||
         item.userEmail.toLowerCase().includes(normalizedSearch);
       const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesCategory = categoryFilter === "ALL" || item.problemType === categoryFilter;
+      const matchesPriority = priorityFilter === "ALL" || item.priority === priorityFilter;
+      return matchesSearch && matchesStatus && matchesCategory && matchesPriority;
     });
-  }, [reclamations, search, statusFilter]);
+  }, [categoryFilter, priorityFilter, reclamations, search, statusFilter]);
 
   const selectedReclamation = useMemo(
     () =>
@@ -138,8 +144,18 @@ export default function ReclamationPage() {
           <ReclamationFilters
             search={search}
             statusFilter={statusFilter}
+            categoryFilter={categoryFilter}
+            priorityFilter={priorityFilter}
             onSearchChange={setSearch}
             onStatusFilterChange={setStatusFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            onPriorityFilterChange={setPriorityFilter}
+            onResetFilters={() => {
+              setSearch("");
+              setStatusFilter("ALL");
+              setCategoryFilter("ALL");
+              setPriorityFilter("ALL");
+            }}
           />
 
           <ReclamationList

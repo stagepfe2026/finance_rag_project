@@ -9,6 +9,8 @@ type PreviewPanelProps = {
   pageCount: number | null;
   fileSizeLabel: string;
   previewItems: PreviewItem[];
+  textPreview: string;
+  wordCount: number | null;
   isLoading: boolean;
   message: string;
 };
@@ -19,6 +21,8 @@ export default function PreviewPanel({
   pageCount,
   fileSizeLabel,
   previewItems,
+  textPreview,
+  wordCount,
   isLoading,
   message,
 }: PreviewPanelProps) {
@@ -51,12 +55,21 @@ export default function PreviewPanel({
       <div className="p-4">
         <h3 className="truncate text-[13px] font-semibold text-[#071f3d]">{fileName}</h3>
         <p className="mt-1 text-[11px] text-[#8a96ad]">
-          {fileTypeLabel} • {pageCount ? `${pageCount} pages` : "--"} • {fileSizeLabel}
+          {fileTypeLabel} • {pageCount ? `${pageCount} pages` : wordCount !== null ? `${wordCount} mots` : "--"} • {fileSizeLabel}
         </p>
 
         {isLoading ? (
           <div className="mt-4 rounded border border-[#e5eaf2] bg-[#f7f9fc] px-4 py-8 text-center text-[12px] text-[#8a96ad]">
             Génération de la prévisualisation...
+          </div>
+        ) : textPreview ? (
+          <div className="mt-4 rounded border border-[#e5eaf2] bg-[#f7f9fc]">
+            <div className="border-b border-[#e5eaf2] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-[#9d0208]">
+              Contenu texte du document Word
+            </div>
+            <div className="max-h-[260px] overflow-y-auto whitespace-pre-wrap px-3 py-3 text-[12px] leading-6 text-[#071f3d]">
+              {textPreview}
+            </div>
           </div>
         ) : previewItems.length > 0 ? (
           <div className="mt-4 overflow-x-auto">

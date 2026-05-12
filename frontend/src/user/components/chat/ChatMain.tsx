@@ -81,24 +81,25 @@ export default function ChatMain({
   }
 
   return (
-<main className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-[#ece1de] bg-white shadow-sm">        <div className="border-b border-[#eee7e5] px-3 py-2">
-        <div className="flex items-start justify-between gap-4">
+    <main className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white ">
+      <div className="border-b border-slate-200 px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate py-2 ml-3 text-sm font-semibold text-[#273043]">
+            <h1 className="truncate text-sm font-semibold text-[#273043]">
               {conversation?.summary || "Nouvelle discussion"}
             </h1>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 self-center">
-            <div className="inline-flex items-center rounded-full border border-[#ddd3d0] bg-white p-1  ">
+          <div className="flex shrink-0 items-center gap-1.5">
+            <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               <button
                 type="button"
                 onClick={() => onResponseModeChange("short")}
                 className={[
-                  "rounded-full px-3 py-1 text-[11px] font-medium transition cursor-pointer",
+                  "rounded-md px-2.5 py-1 text-[11px] font-medium transition",
                   responseMode === "short"
                     ? "bg-[#273043] text-white"
-                    : "text-[#273043] hover:bg-[#f3f5ff]",
+                    : "text-slate-600 hover:bg-white hover:text-[#273043]",
                 ].join(" ")}
               >
                 Court
@@ -107,10 +108,10 @@ export default function ChatMain({
                 type="button"
                 onClick={() => onResponseModeChange("detailed")}
                 className={[
-                  "rounded-full px-3 py-1 text-[11px] font-medium transition cursor-pointer",
+                  "rounded-md px-2.5 py-1 text-[11px] font-medium transition",
                   responseMode === "detailed"
                     ? "bg-[#273043] text-white"
-                    : "text-[#273043] hover:bg-[#f3f5ff]",
+                    : "text-slate-600 hover:bg-white hover:text-[#273043]",
                 ].join(" ")}
               >
                 Detaille
@@ -121,40 +122,40 @@ export default function ChatMain({
               type="button"
               onClick={handleExportPdf}
               disabled={!conversation || messages.length === 0}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#273043] transition hover:border-[#273043] hover:text-[#273043] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:border-[#273043] hover:text-[#273043] disabled:cursor-not-allowed disabled:opacity-50"
               title="Exporter la conversation en PDF"
               aria-label="Exporter la conversation en PDF"
             >
-              <FileText size={17} />
+              <FileText size={15} />
             </button>
 
-            <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex items-center gap-1.5 overflow-hidden">
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((value) => !value)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd3d0] bg-white text-[#273043] transition hover:border-[#273043] hover:text-[#273043]"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:border-[#273043] hover:text-[#273043]"
                 title="Rechercher dans la conversation"
                 aria-label="Rechercher dans la conversation"
                 aria-expanded={isSearchOpen}
               >
-                {isSearchOpen ? <X size={17} /> : <Search size={17} />}
+                {isSearchOpen ? <X size={15} /> : <Search size={15} />}
               </button>
 
               <div
                 className={[
                   "transition-all duration-300 ease-out",
-                  isSearchOpen ? "w-[230px] opacity-100" : "w-0 opacity-0",
+                  isSearchOpen ? "w-[210px] opacity-100" : "w-0 opacity-0",
                 ].join(" ")}
               >
-                <div className="flex items-center rounded-full border border-[#ddd3d0] bg-white px-3">
-                  <Search size={14} className="shrink-0 text-[#8a7f7b]" />
+                <div className="flex items-center rounded-md border border-slate-200 bg-white px-2.5">
+                  <Search size={13} className="shrink-0 text-slate-400" />
                   <input
                     ref={searchInputRef}
                     type="text"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="Rechercher..."
-                    className="h-9 w-full bg-transparent px-2 text-[12px] text-[#2f2725] outline-none placeholder:text-[#9a8e8a]"
+                    className="h-8 w-full bg-transparent px-2 text-[12px] text-[#273043] outline-none placeholder:text-slate-400"
                   />
                 </div>
               </div>
@@ -162,7 +163,7 @@ export default function ChatMain({
           </div>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-[#8a7f7b]">
+        <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
           {isSearchOpen ? (
             <span>
               {searchQuery.trim()
@@ -173,7 +174,7 @@ export default function ChatMain({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5 pr-2 md:px-4 md:py-3 md:pr-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5 pr-2 md:px-4 md:pr-3">
         {error ? (
           <div className="mb-2 rounded-xl border border-[#f0d5d2] bg-[#fff6f5] px-3 py-2 text-[11px] text-[#9d0208]">
             {error}
@@ -184,7 +185,7 @@ export default function ChatMain({
         <div ref={bottomRef} />
       </div>
 
-      <div className="bg-slate-50 px-3 py-3 md:px-4">
+      <div className="border-t border-slate-200 bg-slate-50 px-3 py-2.5 md:px-4">
         <ChatInput value={value} onChange={setValue} onSubmit={handleSubmit} disabled={false} />
       </div>
     </main>
