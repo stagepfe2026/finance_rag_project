@@ -483,6 +483,12 @@ function handleExportExcel() {
 
           <section className="px-2 py-1">
             <div className="space-y-3">
+              <DocumentsStatusSummary
+                indexed={indexedCount}
+                processing={processingCount}
+                failed={failedCount}
+              />
+
               <DocumentsFilterBar
                 search={search}
                 category={category}
@@ -493,13 +499,6 @@ function handleExportExcel() {
                 onStatusChange={setStatus}
                 onReset={handleReset}
               />
-
-              <DocumentsStatusSummary
-                indexed={indexedCount}
-                processing={processingCount}
-                failed={failedCount}
-              />
-
 
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
                 <div className="min-w-0 flex-1 space-y-3">

@@ -49,6 +49,7 @@ export default function RechercheDocumentResultCard({
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
+          aria-label={`Selectionner le document ${item.title}`}
           onClick={() => onSelect(item)}
           className="min-w-0 flex-1 text-left"
         >
@@ -66,6 +67,7 @@ export default function RechercheDocumentResultCard({
 
         <button
           type="button"
+          aria-label={item.isFavored ? `Retirer ${item.title} des favoris` : `Ajouter ${item.title} aux favoris`}
           onClick={(event) => {
             event.stopPropagation();
             onToggleFavorite(item);

@@ -80,6 +80,7 @@ export default function RechercheDocumentFilters({
       <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
         <button
           type="button"
+          aria-label="Reinitialiser les filtres de recherche"
           onClick={onReset}
           className="h-9 w-full rounded-lg border border-slate-200 bg-white text-xs font-semibold text-[#273043] transition hover:border-[#9d0208]"
         >

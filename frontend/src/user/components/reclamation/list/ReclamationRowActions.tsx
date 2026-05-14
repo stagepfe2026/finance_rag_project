@@ -17,6 +17,7 @@ export default function ReclamationRowActions({ onView, onEdit, onDelete }: Prop
     <div className="flex items-center justify-center gap-1.5">
       <button
         type="button"
+        aria-label="Consulter la reclamation"
         onClick={(event) => handleActionClick(event, onView)}
         className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:border-[#9d0208] hover:text-[#273043]"
         title="Consulter"
@@ -27,6 +28,7 @@ export default function ReclamationRowActions({ onView, onEdit, onDelete }: Prop
       {onEdit ? (
         <button
           type="button"
+          aria-label="Modifier la reclamation"
           onClick={(event) => handleActionClick(event, onEdit)}
           className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:border-[#9d0208] hover:text-[#273043]"
           title="Modifier"
@@ -37,6 +39,7 @@ export default function ReclamationRowActions({ onView, onEdit, onDelete }: Prop
 
       <button
         type="button"
+        aria-label="Supprimer la reclamation"
         onClick={(event) => handleActionClick(event, onDelete)}
         className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:border-[#f0caca] hover:text-rose-600"
         title="Supprimer"

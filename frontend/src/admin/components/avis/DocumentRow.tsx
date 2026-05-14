@@ -22,11 +22,6 @@ export default function DocumentRow({ document, onReindex, isBusy }: DocumentRow
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-center">
-        <span className="rounded bg-[#f5e6e7] px-2 py-0.5 text-[10px] font-semibold text-[#9d0208]">
-          {document.signalements}
-        </span>
-      </td>
       <td className="px-4 py-3 text-center text-xs font-semibold text-[#071f3d]">{document.likes}</td>
       <td className="px-4 py-3 text-center text-xs font-semibold text-[#9d0208]">{document.dislikes}</td>
       <td className="px-4 py-3 text-right">

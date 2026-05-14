@@ -21,6 +21,7 @@ export default function GuideCompletionPanel({ onReplayGuide }: GuideCompletionP
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-label="Revoir le guide utilisateur"
             onClick={onReplayGuide}
             className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-[#273043] transition hover:bg-slate-50"
           >
@@ -28,6 +29,7 @@ export default function GuideCompletionPanel({ onReplayGuide }: GuideCompletionP
           </button>
           <Link
             to="/user/accueil"
+            aria-label="Retourner a la page d'accueil"
             className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#273043] px-2.5 text-[11px] font-semibold text-white transition hover:bg-[#1f2636]"
           >
             Retour accueil

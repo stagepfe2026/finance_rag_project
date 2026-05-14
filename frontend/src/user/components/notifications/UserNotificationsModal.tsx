@@ -148,6 +148,8 @@ export default function UserNotificationsModal({
                   <button
                     key={option.value}
                     type="button"
+                    aria-label={`Filtrer les notifications: ${option.label}`}
+                    aria-pressed={isActive}
                     onClick={() => setActiveFilter(option.value)}
                     className={[
                       "relative flex min-h-12 items-center justify-center px-1 text-[13px] font-semibold transition",
@@ -222,6 +224,7 @@ export default function UserNotificationsModal({
                           {!item.isRead ? (
                             <button
                               type="button"
+                              aria-label={`Marquer la notification ${item.title} comme lue`}
                               onClick={() => onMarkAsRead(item)}
                               className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-2 py-1 font-semibold text-[#273043] transition hover:bg-slate-200"
                             >

@@ -128,6 +128,7 @@ export default function ArchivedConversationsModal({
                     <div className="flex justify-center">
                       <button
                         type="button"
+                        aria-label={`Restaurer la conversation ${conversation.summary}`}
                         onClick={() => void onRestore(conversation)}
                         disabled={busyConversationId === conversation._id}
                         className="rounded-xl border border-[#efb4af] px-4 py-2 text-[12px] font-semibold text-[#9d0208] transition hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-60"
@@ -157,6 +158,7 @@ export default function ArchivedConversationsModal({
                 <button
                   key={pageNumber}
                   type="button"
+                  aria-label={`Aller a la page ${pageNumber}`}
                   onClick={() => setPage(pageNumber)}
                   className={[
                     "inline-flex h-8 min-w-8 items-center justify-center rounded-xl px-2 text-[12px] font-semibold transition",

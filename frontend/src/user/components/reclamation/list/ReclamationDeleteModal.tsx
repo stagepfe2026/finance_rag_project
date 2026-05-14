@@ -35,6 +35,7 @@ export default function ReclamationDeleteModal({
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
+            aria-label="Annuler la suppression de la reclamation"
             onClick={onClose}
             disabled={busy}
             className="rounded-xl border border-[#eadfdb] bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-[#d8c8c3] disabled:cursor-not-allowed disabled:opacity-60"
@@ -43,6 +44,7 @@ export default function ReclamationDeleteModal({
           </button>
           <button
             type="button"
+            aria-label={`Confirmer la suppression de la reclamation ${reclamation.subject}`}
             onClick={onConfirm}
             disabled={busy}
             className="rounded-xl bg-[#9d0208] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#9d0208] disabled:cursor-not-allowed disabled:opacity-60"

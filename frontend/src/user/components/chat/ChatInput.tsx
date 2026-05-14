@@ -20,6 +20,7 @@ export default function ChatInput({ value, onChange, onSubmit, disabled }: ChatI
     <div className="flex items-end gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
       <textarea
         rows={1}
+        aria-label="Saisir votre question"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}

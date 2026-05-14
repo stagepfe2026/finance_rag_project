@@ -26,6 +26,7 @@ export default function ReclamationPagination({
       <div className="flex items-center gap-2">
         <button
           type="button"
+          aria-label="Page precedente des reclamations"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] text-slate-600 transition hover:border-[#9d0208] disabled:cursor-not-allowed disabled:opacity-40"
@@ -39,6 +40,7 @@ export default function ReclamationPagination({
 
         <button
           type="button"
+          aria-label="Page suivante des reclamations"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] text-slate-600 transition hover:border-[#9d0208] disabled:cursor-not-allowed disabled:opacity-40"

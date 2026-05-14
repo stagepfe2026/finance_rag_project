@@ -39,6 +39,22 @@ button:focus-visible {
   box-shadow: 0 0 0 4px rgba(157, 2, 8, 0.12);
 }
 
+/* ── Shared Accessibility Modes ───────────────────────────────────────────── */
+
+body.accessibility-eye-comfort::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  background: rgba(255, 214, 153, 0.18);
+  mix-blend-mode: multiply;
+}
+
+body.accessibility-eye-comfort {
+  filter: saturate(0.92) contrast(0.98);
+}
+
 /* ── User Dark Mode: Color Tokens ─────────────────────────────────────────── */
 
 body.user-dark-theme {
@@ -188,6 +204,138 @@ body.user-dark-theme .user-theme-root [class*="shadow"] {
 
 body.user-dark-theme .user-theme-root button:not([class*="bg-[#273043]"]):not([class*="bg-[#9d0208]"]):not([class*="bg-[#071f3d]"]):not([class*="from-[#f1b300]"]):not([class*="from-[#273043]"]) {
   color: var(--udm-text-primary);
+}
+
+/* ── User High Contrast Mode ──────────────────────────────────────────────── */
+
+body.user-high-contrast {
+  --uhc-bg: #ffffff;
+  --uhc-surface: #ffffff;
+  --uhc-text: #020617;
+  --uhc-muted: #1e293b;
+  --uhc-border: #020617;
+  --uhc-focus: #9d0208;
+  background: var(--uhc-bg);
+  color: var(--uhc-text);
+}
+
+body.user-high-contrast .user-theme-root {
+  background: var(--uhc-bg) !important;
+  color: var(--uhc-text) !important;
+}
+
+body.user-high-contrast .user-theme-root main,
+body.user-high-contrast .user-theme-root section,
+body.user-high-contrast .user-theme-root article,
+body.user-high-contrast .user-theme-root aside,
+body.user-high-contrast .user-theme-root form,
+body.user-high-contrast .user-theme-root [class*="bg-white"],
+body.user-high-contrast .user-theme-root [class*="bg-slate-50"],
+body.user-high-contrast .user-theme-root [class*="bg-slate-100"],
+body.user-high-contrast .user-theme-root [class*="bg-red-50"],
+body.user-high-contrast .user-theme-root [class*="bg-rose-50"],
+body.user-high-contrast .user-theme-root [class*="bg-[#fff"],
+body.user-high-contrast .user-theme-root [class*="bg-[#f"] {
+  background-color: var(--uhc-surface) !important;
+}
+
+body.user-high-contrast .user-theme-root h1,
+body.user-high-contrast .user-theme-root h2,
+body.user-high-contrast .user-theme-root h3,
+body.user-high-contrast .user-theme-root h4,
+body.user-high-contrast .user-theme-root h5,
+body.user-high-contrast .user-theme-root h6,
+body.user-high-contrast .user-theme-root p,
+body.user-high-contrast .user-theme-root label,
+body.user-high-contrast .user-theme-root span,
+body.user-high-contrast .user-theme-root div,
+body.user-high-contrast .user-theme-root li,
+body.user-high-contrast .user-theme-root th,
+body.user-high-contrast .user-theme-root td,
+body.user-high-contrast .user-theme-root a,
+body.user-high-contrast .user-theme-root button {
+  color: var(--uhc-text) !important;
+}
+
+body.user-high-contrast .user-theme-root [class*="text-slate-"],
+body.user-high-contrast .user-theme-root [class*="text-[#"],
+body.user-high-contrast .user-theme-root input::placeholder,
+body.user-high-contrast .user-theme-root textarea::placeholder {
+  color: var(--uhc-muted) !important;
+}
+
+body.user-high-contrast .user-theme-root [class*="border"],
+body.user-high-contrast .user-theme-root input,
+body.user-high-contrast .user-theme-root textarea,
+body.user-high-contrast .user-theme-root select {
+  border-color: var(--uhc-border) !important;
+}
+
+body.user-high-contrast .user-theme-root input,
+body.user-high-contrast .user-theme-root textarea,
+body.user-high-contrast .user-theme-root select {
+  background: #ffffff !important;
+  color: var(--uhc-text) !important;
+}
+
+body.user-high-contrast .user-theme-root *:focus-visible {
+  outline: 3px solid var(--uhc-focus) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 5px rgba(157, 2, 8, 0.18) !important;
+}
+
+body.user-high-contrast .user-theme-root [class*="shadow"] {
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.22) !important;
+}
+
+body.user-high-contrast .user-theme-root button[aria-pressed="true"] {
+  background-color: var(--uhc-focus) !important;
+  border-color: var(--uhc-focus) !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast .user-theme-root button[aria-pressed="true"] * {
+  color: #ffffff !important;
+}
+
+body.user-high-contrast .user-theme-root button[class*="bg-[#273043]"],
+body.user-high-contrast .user-theme-root button[class*="bg-[#071f3d]"],
+body.user-high-contrast .user-theme-root button[class*="bg-[#9d0208]"],
+body.user-high-contrast .user-theme-root button[class*="bg-slate-900"],
+body.user-high-contrast .user-theme-root button[class*="bg-slate-800"],
+body.user-high-contrast .user-theme-root button[class*="bg-red-700"],
+body.user-high-contrast .user-theme-root button[class*="bg-red-800"] {
+  color: #ffffff !important;
+}
+
+body.user-high-contrast .user-theme-root button[class*="bg-[#273043]"] *,
+body.user-high-contrast .user-theme-root button[class*="bg-[#071f3d]"] *,
+body.user-high-contrast .user-theme-root button[class*="bg-[#9d0208]"] *,
+body.user-high-contrast .user-theme-root button[class*="bg-slate-900"] *,
+body.user-high-contrast .user-theme-root button[class*="bg-slate-800"] *,
+body.user-high-contrast .user-theme-root button[class*="bg-red-700"] *,
+body.user-high-contrast .user-theme-root button[class*="bg-red-800"] * {
+  color: #ffffff !important;
+}
+
+body.user-high-contrast .user-theme-root [class*="bg-[#9d0208]"],
+body.user-high-contrast .user-theme-root [class*="bg-[#273043]"],
+body.user-high-contrast .user-theme-root [class*="bg-[#071f3d]"],
+body.user-high-contrast .user-theme-root [class*="bg-slate-900"],
+body.user-high-contrast .user-theme-root [class*="bg-slate-800"],
+body.user-high-contrast .user-theme-root [class*="bg-red-700"],
+body.user-high-contrast .user-theme-root [class*="bg-red-800"] {
+  color: #ffffff !important;
+}
+
+body.user-high-contrast .user-theme-root [class*="bg-[#9d0208]"] *,
+body.user-high-contrast .user-theme-root [class*="bg-[#273043]"] *,
+body.user-high-contrast .user-theme-root [class*="bg-[#071f3d]"] *,
+body.user-high-contrast .user-theme-root [class*="bg-slate-900"] *,
+body.user-high-contrast .user-theme-root [class*="bg-slate-800"] *,
+body.user-high-contrast .user-theme-root [class*="bg-red-700"] *,
+body.user-high-contrast .user-theme-root [class*="bg-red-800"] * {
+  color: #ffffff !important;
 }
 
 /* ── Links ─────────────────────────────────────────────────────────────────── */
@@ -361,6 +509,93 @@ body.user-dark-theme .apexcharts-canvas svg {
 
 .admin-theme-root [class*="shadow-sm"] {
   box-shadow: 0 14px 30px rgba(7, 31, 61, 0.055) !important;
+}
+
+.admin-theme-root.admin-high-contrast,
+body.admin-high-contrast .admin-theme-root {
+  --admin-page-bg: #ffffff;
+  --admin-surface: #ffffff;
+  --admin-surface-muted: #ffffff;
+  --admin-border: #020617;
+  background: #ffffff !important;
+  color: #020617 !important;
+}
+
+body.admin-high-contrast .admin-theme-root main,
+body.admin-high-contrast .admin-theme-root section,
+body.admin-high-contrast .admin-theme-root article,
+body.admin-high-contrast .admin-theme-root aside,
+body.admin-high-contrast .admin-theme-root form,
+body.admin-high-contrast .admin-theme-root [class*="bg-white"],
+body.admin-high-contrast .admin-theme-root [class*="bg-slate-50"],
+body.admin-high-contrast .admin-theme-root [class*="bg-slate-100"],
+body.admin-high-contrast .admin-theme-root [class*="bg-[#f"] {
+  background-color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root h1,
+body.admin-high-contrast .admin-theme-root h2,
+body.admin-high-contrast .admin-theme-root h3,
+body.admin-high-contrast .admin-theme-root h4,
+body.admin-high-contrast .admin-theme-root h5,
+body.admin-high-contrast .admin-theme-root h6,
+body.admin-high-contrast .admin-theme-root p,
+body.admin-high-contrast .admin-theme-root label,
+body.admin-high-contrast .admin-theme-root span,
+body.admin-high-contrast .admin-theme-root div,
+body.admin-high-contrast .admin-theme-root li,
+body.admin-high-contrast .admin-theme-root th,
+body.admin-high-contrast .admin-theme-root td,
+body.admin-high-contrast .admin-theme-root a,
+body.admin-high-contrast .admin-theme-root button {
+  color: #020617 !important;
+}
+
+body.admin-high-contrast .admin-theme-root [class*="text-slate-"],
+body.admin-high-contrast .admin-theme-root [class*="text-gray-"],
+body.admin-high-contrast .admin-theme-root [class*="text-[#"],
+body.admin-high-contrast .admin-theme-root input::placeholder,
+body.admin-high-contrast .admin-theme-root textarea::placeholder {
+  color: #1e293b !important;
+}
+
+body.admin-high-contrast .admin-theme-root [class*="border"],
+body.admin-high-contrast .admin-theme-root input,
+body.admin-high-contrast .admin-theme-root textarea,
+body.admin-high-contrast .admin-theme-root select {
+  border-color: #020617 !important;
+}
+
+body.admin-high-contrast .admin-theme-root input,
+body.admin-high-contrast .admin-theme-root textarea,
+body.admin-high-contrast .admin-theme-root select {
+  background: #ffffff !important;
+  color: #020617 !important;
+}
+
+body.admin-high-contrast .admin-theme-root *:focus-visible {
+  outline: 3px solid #9d0208 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 5px rgba(157, 2, 8, 0.18) !important;
+}
+
+body.admin-high-contrast .admin-theme-root [class*="shadow"] {
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.22) !important;
+}
+
+body.admin-high-contrast .admin-theme-root button[aria-pressed="true"],
+body.admin-high-contrast .admin-theme-root button[aria-pressed="true"] *,
+body.admin-high-contrast .admin-theme-root [class*="bg-[#9d0208]"],
+body.admin-high-contrast .admin-theme-root [class*="bg-[#9d0208]"] *,
+body.admin-high-contrast .admin-theme-root [class*="bg-[#273043]"],
+body.admin-high-contrast .admin-theme-root [class*="bg-[#273043]"] *,
+body.admin-high-contrast .admin-theme-root [class*="bg-[#071f3d]"],
+body.admin-high-contrast .admin-theme-root [class*="bg-[#071f3d]"] *,
+body.admin-high-contrast .admin-theme-root [class*="bg-slate-900"],
+body.admin-high-contrast .admin-theme-root [class*="bg-slate-900"] *,
+body.admin-high-contrast .admin-theme-root [class*="bg-slate-800"],
+body.admin-high-contrast .admin-theme-root [class*="bg-slate-800"] * {
+  color: #ffffff !important;
 }
 
 .admin-theme-root .admin-sidebar {

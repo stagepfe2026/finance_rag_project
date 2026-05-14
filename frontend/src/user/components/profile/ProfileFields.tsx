@@ -120,6 +120,8 @@ export function ProfileToggleField({ label, description, checked, onChange }: Pr
   return (
     <button
       type="button"
+      aria-label={`${checked ? "Desactiver" : "Activer"} ${label}`}
+      aria-pressed={checked}
       onClick={() => onChange(!checked)}
       className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition hover:border-[#9d0208]"
     >

@@ -25,6 +25,7 @@ export default function NotificationsPanel({ items, onDismiss }: NotificationsPa
               </div>
               <button
                 type="button"
+                aria-label={`Supprimer la notification ${item.title}`}
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();

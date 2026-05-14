@@ -28,6 +28,7 @@ export default function QuickActionsSection({ actions }: Props) {
             <button
               key={action.id}
               type="button"
+              aria-label={action.title}
               onClick={action.onClick}
               className="flex min-h-32 flex-col justify-between rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300"
             >

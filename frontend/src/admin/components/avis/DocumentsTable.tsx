@@ -18,11 +18,10 @@ export default function DocumentsTable({ documents, busyDocumentId, onReindex }:
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left">
+        <table className="w-full min-w-[640px] text-left">
           <thead>
             <tr className="bg-[#f7f9fc] text-[10px] font-semibold uppercase text-red-700">
               <th className="whitespace-nowrap px-4 py-2.5">Document</th>
-              <th className="whitespace-nowrap px-4 py-2.5 text-center">Signalements</th>
               <th className="whitespace-nowrap px-4 py-2.5 text-center">Likes</th>
               <th className="whitespace-nowrap px-4 py-2.5 text-center">Dislikes</th>
               <th className="whitespace-nowrap px-4 py-2.5 text-right">Mesure</th>
@@ -31,7 +30,7 @@ export default function DocumentsTable({ documents, busyDocumentId, onReindex }:
           <tbody>
             {documents.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-[#8a96ad]">
+                <td colSpan={4} className="px-4 py-8 text-center text-sm text-[#8a96ad]">
                   Aucun avis chat pour le moment.
                 </td>
               </tr>

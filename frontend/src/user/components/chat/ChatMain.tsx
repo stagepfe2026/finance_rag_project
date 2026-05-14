@@ -94,6 +94,8 @@ export default function ChatMain({
             <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               <button
                 type="button"
+                aria-label="Choisir une reponse courte"
+                aria-pressed={responseMode === "short"}
                 onClick={() => onResponseModeChange("short")}
                 className={[
                   "rounded-md px-2.5 py-1 text-[11px] font-medium transition",
@@ -106,6 +108,8 @@ export default function ChatMain({
               </button>
               <button
                 type="button"
+                aria-label="Choisir une reponse detaillee"
+                aria-pressed={responseMode === "detailed"}
                 onClick={() => onResponseModeChange("detailed")}
                 className={[
                   "rounded-md px-2.5 py-1 text-[11px] font-medium transition",
@@ -152,6 +156,7 @@ export default function ChatMain({
                   <input
                     ref={searchInputRef}
                     type="text"
+                    aria-label="Rechercher dans les messages de la conversation"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="Rechercher..."

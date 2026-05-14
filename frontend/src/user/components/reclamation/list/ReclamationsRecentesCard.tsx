@@ -57,6 +57,7 @@ export default function ReclamationsRecentesCard({
           <button
             key={reclamation._id}
             type="button"
+            aria-label={`Consulter la reclamation ${reclamation.subject}`}
             onClick={() => onSelect(reclamation)}
             className="flex w-full items-start gap-3 rounded-xl border border-[#f0e5e2] bg-[#fffdfd] px-3 py-3 text-left transition hover:border-[#d8b5b0] hover:bg-[#fcf8f7]"
           >
@@ -85,6 +86,7 @@ export default function ReclamationsRecentesCard({
         </span>
         <button
           type="button"
+          aria-label="Voir toutes les reclamations"
           className="inline-flex items-center gap-1 text-[12px] font-medium text-slate-600 transition hover:text-[#9d0208]"
         >
           Voir tout

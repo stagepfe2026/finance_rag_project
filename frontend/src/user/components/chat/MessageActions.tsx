@@ -115,6 +115,7 @@ export default function MessageActions({
               type="button"
               onClick={() => setIsSourcesOpen((value) => !value)}
               className="flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-50 hover:text-[#273043]"
+              aria-label={isSourcesOpen ? "Fermer la liste des sources utilisees" : "Ouvrir la liste des sources utilisees"}
               aria-expanded={isSourcesOpen}
             >
               <Download size={13} />
@@ -172,6 +173,7 @@ export default function MessageActions({
           type="button"
           onClick={() => void handleCopy()}
           className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-100 hover:text-[#273043]"
+          aria-label="Copier la reponse de l'assistant"
         >
           <Copy size={13} />
         </button>
@@ -179,6 +181,7 @@ export default function MessageActions({
           type="button"
           onClick={handleExport}
           className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-100 hover:text-[#273043]"
+          aria-label="Exporter la reponse de l'assistant en fichier texte"
         >
           <Download size={13} />
         </button>

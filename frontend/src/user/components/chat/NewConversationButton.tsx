@@ -8,6 +8,7 @@ export default function NewConversationButton({ onClick }: NewConversationButton
   return (
     <button
       type="button"
+      aria-label="Creer une nouvelle conversation"
       onClick={onClick}
       className="flex h-8 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#273043] bg-[#273043] text-xs font-semibold text-white transition hover:bg-[#1f2636]"
     >

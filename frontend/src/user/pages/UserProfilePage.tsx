@@ -164,6 +164,7 @@ export default function UserProfilePage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                aria-label="Reinitialiser les informations personnelles"
                 onClick={handleReset}
                 disabled={isSaving}
                 className="inline-flex h-8 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#273043] transition hover:border-[#273043] disabled:cursor-not-allowed disabled:opacity-50"
@@ -173,6 +174,7 @@ export default function UserProfilePage() {
               </button>
               <button
                 type="submit"
+                aria-label={isSaving ? "Enregistrement du profil en cours" : "Enregistrer les informations personnelles"}
                 disabled={isSaving}
                 className="inline-flex h-8 items-center justify-center gap-2 rounded-xl bg-[#9d0208] px-4 text-sm font-semibold text-white transition hover:bg-[#7f0207] disabled:cursor-not-allowed disabled:opacity-60"
               >

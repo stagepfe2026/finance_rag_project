@@ -215,6 +215,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
                   href={attachmentUrl}
                   target="_blank"
                   rel="noreferrer"
+                  aria-label={`Ouvrir la piece jointe ${reclamation.attachment.name}`}
                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-white hover:text-[#9d0208]"
                   title="Ouvrir la piece jointe"
                 >

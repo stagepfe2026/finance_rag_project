@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
+import AccessibilityMenu from "../../components/accessibility/AccessibilityMenu";
 import AdminSidebar from "../components/sidebar/AdminSidebar";
 import Snackbar from "../components/Snackbar";
 import { fetchAdminReclamations } from "../../services/admin-reclamation.service";
 
 const ADMIN_THEME_KEY = "admin-layout-theme";
+const ADMIN_HIGH_CONTRAST_KEY = "admin-layout-high-contrast";
 const REMINDER_POLL_MS = 5 * 60 * 1000;
 
 export default function AdminLayout() {
@@ -93,6 +95,12 @@ export default function AdminLayout() {
       <main className="overflow-auto p-4">
         <Outlet />
       </main>
+
+      <AccessibilityMenu
+        highContrastClassName="admin-high-contrast"
+        highContrastStorageKey={ADMIN_HIGH_CONTRAST_KEY}
+        isDarkMode={dark}
+      />
 
       <Snackbar
         open={reminderOpen}

@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import cimfLogo from "../../assets/cimf-logo.png";
 import cimfLogoWhite from "../../assets/cimf-logo-white.png";
+import AccessibilityMenu from "../../components/accessibility/AccessibilityMenu";
 import type { DocumentSearchItem } from "../../models/document";
 import type { NotificationItem } from "../../models/notification";
 import { searchDocuments, setDocumentFavorite } from "../../services/documents.service";
@@ -20,6 +21,7 @@ import Snackbar from "../components/chat/Snackbar";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const USER_THEME_STORAGE_KEY = "user-layout-theme";
+const USER_HIGH_CONTRAST_STORAGE_KEY = "user-layout-high-contrast";
 
 export type UserLayoutContextValue = {
   favoriteDocuments: DocumentSearchItem[];
@@ -73,6 +75,7 @@ export default function UserLayout() {
       return;
     }
 
+    document.documentElement.lang = "fr";
     document.body.classList.toggle("user-dark-theme", isDarkMode);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(USER_THEME_STORAGE_KEY, isDarkMode ? "dark" : "light");
@@ -315,8 +318,12 @@ export default function UserLayout() {
               className="h-10 w-auto object-contain"
             />
 
-            <nav className="flex items-center gap-6">
-              <NavLink to="/user/" className={({ isActive }) => navClassName(isActive)}>
+            <nav className="flex items-center gap-6" aria-label="Navigation principale utilisateur">
+              <NavLink
+                to="/user/"
+                aria-label="Page d'accueil utilisateur"
+                className={({ isActive }) => navClassName(isActive)}
+              >
                 {({ isActive }) => (
                   <span className="relative inline-block">
                     Accueil
@@ -330,7 +337,11 @@ export default function UserLayout() {
                 )}
               </NavLink>
 
-              <NavLink to="/user/chat" className={({ isActive }) => navClassName(isActive)}>
+              <NavLink
+                to="/user/chat"
+                aria-label="Discussion avec l'assistant"
+                className={({ isActive }) => navClassName(isActive)}
+              >
                 {({ isActive }) => (
                   <span className="relative inline-block">
                     Chat
@@ -344,7 +355,11 @@ export default function UserLayout() {
                 )}
               </NavLink>
 
-              <NavLink to="/user/documents/recherche" className={({ isActive }) => navClassName(isActive)}>
+              <NavLink
+                to="/user/documents/recherche"
+                aria-label="Recherche de documents"
+                className={({ isActive }) => navClassName(isActive)}
+              >
                 {({ isActive }) => (
                   <span className="relative inline-block">
                     Recherche documents
@@ -358,7 +373,11 @@ export default function UserLayout() {
                 )}
               </NavLink>
 
-              <NavLink to="/user/reclamations" className={({ isActive }) => navClassName(isActive)}>
+              <NavLink
+                to="/user/reclamations"
+                aria-label="Reclamations utilisateur"
+                className={({ isActive }) => navClassName(isActive)}
+              >
                 {({ isActive }) => (
                   <span className="relative inline-block">
                     Reclamations
@@ -377,6 +396,7 @@ export default function UserLayout() {
           <div className="flex items-center gap-4">
             <button
               type="button"
+              aria-label="Modifier mes donnees personnelles"
               onClick={() => navigate("/user/profil")}
               className={["cursor-pointer px-4 py-2 text-xs font-semibold transition duration-300", isDarkMode ? "text-[#dec9cb] hover:text-white" : "text-slate-700 hover:text-[#273043]"].join(" ")}
               title="Modifier mes donnees personnelles"
@@ -385,6 +405,7 @@ export default function UserLayout() {
             </button>
             <button
               type="button"
+              aria-label="Ouvrir mes documents favoris"
               onClick={() => setIsFavoritesModalOpen(true)}
               className={["relative cursor-pointer text-xs font-semibold transition duration-300", isDarkMode ? "text-[#dec9cb] hover:text-white" : "text-slate-700 hover:text-[#273043]"].join(" ")}
               title="Mes favoris"
@@ -398,6 +419,11 @@ export default function UserLayout() {
             </button>
             <button
               type="button"
+              aria-label={
+                unreadNotificationsCount > 0
+                  ? `Ouvrir les notifications, ${unreadNotificationsCount} non lues`
+                  : "Ouvrir les notifications"
+              }
               onClick={() => void handleOpenNotifications()}
               className={["relative cursor-pointer text-xs font-semibold transition duration-300", isDarkMode ? "text-[#dec9cb] hover:text-white" : "text-slate-700 hover:text-[#273043]"].join(" ")}
               title="Notifications"
@@ -411,6 +437,7 @@ export default function UserLayout() {
             </button>
             <button
               type="button"
+              aria-label="Se deconnecter"
               onClick={() => void logout()}
               className={["cursor-pointer px-4 py-2 text-xs font-semibold transition duration-300", isDarkMode ? "text-[#dec9cb] hover:text-white" : "text-slate-700 hover:border-[#273043] hover:text-[#273043]"].join(" ")}
             >
@@ -455,6 +482,12 @@ export default function UserLayout() {
       </main>
 
       {isHomePage ? <HelpCard /> : null}
+
+      <AccessibilityMenu
+        highContrastClassName="user-high-contrast"
+        highContrastStorageKey={USER_HIGH_CONTRAST_STORAGE_KEY}
+        isDarkMode={isDarkMode}
+      />
 
       <RechercheDocumentFavoritesModal
         open={isFavoritesModalOpen}

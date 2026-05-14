@@ -161,6 +161,7 @@ export default function RechercheDocumentFavoritesModal({
                       <div className="flex shrink-0 flex-col items-center gap-2">
                         <button
                           type="button"
+                          aria-label={`Retirer ${item.title} des favoris`}
                           onClick={(event) => {
                             event.stopPropagation();
                             onToggleFavorite(item);
@@ -173,6 +174,7 @@ export default function RechercheDocumentFavoritesModal({
 
                         <button
                           type="button"
+                          aria-label={`Consulter ${item.title} dans un nouvel onglet`}
                           onClick={(event) => {
                             event.stopPropagation();
                             openDocumentInNewTab(apiBaseUrl, item);

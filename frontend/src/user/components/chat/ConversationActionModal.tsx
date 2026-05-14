@@ -105,6 +105,7 @@ export default function ConversationActionModal({
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
+            aria-label="Annuler l'action sur la conversation"
             onClick={onClose}
             disabled={busy}
             className="rounded-xl border border-[#ddd3d0] px-4 py-2 text-[13px] font-medium text-[#5f5652] transition hover:bg-[#faf7f6] disabled:cursor-not-allowed disabled:opacity-60"
@@ -113,6 +114,7 @@ export default function ConversationActionModal({
           </button>
           <button
             type="button"
+            aria-label={`${confirmLabel} la conversation`}
             onClick={() => void handleConfirm()}
             disabled={busy || (mode === "rename" && !summary.trim())}
             className={[

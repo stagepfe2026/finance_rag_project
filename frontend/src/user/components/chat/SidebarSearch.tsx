@@ -8,9 +8,10 @@ type SidebarSearchProps = {
 export default function SidebarSearch({ value, onChange }: SidebarSearchProps) {
   return (
     <label className="flex h-8 items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5">
-      <Search size={14} className="text-slate-400" />
+      <Search size={14} className="text-slate-400" aria-hidden="true" />
       <input
         type="text"
+        aria-label="Rechercher une conversation"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Rechercher une conversation..."

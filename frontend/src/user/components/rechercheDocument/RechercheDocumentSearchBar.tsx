@@ -60,6 +60,7 @@ export default function RechercheDocumentSearchBar({
                   <button
                     key={item}
                     type="button"
+                    aria-label={`Relancer la recherche ${item}`}
                     onClick={() => {
                       onQueryChange(item);
                       setIsRecentOpen(false);

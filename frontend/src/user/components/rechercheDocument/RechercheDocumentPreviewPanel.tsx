@@ -79,6 +79,7 @@ export default function RechercheDocumentPreviewPanel({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
+            aria-label={item.isFavored ? `Retirer ${item.title} des favoris` : `Ajouter ${item.title} aux favoris`}
             onClick={() => onToggleFavorite(item)}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-[#9d0208] transition hover:bg-red-50"
             title={item.isFavored ? "Retirer des favoris" : "Ajouter aux favoris"}
@@ -88,6 +89,7 @@ export default function RechercheDocumentPreviewPanel({
 
           <button
             type="button"
+            aria-label="Fermer le detail du document"
             onClick={onClose}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#9d0208]"
             title="Fermer le detail"

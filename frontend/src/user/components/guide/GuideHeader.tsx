@@ -35,6 +35,7 @@ export default function GuideHeader({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
+          aria-label="Aller a l'etape precedente du guide"
           onClick={onPreviousStep}
           disabled={activeStepIndex === 0}
           className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
@@ -45,6 +46,7 @@ export default function GuideHeader({
 
         <button
           type="button"
+          aria-label={isPlaying ? "Mettre le guide en pause" : "Lancer la lecture du guide"}
           onClick={onTogglePlay}
           className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 text-[11px] font-medium text-gray-900 transition hover:bg-gray-50"
         >
@@ -53,6 +55,7 @@ export default function GuideHeader({
 
         <button
           type="button"
+          aria-label="Aller a l'etape suivante du guide"
           onClick={onNextStep}
           className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:text-gray-900"
           title="Etape suivante"
@@ -62,6 +65,7 @@ export default function GuideHeader({
 
         <button
           type="button"
+          aria-label="Revoir le guide depuis le debut"
           onClick={onReplayGuide}
           className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 text-[11px] font-medium text-gray-900 transition hover:bg-gray-50"
         >
@@ -70,6 +74,7 @@ export default function GuideHeader({
 
         <Link
           to={activeStep.route}
+          aria-label={`Ouvrir la page ${activeStep.title}`}
           className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#9d0208] px-2.5 text-[11px] font-semibold text-white transition hover:bg-[#870106]"
         >
           Ouvrir la page

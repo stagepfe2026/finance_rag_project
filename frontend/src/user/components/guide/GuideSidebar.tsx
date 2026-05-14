@@ -37,6 +37,8 @@ export default function GuideSidebar({
             <button
               key={step.id}
               type="button"
+              aria-label={`Ouvrir l'etape du guide: ${step.title}`}
+              aria-current={isActive ? "step" : undefined}
               onClick={() => onSelectStep(step.id)}
               className={[
                 "relative mb-1 flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors duration-200",

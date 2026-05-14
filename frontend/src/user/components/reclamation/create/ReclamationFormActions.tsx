@@ -15,6 +15,7 @@ export default function ReclamationFormActions({
     <div className="flex justify-end gap-3 border-t border-[#f0e8e5] pt-3">
       <button
         type="button"
+        aria-label="Annuler la reclamation"
         onClick={onClose}
         disabled={isSubmitting}
         className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[12px] font-semibold text-[#273043] transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
@@ -24,6 +25,7 @@ export default function ReclamationFormActions({
 
       <button
         type="button"
+        aria-label={isSubmitting ? "Envoi de la reclamation en cours" : "Soumettre la reclamation"}
         onClick={onSubmit}
         disabled={isSubmitting}
         className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#9d0208] px-4 text-[12px] font-semibold text-white transition hover:bg-[#870106] disabled:cursor-not-allowed disabled:opacity-70"

@@ -53,6 +53,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
 
         <button
           type="button"
+          aria-label="Fermer le detail de la reclamation"
           onClick={onClose}
           className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfdb] bg-[#faf7f6] text-slate-500 transition hover:text-[#9d0208]"
           title="Fermer"

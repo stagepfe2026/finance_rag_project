@@ -106,7 +106,12 @@ export default function ConversationItem({
           : "border-l-transparent bg-white text-[#273043] hover:bg-slate-50",
       ].join(" ")}
     >
-      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`Ouvrir la conversation ${conversation.summary || "Nouvelle conversation"}`}
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+      >
        
 
         <span className="min-w-0 flex-1">
@@ -147,6 +152,7 @@ export default function ConversationItem({
               <>
                 <button
                   type="button"
+                  aria-label={`Renommer la conversation ${conversation.summary || "Nouvelle conversation"}`}
                   onClick={() => handleMenuAction(() => onRename(conversation))}
                   className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] text-[#273043] transition hover:bg-slate-50"
                 >
@@ -155,6 +161,7 @@ export default function ConversationItem({
                 </button>
                 <button
                   type="button"
+                  aria-label={`Archiver la conversation ${conversation.summary || "Nouvelle conversation"}`}
                   onClick={() => handleMenuAction(() => onArchive(conversation))}
                   className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] text-[#273043] transition hover:bg-slate-50"
                 >
@@ -165,6 +172,7 @@ export default function ConversationItem({
             ) : (
               <button
                 type="button"
+                aria-label={`Restaurer la conversation ${conversation.summary || "Nouvelle conversation"}`}
                 onClick={() => handleMenuAction(() => onRestore(conversation))}
                 className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] text-[#273043] transition hover:bg-slate-50"
               >
@@ -175,6 +183,7 @@ export default function ConversationItem({
 
             <button
               type="button"
+              aria-label={`Supprimer la conversation ${conversation.summary || "Nouvelle conversation"}`}
               onClick={() => handleMenuAction(() => onDelete(conversation))}
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] text-[#9d0208] transition hover:bg-[#fff4f2]"
             >

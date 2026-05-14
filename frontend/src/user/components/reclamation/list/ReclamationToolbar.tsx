@@ -49,6 +49,7 @@ export default function ReclamationToolbar({
             <Search size={14} className="shrink-0 text-slate-400" />
             <input
               type="text"
+              aria-label="Rechercher une reclamation"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Rechercher par mot cle ou ticket ..."
@@ -79,6 +80,7 @@ export default function ReclamationToolbar({
                 <button
                   key={option.value}
                   type="button"
+                  aria-label={`Filtrer les reclamations: ${option.label}`}
                   onClick={() => onReadFilterChange(option.value)}
                   aria-pressed={isActive}
                   className={[
@@ -96,6 +98,7 @@ export default function ReclamationToolbar({
 
           <button
             type="button"
+            aria-label="Reinitialiser les filtres des reclamations"
             onClick={onResetFilters}
             disabled={!hasFilters}
             className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-600 transition hover:border-[#9d0208] hover:text-[#273043] disabled:cursor-not-allowed disabled:opacity-45"
@@ -112,6 +115,7 @@ export default function ReclamationToolbar({
 
           <button
             type="button"
+            aria-label="Creer une nouvelle reclamation"
             onClick={onCreate}
             className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-[#273043] px-3 text-[12px] font-semibold text-white transition hover:bg-[#1f2636]"
           >
@@ -121,6 +125,7 @@ export default function ReclamationToolbar({
 
           <button
             type="button"
+            aria-label="Actualiser la liste des reclamations"
             onClick={onRefresh}
             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 transition hover:border-[#9d0208] hover:text-[#273043]"
             title="Actualiser"
