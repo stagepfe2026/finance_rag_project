@@ -23,7 +23,7 @@ export default function SidebarItem({
             "flex h-11 items-center rounded-md text-xs font-medium transition",
             isCollapsed ? "justify-center" : "gap-3 px-3",
             isActive
-              ? "bg-red-50 text-[#9d0208]"
+              ? "admin-sidebar-link-active bg-red-50 text-[#9d0208]"
               : "text-gray-700 hover:bg-gray-100 admin-sidebar-link",
           ].join(" ")
         }

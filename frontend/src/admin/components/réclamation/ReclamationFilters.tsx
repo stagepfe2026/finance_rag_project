@@ -37,7 +37,7 @@ export default function ReclamationFilters({
   const hasFilters = search.trim() || statusFilter !== "ALL" || categoryFilter !== "ALL" || priorityFilter !== "ALL";
 
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-[#e5eaf2] px-4 py-3">
+    <div className="admin-reclamation-filters flex flex-wrap items-center gap-3 border-b border-[#e5eaf2] px-4 py-3">
       <ReclamationSearchBar value={search} onChange={onSearchChange} />
 
       <select

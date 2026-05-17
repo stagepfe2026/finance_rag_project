@@ -15,6 +15,7 @@ import {
 type StatusFilter = "ALL" | Extract<Reclamation["status"], "PENDING" | "IN_PROGRESS" | "RESOLVED">;
 type CategoryFilter = "ALL" | ReclamationProblemType;
 type PriorityFilter = "ALL" | ReclamationPriority;
+const PAGE_SIZE = 8;
 
 export default function ReclamationPage() {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -30,6 +31,7 @@ export default function ReclamationPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTaking, setIsTaking] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", tone: "info" as "success" | "error" | "info" });
   const closeSnackbar = useCallback(() => setSnackbar((s) => ({ ...s, open: false })), []);
 
@@ -88,6 +90,17 @@ export default function ReclamationPage() {
     [filteredReclamations, reclamations, selectedId],
   );
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, categoryFilter, priorityFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredReclamations.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedReclamations = useMemo(
+    () => filteredReclamations.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE),
+    [filteredReclamations, safeCurrentPage],
+  );
+
   const alreadyHandled = Boolean(selectedReclamation?.adminReplyAt || selectedReclamation?.adminReply);
   const liveStatus: Reclamation["status"] = alreadyHandled
     ? "RESOLVED"
@@ -140,7 +153,7 @@ export default function ReclamationPage() {
   return (
     <ReclamationLayout stats={stats}>
       <div className="flex min-h-[620px] gap-4">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#e5eaf2] bg-white">
+        <div className="admin-reclamation-list-panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#e5eaf2] bg-white">
           <ReclamationFilters
             search={search}
             statusFilter={statusFilter}
@@ -159,12 +172,38 @@ export default function ReclamationPage() {
           />
 
           <ReclamationList
-            items={filteredReclamations}
+            items={paginatedReclamations}
             selectedId={selectedId}
             showPanel={showPanel}
             isLoading={isLoading}
             onSelect={handleSelectReclamation}
           />
+
+          {!isLoading && filteredReclamations.length > 0 ? (
+            <div className="admin-reclamation-pagination flex flex-wrap items-center justify-between gap-3 border-t border-[#e5eaf2] px-4 py-3 text-[12px] text-[#596579]">
+              <span>
+                Page {safeCurrentPage} / {totalPages} - {filteredReclamations.length} reclamation(s)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={safeCurrentPage === 1}
+                  className="h-8 cursor-pointer rounded border border-[#d8dee9] bg-white px-3 font-semibold text-[#071f3d] transition hover:border-[#071f3d] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Precedent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={safeCurrentPage === totalPages}
+                  className="h-8 cursor-pointer rounded border border-[#d8dee9] bg-white px-3 font-semibold text-[#071f3d] transition hover:border-[#071f3d] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {showPanel && selectedReclamation ? (

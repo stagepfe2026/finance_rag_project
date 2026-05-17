@@ -123,7 +123,7 @@ class AuditService:
             user_id="system",
             user_name="Systeme",
             user_email="",
-            user_role="SYSTEM",
+            user_role="",
             action_type=action_type,
             action_label=action_label,
             category=category,
@@ -483,7 +483,7 @@ class AuditService:
         seen: dict[str, dict[str, str]] = {}
         for item in items:
             user_id = str(item.get("userId", "")).strip()
-            if not user_id or user_id in seen:
+            if not user_id or user_id == "system" or user_id in seen:
                 continue
             seen[user_id] = {
                 "id": user_id,

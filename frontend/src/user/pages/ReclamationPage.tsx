@@ -20,7 +20,7 @@ import Snackbar from "../components/chat/Snackbar";
 import ReclamationForm from "../components/reclamation/create/ReclamationForm";
 import ReclamationDesk from "../components/reclamation/ReclamationDesk";
 
-const pageSize = 4;
+const pageSize = 8;
 const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
 const maxFileSize = 5 * 1024 * 1024;
 

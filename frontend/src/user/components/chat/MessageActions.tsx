@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Copy, Download, ThumbsDown, ThumbsUp } from "lucide-react";
+import jsPDF from "jspdf";
 
 import type { ChatFeedback, ChatSource } from "../../../models/chat";
 import { downloadChatSource } from "../../../services/chat.service";
@@ -48,13 +49,39 @@ export default function MessageActions({
   }
 
   function handleExport() {
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "reponse-assistant.txt";
-    link.click();
-    URL.revokeObjectURL(url);
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const margin = 42;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxLineWidth = pageWidth - margin * 2;
+    const lines = doc.splitTextToSize(content || "Aucune reponse a exporter.", maxLineWidth);
+    let y = 86;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Reponse assistant", margin, 48);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(
+      `Exportee le ${new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date())}`,
+      margin,
+      66,
+    );
+
+    doc.setFontSize(11);
+    doc.setTextColor(30);
+    lines.forEach((line: string) => {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += 15;
+    });
+
+    doc.save("reponse-assistant.pdf");
   }
 
   async function handleSourceDownload(source: ChatSource) {
@@ -181,7 +208,7 @@ export default function MessageActions({
           type="button"
           onClick={handleExport}
           className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] text-slate-600 transition hover:bg-slate-100 hover:text-[#273043]"
-          aria-label="Exporter la reponse de l'assistant en fichier texte"
+          aria-label="Exporter la reponse de l'assistant en PDF"
         >
           <Download size={13} />
         </button>

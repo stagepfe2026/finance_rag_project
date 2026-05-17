@@ -43,16 +43,16 @@ export default function GuideSidebar({
               className={[
                 "relative mb-1 flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors duration-200",
                 isActive
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                  ? "user-guide-step-active bg-gray-100 text-gray-900"
+                  : "user-guide-step text-gray-600 hover:bg-gray-50 hover:text-gray-900",
               ].join(" ")}
             >
               <span
                 className={[
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
                   isActive
-                    ? "bg-[#9d0208] text-white"
-                    : "bg-gray-100 text-gray-500",
+                    ? "user-guide-step-index-active bg-[#9d0208] text-white"
+                    : "user-guide-step-index bg-gray-100 text-gray-500",
                 ].join(" ")}
               >
                 {index + 1}

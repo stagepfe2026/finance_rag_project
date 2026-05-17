@@ -17,10 +17,10 @@ export default function ReclamationListRow({ item, isSelected, onSelect }: Recla
   return (
     <tr
       onClick={() => onSelect(item)}
-      className={`cursor-pointer transition ${isSelected ? "bg-[#f5e6e7]" : "hover:bg-[#f7f9fc]"}`}
+      className={`admin-reclamation-table-row cursor-pointer transition ${isSelected ? "admin-reclamation-table-row-selected bg-[#f5e6e7]" : "hover:bg-[#f7f9fc]"}`}
     >
       <td className="border-b border-[#e5eaf2] px-4 py-3">
-        <span className="rounded bg-[#eef2f8] px-2 py-0.5 text-[10px] font-semibold text-[#071f3d]">
+        <span className="admin-reclamation-ticket-badge rounded bg-[#eef2f8] px-2 py-0.5 text-[10px] font-semibold text-[#071f3d]">
           {item.ticketNumber}
         </span>
       </td>

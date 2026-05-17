@@ -191,7 +191,7 @@ class DocumentRepository:
             favorites_only=favorites_only,
             current_user_id=current_user_id,
         )
-        sort_config = [("createdAt", -1)] if sort_by == "recent" else [("title", 1)]
+        sort_config = [("datePublication", -1), ("createdAt", -1)] if sort_by == "recent" else [("title", 1)]
         cursor = self.collection.find(mongo_query).sort(sort_config).skip(skip).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
@@ -375,7 +375,7 @@ class DocumentRepository:
                 date_range["$gte"] = datetime.combine(date_from, time.min, tzinfo=UTC)
             if date_to:
                 date_range["$lte"] = datetime.combine(date_to, time.max, tzinfo=UTC)
-            filters.append({"createdAt": date_range})
+            filters.append({"datePublication": date_range})
 
         if favorites_only:
             if current_user_id:

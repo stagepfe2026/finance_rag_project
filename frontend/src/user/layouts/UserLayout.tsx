@@ -320,17 +320,18 @@ export default function UserLayout() {
 
             <nav className="flex items-center gap-6" aria-label="Navigation principale utilisateur">
               <NavLink
-                to="/user/"
+                to="/user/accueil"
+                end
                 aria-label="Page d'accueil utilisateur"
-                className={({ isActive }) => navClassName(isActive)}
+                className={() => navClassName(isHomePage)}
               >
-                {({ isActive }) => (
+                {() => (
                   <span className="relative inline-block">
                     Accueil
                     <span
                       className={[
                         "absolute left-0 -bottom-1 h-[2px] w-full origin-left rounded-full bg-[#9d0208] transition-transform duration-300",
-                        isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
+                        isHomePage ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
                       ].join(" ")}
                     />
                   </span>

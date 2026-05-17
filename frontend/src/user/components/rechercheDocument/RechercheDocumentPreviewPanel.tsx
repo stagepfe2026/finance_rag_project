@@ -72,7 +72,7 @@ export default function RechercheDocumentPreviewPanel({
             <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-[#9d0208]">
               {documentCategoryLabels[item.category]}
             </span>
-            <span>Mis à jour le {formatDate(item.realizedAt || item.createdAt)}</span>
+            <span>Publie le {formatDate(item.datePublication || item.createdAt)}</span>
           </div>
         </div>
 
@@ -105,8 +105,8 @@ export default function RechercheDocumentPreviewPanel({
           <p className="mt-1 font-medium text-[#273043]">{documentCategoryLabels[item.category]}</p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
-          <p className="text-slate-500">Date realisation</p>
-          <p className="mt-1 font-medium text-[#273043]">{formatDate(item.realizedAt || item.createdAt)}</p>
+          <p className="text-slate-500">Date publication</p>
+          <p className="mt-1 font-medium text-[#273043]">{formatDate(item.datePublication || item.createdAt)}</p>
         </div>
       </div>
 

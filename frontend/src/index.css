@@ -340,6 +340,284 @@ body.user-high-contrast .user-theme-root [class*="bg-red-800"] * {
 
 /* ── Links ─────────────────────────────────────────────────────────────────── */
 
+body.user-high-contrast.user-dark-theme {
+  --uhc-bg: #020617;
+  --uhc-surface: #0f172a;
+  --uhc-text: #ffffff;
+  --uhc-muted: #cbd5e1;
+  --uhc-border: #94a3b8;
+  --uhc-focus: #fbbf24;
+  background: #020617 !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root {
+  background: #020617 !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root main,
+body.user-high-contrast.user-dark-theme .user-theme-root header,
+body.user-high-contrast.user-dark-theme .user-theme-root section,
+body.user-high-contrast.user-dark-theme .user-theme-root article,
+body.user-high-contrast.user-dark-theme .user-theme-root aside,
+body.user-high-contrast.user-dark-theme .user-theme-root form,
+body.user-high-contrast.user-dark-theme .user-theme-root table,
+body.user-high-contrast.user-dark-theme .user-theme-root thead,
+body.user-high-contrast.user-dark-theme .user-theme-root tbody,
+body.user-high-contrast.user-dark-theme .user-theme-root tr,
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-white"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-slate-50"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-slate-100"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#fff"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#f"] {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root div,
+body.user-high-contrast.user-dark-theme .user-theme-root span,
+body.user-high-contrast.user-dark-theme .user-theme-root p,
+body.user-high-contrast.user-dark-theme .user-theme-root h1,
+body.user-high-contrast.user-dark-theme .user-theme-root h2,
+body.user-high-contrast.user-dark-theme .user-theme-root h3,
+body.user-high-contrast.user-dark-theme .user-theme-root h4,
+body.user-high-contrast.user-dark-theme .user-theme-root h5,
+body.user-high-contrast.user-dark-theme .user-theme-root h6,
+body.user-high-contrast.user-dark-theme .user-theme-root label,
+body.user-high-contrast.user-dark-theme .user-theme-root li,
+body.user-high-contrast.user-dark-theme .user-theme-root th,
+body.user-high-contrast.user-dark-theme .user-theme-root td,
+body.user-high-contrast.user-dark-theme .user-theme-root a,
+body.user-high-contrast.user-dark-theme .user-theme-root button,
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-slate-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-gray-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#"] {
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-slate-400"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-slate-500"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-slate-600"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#5"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#6"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#7"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#8"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#9"],
+body.user-high-contrast.user-dark-theme .user-theme-root input::placeholder,
+body.user-high-contrast.user-dark-theme .user-theme-root textarea::placeholder {
+  color: #cbd5e1 !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border"],
+body.user-high-contrast.user-dark-theme .user-theme-root input,
+body.user-high-contrast.user-dark-theme .user-theme-root textarea,
+body.user-high-contrast.user-dark-theme .user-theme-root select {
+  border-color: #94a3b8 !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root input,
+body.user-high-contrast.user-dark-theme .user-theme-root textarea,
+body.user-high-contrast.user-dark-theme .user-theme-root select,
+body.user-high-contrast.user-dark-theme .user-theme-root button:not([class*="bg-[#9d0208]"]):not([class*="bg-[#071f3d]"]):not([class*="bg-[#273043]"]) {
+  background-color: #020617 !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-gray-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-slate-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#eef"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#f0"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#f3"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#f7"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#f8"] {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#9d0208]"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#071f3d]"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-[#273043]"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-red-700"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-red-800"] {
+  background-color: #7f1d1d !important;
+  border-color: #fecaca !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-emerald-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-emerald-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-green-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-green-"] {
+  background-color: rgba(21, 128, 61, 0.32) !important;
+  border-color: #86efac !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-emerald-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-green-"] {
+  color: #bbf7d0 !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-amber-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-amber-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-orange-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-orange-"] {
+  background-color: rgba(180, 83, 9, 0.36) !important;
+  border-color: #fcd34d !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-amber-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-orange-"] {
+  color: #fde68a !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-sky-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-sky-"] {
+  background-color: rgba(3, 105, 161, 0.34) !important;
+  border-color: #7dd3fc !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-sky-"] {
+  color: #bae6fd !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-rose-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-rose-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="bg-red-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="border-red-"] {
+  background-color: rgba(159, 18, 57, 0.34) !important;
+  border-color: #fda4af !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-rose-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-red-"],
+body.user-high-contrast.user-dark-theme .user-theme-root [class*="text-[#9d0208]"] {
+  color: #fecdd3 !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root tbody tr:hover,
+body.user-high-contrast.user-dark-theme .user-theme-root button:hover {
+  background-color: #1e293b !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root *:focus-visible {
+  outline: 3px solid #fbbf24 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.28) !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-backdrop {
+  background-color: rgba(148, 163, 184, 0.08) !important;
+  backdrop-filter: none !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-panel {
+  background-color: #0f172a !important;
+  border-left-color: #cbd5e1 !important;
+  box-shadow: -18px 0 42px rgba(0, 0, 0, 0.55) !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-header {
+  background-color: #111827 !important;
+  border-bottom-color: #94a3b8 !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-title {
+  color: #fecaca !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-count,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-date {
+  color: #dbeafe !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-body,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-list {
+  background-color: #0f172a !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-item {
+  background-color: #1e293b !important;
+  border-bottom: 1px solid #64748b !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-item:hover {
+  background-color: #263449 !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-item-title {
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-category {
+  background-color: #020617 !important;
+  border: 1px solid #94a3b8 !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-action,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-close {
+  background-color: #020617 !important;
+  border: 1px solid #94a3b8 !important;
+  color: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-action svg,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-close svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-action-danger svg {
+  fill: #fecaca !important;
+  stroke: #fecaca !important;
+}
+
+body.user-high-contrast.user-dark-theme .user-theme-root .user-favorites-empty {
+  background-color: #111827 !important;
+  border-color: #94a3b8 !important;
+  color: #dbeafe !important;
+}
+
+body.user-dark-theme .user-theme-root .user-recent-doc-category,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-recent-doc-category {
+  background-color: #1e293b !important;
+  border: 1px solid #94a3b8 !important;
+  color: #ffffff !important;
+}
+
+body.user-dark-theme .user-theme-root .user-guide-step-active,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-guide-step-active {
+  background-color: #7f1d1d !important;
+  border: 1px solid #fecaca !important;
+  color: #ffffff !important;
+}
+
+body.user-dark-theme .user-theme-root .user-guide-step-active span,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-guide-step-active span {
+  color: #ffffff !important;
+}
+
+body.user-dark-theme .user-theme-root .user-guide-step:hover,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-guide-step:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+body.user-dark-theme .user-theme-root .user-guide-step-index,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-guide-step-index {
+  background-color: #1e293b !important;
+  border: 1px solid #94a3b8 !important;
+  color: #ffffff !important;
+}
+
+body.user-dark-theme .user-theme-root .user-guide-step-index-active,
+body.user-high-contrast.user-dark-theme .user-theme-root .user-guide-step-index-active {
+  background-color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  color: #ffffff !important;
+}
+
 body.user-dark-theme .user-theme-root a {
   color: var(--udm-text-primary);
 }
@@ -963,6 +1241,350 @@ body.admin-high-contrast .admin-theme-root [class*="bg-slate-800"] * {
 .admin-theme-root.admin-dark-theme [class*="text-[#5f6680]"],
 .admin-theme-root.admin-dark-theme [class*="text-[#8a96ad]"] {
   color: #64748b !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-gray-"],
+.admin-theme-root.admin-dark-theme [class*="bg-slate-"] {
+  background-color: #1e293b !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-emerald-"],
+.admin-theme-root.admin-dark-theme [class*="border-emerald-"] {
+  background-color: rgba(21, 128, 61, 0.24) !important;
+  border-color: rgba(134, 239, 172, 0.55) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-emerald-"] {
+  color: #86efac !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-amber-"],
+.admin-theme-root.admin-dark-theme [class*="border-amber-"],
+.admin-theme-root.admin-dark-theme [class*="bg-orange-"],
+.admin-theme-root.admin-dark-theme [class*="border-orange-"] {
+  background-color: rgba(180, 83, 9, 0.26) !important;
+  border-color: rgba(252, 211, 77, 0.55) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-amber-"],
+.admin-theme-root.admin-dark-theme [class*="text-orange-"] {
+  color: #fcd34d !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-sky-"],
+.admin-theme-root.admin-dark-theme [class*="border-sky-"] {
+  background-color: rgba(3, 105, 161, 0.26) !important;
+  border-color: rgba(125, 211, 252, 0.55) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-sky-"] {
+  color: #7dd3fc !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="bg-rose-"],
+.admin-theme-root.admin-dark-theme [class*="border-rose-"],
+.admin-theme-root.admin-dark-theme [class*="bg-red-"],
+.admin-theme-root.admin-dark-theme [class*="border-red-"] {
+  background-color: rgba(159, 18, 57, 0.26) !important;
+  border-color: rgba(253, 164, 175, 0.55) !important;
+}
+
+.admin-theme-root.admin-dark-theme [class*="text-rose-"],
+.admin-theme-root.admin-dark-theme [class*="text-red-"] {
+  color: #fda4af !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-page,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-page {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-header,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-header {
+  background-color: #0f172a !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-title,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-title {
+  color: #f8fafc !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-stat-card,
+.admin-theme-root.admin-dark-theme .admin-reclamation-list-panel,
+.admin-theme-root.admin-dark-theme .admin-reclamation-filters,
+.admin-theme-root.admin-dark-theme .admin-reclamation-table-wrap,
+.admin-theme-root.admin-dark-theme .admin-reclamation-pagination,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-stat-card,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-list-panel,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-filters,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table-wrap,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-pagination {
+  background-color: #111827 !important;
+  border-color: #243041 !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table,
+.admin-theme-root.admin-dark-theme .admin-reclamation-table tbody,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table tbody {
+  background-color: #111827 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table-head,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table-head {
+  background-color: #172036 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table-row,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table-row {
+  background-color: #111827 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table-row:hover,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table-row:hover {
+  background-color: #172036 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table-row-selected,
+.admin-theme-root.admin-dark-theme .admin-reclamation-table-row-selected:hover,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table-row-selected,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table-row-selected:hover {
+  background-color: rgba(157, 2, 8, 0.22) !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-count-badge,
+.admin-theme-root.admin-dark-theme .admin-reclamation-ticket-badge,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-count-badge,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-ticket-badge {
+  background-color: #1a2a40 !important;
+  color: #dbeafe !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-urgent-badge,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-urgent-badge {
+  background-color: rgba(157, 2, 8, 0.2) !important;
+  color: #fecaca !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table th,
+.admin-theme-root.admin-dark-theme .admin-reclamation-table td,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table th,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table td {
+  border-color: #243041 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table td,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table td {
+  color: #cbd5e1 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-table td:nth-child(2),
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-table td:nth-child(2) {
+  color: #f8fafc !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-filters input,
+.admin-theme-root.admin-dark-theme .admin-reclamation-filters select,
+.admin-theme-root.admin-dark-theme .admin-reclamation-pagination button,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-filters input,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-filters select,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-pagination button {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-reclamation-pagination button:disabled,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-reclamation-pagination button:disabled {
+  color: #64748b !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme {
+  --admin-page-bg: #020617;
+  --admin-surface: #0f172a;
+  --admin-surface-muted: #111827;
+  --admin-border: #94a3b8;
+  background: #020617 !important;
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme main,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme header,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme section,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme article,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme aside,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme form,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme table,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme thead,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme tbody,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme tr,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-white"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-slate-50"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-slate-100"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#f"] {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme div,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme span,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme p,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme h1,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme h2,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme h3,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme h4,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme h5,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme h6,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme label,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme li,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme th,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme td,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme a,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme button,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-slate-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-gray-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#"] {
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#5"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#6"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#7"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#8"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#9"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme input::placeholder,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme textarea::placeholder {
+  color: #cbd5e1 !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme input,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme textarea,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme select {
+  border-color: #94a3b8 !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme input,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme textarea,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme select,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme button:not([class*="bg-[#9d0208]"]):not([class*="bg-[#071f3d]"]) {
+  background-color: #020617 !important;
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-sidebar {
+  background-color: #020617 !important;
+  border-color: #94a3b8 !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-sidebar-link:hover,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme button:hover,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme tr:hover {
+  background-color: #1e293b !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-sidebar-link-active,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-sidebar-link-active {
+  background-color: #7f1d1d !important;
+  border: 1px solid #fecaca !important;
+  color: #ffffff !important;
+}
+
+.admin-theme-root.admin-dark-theme .admin-sidebar-link-active svg,
+.admin-theme-root.admin-dark-theme .admin-sidebar-link-active span,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-sidebar-link-active svg,
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .admin-sidebar-link-active span {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-red-700"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-[#9d0208]"] {
+  color: #fca5a5 !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#9d0208]"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#071f3d]"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#273043]"] {
+  background-color: #7f1d1d !important;
+  border-color: #fecaca !important;
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-gray-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-slate-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#eef"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#f0"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#f7"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-[#f8"] {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-emerald-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border-emerald-"] {
+  background-color: rgba(21, 128, 61, 0.32) !important;
+  border-color: #86efac !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-emerald-"] {
+  color: #bbf7d0 !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-amber-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border-amber-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-orange-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border-orange-"] {
+  background-color: rgba(180, 83, 9, 0.36) !important;
+  border-color: #fcd34d !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-amber-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-orange-"] {
+  color: #fde68a !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-sky-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border-sky-"] {
+  background-color: rgba(3, 105, 161, 0.34) !important;
+  border-color: #7dd3fc !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-sky-"] {
+  color: #bae6fd !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-rose-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border-rose-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-red-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="border-red-"] {
+  background-color: rgba(159, 18, 57, 0.34) !important;
+  border-color: #fda4af !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-rose-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="text-red-"] {
+  color: #fecdd3 !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .rounded-full[class*="bg-gray-"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme .rounded-full[class*="bg-slate-"] {
+  background-color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #ffffff !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-gray-200"],
+body.admin-high-contrast .admin-theme-root.admin-dark-theme [class*="bg-slate-200"] {
+  background-color: #64748b !important;
+}
+
+body.admin-high-contrast .admin-theme-root.admin-dark-theme *:focus-visible {
+  outline: 3px solid #fbbf24 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.28) !important;
 }
 
 .login-grid-bg {

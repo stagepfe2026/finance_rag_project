@@ -61,7 +61,7 @@ export default function RechercheDocumentResultCard({
             <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-[#9d0208]">
               {documentCategoryLabels[item.category]}
             </span>
-            <span>{formatDate(item.realizedAt || item.createdAt)}</span>
+            <span>Publie le {formatDate(item.datePublication || item.createdAt)}</span>
           </div>
         </button>
 

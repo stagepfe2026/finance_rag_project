@@ -13,7 +13,7 @@ export default function RechercheDocumentDateFilter({
 }: Props) {
   return (
     <section>
-      <h3 className="text-xs font-semibold text-[#273043]">Période</h3>
+      <h3 className="text-xs font-semibold text-[#273043]">Periode de publication</h3>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <input

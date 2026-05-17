@@ -60,7 +60,7 @@ export default function RecentDocumentsTable({ documents }: RecentDocumentsTable
             <tr key={doc.id} className="border-t">
               <td className="py-3 text-sm text-slate-900">{doc.title}</td>
               <td className="text-xs">
-                <span className="rounded-full px-2 py-1" style={getCategoryStyle(doc.category)}>
+                <span className="user-recent-doc-category rounded-full px-2 py-1" style={getCategoryStyle(doc.category)}>
                   {doc.category}
                 </span>
               </td>

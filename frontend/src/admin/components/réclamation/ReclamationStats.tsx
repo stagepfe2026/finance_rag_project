@@ -20,7 +20,7 @@ export default function ReclamationStats({ stats }: ReclamationStatsProps) {
   return (
     <div className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-5">
       {cards.map(([label, value, sub]) => (
-        <div key={label} className="rounded-lg border border-[#e5eaf2] bg-white p-2">
+        <div key={label} className="admin-reclamation-stat-card rounded-lg border border-[#e5eaf2] bg-white p-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700">
             {label}
           </p>

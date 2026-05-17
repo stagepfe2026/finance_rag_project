@@ -293,7 +293,7 @@ class NotificationService:
                 user_id="system",
                 user_name="Systeme",
                 user_email="",
-                user_role="SYSTEM",
+                user_role="",
                 action_type=action_type,
                 action_label=action_label,
                 category="Notifications",

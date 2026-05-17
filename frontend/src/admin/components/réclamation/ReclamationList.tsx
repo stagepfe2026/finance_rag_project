@@ -17,9 +17,9 @@ export default function ReclamationList({
   onSelect,
 }: ReclamationListProps) {
   return (
-    <div className="min-h-0 flex-1 overflow-auto">
-      <table className="min-w-full border-separate border-spacing-0">
-        <thead className="sticky top-0 z-10 bg-[#f7f9fc]">
+    <div className="admin-reclamation-table-wrap min-h-0 flex-1 overflow-auto">
+      <table className="admin-reclamation-table min-w-full border-separate border-spacing-0">
+        <thead className="admin-reclamation-table-head sticky top-0 z-10 bg-[#f7f9fc]">
           <tr className="text-left text-[10px] font-semibold uppercase text-red-700">
             <th className="border-b border-[#e5eaf2] px-4 py-2.5">Ticket</th>
             <th className="border-b border-[#e5eaf2] px-4 py-2.5">Sujet</th>
