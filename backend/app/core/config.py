@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     retrieval_top_k_per_category: int = 6
     final_top_k: int = 4
 
+    rrf_retrieval_top_k: int = 20
+    min_rrf_score: float = 0.010
+    min_rrf_final_score: float = 0.005
+    min_reranker_score: float = 0.0
+
     min_vector_score: float = 0.50
     min_lexical_score: float = 0.12
     min_final_score: float = 0.50

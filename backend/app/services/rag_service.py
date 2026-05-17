@@ -5,12 +5,14 @@ from app.core.config import settings
 from app.infrastructure.nlp.nlp_provider import NLPProvider
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.qdrant_repository import QdrantRepository
+from app.services.bm25_service import BM25Service
 from app.services.embedding_service import EmbeddingService
 from app.services.generation_service import GenerationService
 from app.services.legal_ranking_service import LegalRankingService
 from app.services.legal_status_service import LegalStatusService
 from app.services.nlp_service import NLPService
 from app.services.prompt_builder_service import PromptBuilderService
+from app.services.reranker_service import RerankerService
 
 
 class RagService:
@@ -27,6 +29,7 @@ class RagService:
         self.legal_ranking_service = LegalRankingService()
         self.legal_status_service = LegalStatusService(self.document_repository)
         self.prompt_builder_service = PromptBuilderService()
+        self.reranker_service = RerankerService()
         self.logger = logging.getLogger(__name__)
 
     def _tokenize(self, text: str) -> set[str]:
@@ -138,6 +141,46 @@ class RagService:
             if chunk["vector_score"] >= settings.min_vector_score
             and chunk["lexical_score"] >= settings.min_lexical_score
             and chunk["final_score"] >= settings.min_final_score
+        ]
+
+    def _rrf_rerank(
+        self,
+        *,
+        enriched_map: dict[tuple[str, int], dict],
+        dense_ranks: dict[tuple[str, int], int],
+        bm25_ranks: dict[tuple[str, int], int],
+        question_profile: str,
+        query_mode: Literal["current", "future_preview", "comparison"],
+    ) -> list[dict]:
+        K = 60
+        n_dense = len(dense_ranks)
+        n_bm25 = len(bm25_ranks)
+        ranked = []
+
+        for key, chunk in enriched_map.items():
+            d_rank = dense_ranks.get(key, n_dense + K)
+            b_rank = bm25_ranks.get(key, n_bm25 + K)
+            rrf_score = 1 / (K + d_rank) + 1 / (K + b_rank)
+
+            legal_modifier = self.legal_ranking_service.compute_legal_modifier(
+                chunk, question_profile, query_mode
+            )
+            ranked.append({
+                **chunk,
+                "vector_score": float(chunk.get("score", 0.0)),
+                "rrf_score": rrf_score,
+                "legal_modifier": legal_modifier,
+                "final_score": rrf_score + legal_modifier,
+            })
+
+        ranked.sort(key=lambda x: x["final_score"], reverse=True)
+        return ranked
+
+    def _filter_relevant_chunks_rrf(self, ranked_chunks: list[dict]) -> list[dict]:
+        return [
+            chunk for chunk in ranked_chunks
+            if chunk["rrf_score"] >= settings.min_rrf_score
+            and chunk["final_score"] >= settings.min_rrf_final_score
         ]
 
     @staticmethod
@@ -380,12 +423,10 @@ class RagService:
         if lowered_answer == "information non trouvee dans les sources fournies.":
             return False
 
-        best_final_score = max(chunk["final_score"] for chunk in final_chunks)
-        best_lexical_score = max(chunk["lexical_score"] for chunk in final_chunks)
-        best_vector_score = max(chunk["vector_score"] for chunk in final_chunks)
+        best_reranker_score = max(chunk.get("reranker_score", 0.0) for chunk in final_chunks)
+        best_vector_score = max(chunk.get("vector_score", 0.0) for chunk in final_chunks)
 
-        # With retrieved sources already selected, avoid aggressively discarding grounded answers.
-        if best_final_score >= 0.56 or (best_vector_score >= 0.58 and best_lexical_score >= 0.16):
+        if best_reranker_score >= settings.min_reranker_score or best_vector_score >= 0.58:
             return False
 
         context_text = " ".join(chunk["text"] for chunk in final_chunks).lower()
@@ -427,7 +468,8 @@ class RagService:
                 "related_document_title": str(chunk.get("related_document_title", "")).strip(),
                 "chunk_index": int(chunk.get("chunk_index", -1)),
                 "vector_score": float(chunk.get("vector_score", 0.0)),
-                "lexical_score": float(chunk.get("lexical_score", 0.0)),
+                "rrf_score": float(chunk.get("rrf_score", 0.0)),
+                "reranker_score": float(chunk.get("reranker_score", 0.0)),
                 "final_score": float(chunk.get("final_score", 0.0)),
             }
 
@@ -497,13 +539,13 @@ class RagService:
                 "sources": [],
             }
 
-        retrieved_chunks = self.qdrant_repository.search_chunks(
+        dense_chunks = self.qdrant_repository.search_chunks(
             category=best_category,
             query_vector=query_vector,
-            limit=settings.retrieval_top_k_per_category,
+            limit=settings.rrf_retrieval_top_k,
             query_mode=query_mode,
         )
-        if not retrieved_chunks:
+        if not dense_chunks:
             return {
                 "question": normalized_question,
                 "query_mode": query_mode,
@@ -512,14 +554,42 @@ class RagService:
                 "sources": [],
             }
 
-        enriched_main_chunks = self._enrich_chunks_with_document_metadata(retrieved_chunks)
-        ranked_main_chunks = self._hybrid_rerank(
-            normalized_question,
-            enriched_main_chunks,
+        all_category_chunks = self.qdrant_repository.scroll_all_chunks(best_category, query_mode)
+        bm25_results = BM25Service(all_category_chunks).search(
+            normalized_question, top_k=settings.rrf_retrieval_top_k
+        )
+
+        chunk_registry: dict[tuple[str, int], dict] = {}
+        for chunk in dense_chunks:
+            key = (str(chunk["document_id"]), int(chunk["chunk_index"]))
+            chunk_registry[key] = chunk
+        for chunk in bm25_results:
+            key = (str(chunk["document_id"]), int(chunk["chunk_index"]))
+            if key not in chunk_registry:
+                chunk_registry[key] = chunk
+
+        enriched_all = self._enrich_chunks_with_document_metadata(list(chunk_registry.values()))
+        enriched_map = {
+            (str(c["document_id"]), int(c["chunk_index"])): c
+            for c in enriched_all
+        }
+        dense_ranks = {
+            (str(c["document_id"]), int(c["chunk_index"])): i + 1
+            for i, c in enumerate(dense_chunks)
+        }
+        bm25_ranks = {
+            (str(c["document_id"]), int(c["chunk_index"])): i + 1
+            for i, c in enumerate(bm25_results)
+        }
+
+        ranked_main_chunks = self._rrf_rerank(
+            enriched_map=enriched_map,
+            dense_ranks=dense_ranks,
+            bm25_ranks=bm25_ranks,
             question_profile=question_profile,
             query_mode=query_mode,
         )
-        relevant_main_chunks = self._filter_relevant_chunks(ranked_main_chunks)
+        relevant_main_chunks = self._filter_relevant_chunks_rrf(ranked_main_chunks)
 
         related_ranked_chunks: list[dict] = []
         related_relevant_chunks: list[dict] = []
@@ -543,7 +613,7 @@ class RagService:
             question_profile,
             query_mode,
             best_category,
-            len(retrieved_chunks),
+            len(dense_chunks),
             len(ranked_main_chunks),
             len(relevant_main_chunks),
             len(related_ranked_chunks),
@@ -564,6 +634,9 @@ class RagService:
             related_ranked_chunks=related_ranked_chunks,
             question_profile=question_profile,
             query_mode=query_mode,
+        )
+        final_chunks = self.reranker_service.rerank(
+            normalized_question, final_chunks, top_k=settings.final_top_k
         )
         self.logger.info(
             "RAG final_chunks question=%r total=%d documents=%s",
@@ -597,11 +670,12 @@ class RagService:
             context_window=settings.context_window,
         )
         self.logger.info(
-            "RAG generation raw_answer=%r best_scores={vector=%.4f lexical=%.4f final=%.4f}",
+            "RAG generation raw_answer=%r best_scores={vector=%.4f rrf=%.4f reranker=%.4f final=%.4f}",
             answer,
-            max(chunk["vector_score"] for chunk in final_chunks),
-            max(chunk["lexical_score"] for chunk in final_chunks),
-            max(chunk["final_score"] for chunk in final_chunks),
+            max(chunk.get("vector_score", 0.0) for chunk in final_chunks),
+            max(chunk.get("rrf_score", 0.0) for chunk in final_chunks),
+            max(chunk.get("reranker_score", 0.0) for chunk in final_chunks),
+            max(chunk.get("final_score", 0.0) for chunk in final_chunks),
         )
 
         if self._needs_fallback(answer, final_chunks):

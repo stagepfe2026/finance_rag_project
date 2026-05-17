@@ -41,7 +41,4 @@ class NLPService:
         return self.provider.clean_text(text)
 
     def tokenize_for_lexical_search(self, text: str) -> set[str]:
-        cleaned_text = self.preprocess_query(text)
-        tokens = self.provider.tokenize_words(cleaned_text)
-        filtered_tokens = self.provider.remove_stopwords(tokens)
-        return {token for token in filtered_tokens if len(token) > 2}
+        return self.provider.tokenize_for_lexical_search(text)

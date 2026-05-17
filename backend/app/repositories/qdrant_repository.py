@@ -158,6 +158,55 @@ class QdrantRepository:
             if self._matches_query_mode(chunk, query_mode)
         ]
 
+    def scroll_all_chunks(
+        self,
+        category: str,
+        query_mode: Literal["current", "future_preview", "comparison"] = "current",
+    ) -> list[dict]:
+        collection_name = self._normalize_collection_name(category)
+        if not self.collection_exists(collection_name):
+            return []
+
+        query_filter = self._build_query_filter(document_id=None, query_mode=query_mode)
+        fallback_filter = self._build_query_filter(document_id=None, query_mode="future_preview")
+
+        all_chunks: list[dict] = []
+        offset = None
+
+        while True:
+            try:
+                points, next_offset = self.client.scroll(
+                    collection_name=collection_name,
+                    scroll_filter=query_filter,
+                    limit=100,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=False,
+                )
+            except Exception:
+                if query_mode != "current":
+                    raise
+                self.logger.exception(
+                    "Qdrant scroll current-mode filter failed for collection=%s. Retrying without date filter.",
+                    collection_name,
+                )
+                points, next_offset = self.client.scroll(
+                    collection_name=collection_name,
+                    scroll_filter=fallback_filter,
+                    limit=100,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=False,
+                )
+
+            all_chunks.extend(self._point_to_chunk(point, category) for point in points)
+
+            if next_offset is None:
+                break
+            offset = next_offset
+
+        return [chunk for chunk in all_chunks if self._matches_query_mode(chunk, query_mode)]
+
     def _build_query_filter(
         self,
         *,
