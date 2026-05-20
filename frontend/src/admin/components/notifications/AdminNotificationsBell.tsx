@@ -1,81 +1,21 @@
 import { Bell } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { NotificationItem } from "../../../models/notification";
-import {
-  createNotificationsWebSocket,
-  fetchNotifications,
-  markNotificationAsRead,
-} from "../../../services/notifications.service";
+import { useAdminNotificationsBellViewModel } from "../../viewmodels/useAdminNotificationsBellViewModel";
 import Snackbar from "../Snackbar";
 import AdminNotificationsPanel from "./AdminNotificationsPanel";
-
-const SNACKBAR_MESSAGES: Record<string, string> = {
-  urgent_reclamation: "Nouvelle réclamation urgente reçue.",
-  sla_overdue:        "Une réclamation a dépassé son délai SLA.",
-  indexation_failed:  "Un document n'a pas pu être indexé.",
-};
 
 type Props = {
   tooltipPosition?: string;
 };
 
 export default function AdminNotificationsBell({ tooltipPosition = "bottom-full left-1/2 mb-2 -translate-x-1/2" }: Props) {
-  const [items, setItems]         = useState<NotificationItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]         = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [snackbar, setSnackbar]   = useState({ open: false, message: "" });
-  const socketRef                 = useRef<WebSocket | null>(null);
-
-  const unreadCount = items.filter((i) => !i.isRead).length;
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetchNotifications(30);
-        if (!cancelled) setItems(res.items);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erreur de chargement.");
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    const socket = createNotificationsWebSocket({
-      onNotification: (event) => {
-        setItems((prev) => [event.data, ...prev]);
-        const msg = SNACKBAR_MESSAGES[event.data.type] ?? event.data.title;
-        setSnackbar({ open: true, message: msg });
-      },
-    });
-    socketRef.current = socket;
-    return () => { socket.close(); };
-  }, []);
-
-  const handleMarkAsRead = useCallback(async (item: NotificationItem) => {
-    try {
-      await markNotificationAsRead(item.id);
-      setItems((prev) => prev.map((n) => n.id === item.id ? { ...n, isRead: true } : n));
-    } catch {
-      // silent
-    }
-  }, []);
-
-  const handleDismiss = useCallback((id: string) => {
-    setItems((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+  const vm = useAdminNotificationsBellViewModel();
 
   return (
     <>
       <div className="group relative">
         <button
           type="button"
-          onClick={() => setPanelOpen((v) => !v)}
+          onClick={vm.togglePanel}
           aria-label="Notifications"
           className={[
             "relative flex h-9 w-9 items-center justify-center rounded-md cursor-pointer transition-all duration-200",
@@ -83,33 +23,33 @@ export default function AdminNotificationsBell({ tooltipPosition = "bottom-full 
           ].join(" ")}
         >
           <Bell size={14} />
-          {unreadCount > 0 && (
+          {vm.unreadCount > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#9d0208] px-0.5 text-[9px] font-bold leading-none text-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
+              {vm.unreadCount > 9 ? "9+" : vm.unreadCount}
             </span>
           )}
         </button>
         <span className={`pointer-events-none absolute z-50 whitespace-nowrap rounded border border-[#e5eaf2] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#071f3d] opacity-0 shadow-lg transition group-hover:opacity-100 ${tooltipPosition}`}>
           Notifications
-          </span>
+        </span>
       </div>
 
       <AdminNotificationsPanel
-        open={panelOpen}
-        items={items}
-        isLoading={isLoading}
-        error={error}
-        onClose={() => setPanelOpen(false)}
-        onMarkAsRead={(item) => void handleMarkAsRead(item)}
-        onDismiss={handleDismiss}
+        open={vm.panelOpen}
+        items={vm.items}
+        isLoading={vm.isLoading}
+        error={vm.error}
+        onClose={vm.closePanel}
+        onMarkAsRead={(item) => void vm.handleMarkAsRead(item)}
+        onDismiss={vm.handleDismiss}
       />
 
       <Snackbar
-        open={snackbar.open}
-        message={snackbar.message}
+        open={vm.snackbar.open}
+        message={vm.snackbar.message}
         tone="info"
         duration={5000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        onClose={vm.closeSnackbar}
       />
     </>
   );
