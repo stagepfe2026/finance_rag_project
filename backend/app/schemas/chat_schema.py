@@ -21,7 +21,7 @@ class ChatAskRequest(BaseModel):
 
 
 class ChatConversationRenameRequest(BaseModel):
-    summary: str = Field(..., min_length=1, max_length=120)
+    title: str = Field(..., min_length=1, max_length=120)
 
 
 class ChatMessageFeedbackRequest(BaseModel):

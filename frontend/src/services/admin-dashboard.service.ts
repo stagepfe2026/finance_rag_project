@@ -25,7 +25,7 @@ function readErrorMessage(data: unknown, fallback: string) {
 }
 
 export async function fetchAdminDashboard(): Promise<AdminDashboard> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/dashboard/admin-overview`, {
+  const response = await fetch(`${apiBaseUrl}/api/dashboard/admin-overview`, {
     credentials: "include",
   });
   const data = await parseJson(response);

@@ -13,7 +13,7 @@ class AuditEventRepository:
         self.collection.create_index([("category", 1), ("actionType", 1)])
         self.collection.create_index([("userId", 1), ("occurredAt", -1)])
 
-    def record(
+    def log_event(
         self,
         *,
         occurred_at: datetime | None = None,

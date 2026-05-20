@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class NotificationOut(BaseModel):
     id: str
-    type: str
+    notificationType: str
     title: str
     description: str
     link: str | None = None

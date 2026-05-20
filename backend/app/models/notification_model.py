@@ -14,7 +14,7 @@ def _as_utc_datetime(value: Any) -> datetime:
 @dataclass
 class NotificationModel:
     user_id: str
-    type: str
+    notification_type: str
     title: str
     description: str
     link: str | None
@@ -28,7 +28,7 @@ class NotificationModel:
         return cls(
             id=str(raw.get("_id")) if raw.get("_id") is not None else None,
             user_id=str(raw.get("userId", "")),
-            type=str(raw.get("type", "system")),
+            notification_type=str(raw.get("notificationType", "system")),
             title=str(raw.get("title", "")),
             description=str(raw.get("description", "")),
             link=str(raw.get("link", "")).strip() or None,
@@ -40,7 +40,7 @@ class NotificationModel:
     def to_mongo_insert(self) -> dict[str, Any]:
         return {
             "userId": self.user_id,
-            "type": self.type,
+            "notificationType": self.notification_type,
             "title": self.title,
             "description": self.description,
             "link": self.link,

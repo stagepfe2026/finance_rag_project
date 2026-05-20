@@ -14,7 +14,7 @@ def _as_utc_datetime(value: Any) -> datetime:
 @dataclass
 class SessionModel:
     user_id: str
-    token_hash: str
+    hashed_token: str
     csrf_token: str
     access_expires_at: datetime
     refresh_expires_at: datetime
@@ -23,12 +23,12 @@ class SessionModel:
     created_at: datetime
     last_activity_at: datetime
     auth_method: str = "local"
-    oidc_subject: str | None = None
-    oidc_access_token: str | None = None
-    oidc_refresh_token: str | None = None
+    sso_subject: str | None = None
+    sso_access_token: str | None = None
+    sso_refresh_token: str | None = None
     closed_at: datetime | None = None
-    close_reason: str | None = None
-    closed_before_expiry: bool | None = None
+    closure_reason: str | None = None
+    is_early_closure: bool | None = None
     id: str | None = None
 
     @classmethod
@@ -36,7 +36,7 @@ class SessionModel:
         return cls(
             id=str(raw.get("_id")) if raw.get("_id") is not None else None,
             user_id=str(raw.get("userId", "")),
-            token_hash=str(raw.get("tokenHash", "")),
+            hashed_token=str(raw.get("hashedToken", "")),
             csrf_token=str(raw.get("csrfToken", "")),
             access_expires_at=_as_utc_datetime(raw.get("expiresAt")),
             refresh_expires_at=_as_utc_datetime(raw.get("refreshExpiresAt")),
@@ -45,20 +45,19 @@ class SessionModel:
             created_at=_as_utc_datetime(raw.get("createdAt")),
             last_activity_at=_as_utc_datetime(raw.get("lastActivityAt")),
             auth_method=str(raw.get("authMethod", "local")),
-            oidc_subject=raw.get("oidcSubject"),
-            oidc_access_token=raw.get("oidcAccessToken"),
-            oidc_refresh_token=raw.get("oidcRefreshToken"),
+            sso_subject=raw.get("ssoSubject"),
+            sso_access_token=raw.get("ssoAccessToken"),
+            sso_refresh_token=raw.get("ssoRefreshToken"),
             closed_at=_as_utc_datetime(raw.get("closedAt")) if raw.get("closedAt") else None,
-            close_reason=raw.get("closeReason"),
-            closed_before_expiry=raw.get("closedBeforeExpiry"),
+            closure_reason=raw.get("closureReason"),
+            is_early_closure=raw.get("isEarlyClosure"),
         )
 
     def to_mongo_insert(self) -> dict[str, Any]:
         return {
             "userId": self.user_id,
-            "tokenHash": self.token_hash,
+            "hashedToken": self.hashed_token,
             "csrfToken": self.csrf_token,
-            # Kept as expiresAt for readability and compatibility with the requested sample shape.
             "expiresAt": self.access_expires_at,
             "refreshExpiresAt": self.refresh_expires_at,
             "idleExpiresAt": self.idle_expires_at,
@@ -66,10 +65,10 @@ class SessionModel:
             "createdAt": self.created_at,
             "lastActivityAt": self.last_activity_at,
             "authMethod": self.auth_method,
-            "oidcSubject": self.oidc_subject,
-            "oidcAccessToken": self.oidc_access_token,
-            "oidcRefreshToken": self.oidc_refresh_token,
+            "ssoSubject": self.sso_subject,
+            "ssoAccessToken": self.sso_access_token,
+            "ssoRefreshToken": self.sso_refresh_token,
             "closedAt": self.closed_at,
-            "closeReason": self.close_reason,
-            "closedBeforeExpiry": self.closed_before_expiry,
+            "closureReason": self.closure_reason,
+            "isEarlyClosure": self.is_early_closure,
         }

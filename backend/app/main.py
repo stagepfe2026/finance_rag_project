@@ -3,32 +3,33 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.controllers.auth_controller import router as auth_router
-from app.api.v1.controllers.audit_controller import router as audit_router
-from app.api.v1.controllers.chat_controller import router as chat_router
-from app.api.v1.controllers.dashboard_controller import router as dashboard_router
-from app.api.v1.controllers.document_controller import router as document_router
-from app.api.v1.controllers.document_search_controller import router as document_search_router
-from app.api.v1.controllers.notification_controller import router as notification_router
-from app.api.v1.controllers.rag_controller import router as rag_router
-from app.api.v1.controllers.reclamation_controller import router as reclamation_router
+from app.api.routers.auth_router import router as auth_router
+from app.api.routers.audit_router import router as audit_router
+from app.api.routers.chat_router import router as chat_router
+from app.api.routers.dashboard_router import router as dashboard_router
+from app.api.routers.document_router import router as document_router
+from app.api.routers.document_search_router import router as document_search_router
+from app.api.routers.notification_router import router as notification_router
+from app.api.routers.rag_router import router as rag_router
+from app.api.routers.reclamation_router import router as reclamation_router
 from app.core.config import settings
-from app.core.database import close_mongo_connection, connect_to_mongo
+from app.core.database import close_mongo_connection, connect_to_mongo, get_database
 from app.infrastructure.embeddings.ollama_embedding_provider import (
     OllamaEmbeddingProvider,
 )
 from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
+from app.infrastructure.database.mongodb_validator_manager import ensure_mongodb_validators
 from app.middlewares.auth_session_middleware import AuthSessionMiddleware
-from app.services.auth_service import AuthService
-from app.services.audit_service import AuditService
-from app.services.chat_service import ChatService
-from app.services.document_index_service import DocumentIndexService
-from app.services.dashboard_service import DashboardService
-from app.services.embedding_service import EmbeddingService
-from app.services.generation_service import GenerationService
-from app.services.notification_service import NotificationConnectionManager, NotificationService
-from app.services.rag_service import RagService
-from app.services.reclamation_service import ReclamationService
+from app.services.auth.auth_service import AuthService
+from app.services.audit.audit_service import AuditService
+from app.services.chat.chat_service import ChatService
+from app.services.documents.indexing.document_index_service import DocumentIndexService
+from app.services.dashboard.dashboard_service import DashboardService
+from app.services.rag.processing.embedding_service import EmbeddingService
+from app.services.rag.generation.generation_service import GenerationService
+from app.services.notifications.notification_service import NotificationConnectionManager, NotificationService
+from app.services.rag.pipeline.rag_service import RagService
+from app.services.reclamations.reclamation_service import ReclamationService
 
 
 auth_service = AuthService()
@@ -38,8 +39,9 @@ notification_manager = NotificationConnectionManager()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     connect_to_mongo()
-    auth_service.ensure_auth_indexes()
-    auth_service.seed_default_users()
+    ensure_mongodb_validators(get_database())
+    auth_service.setup_indexes()
+    auth_service.create_default_accounts()
 
     provider = OllamaEmbeddingProvider(
         base_url=settings.ollama_base_url,
@@ -108,12 +110,12 @@ app.add_middleware(
 )
 app.add_middleware(AuthSessionMiddleware)
 
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
-app.include_router(audit_router, prefix="/api/v1/audit", tags=["Audit"])
-app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
+app.include_router(audit_router, prefix="/api/audit", tags=["Audit"])
+app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
 app.include_router(dashboard_router)
-app.include_router(document_router, prefix="/api/v1/documents", tags=["Documents"])
-app.include_router(document_search_router, prefix="/api/v1/document-search", tags=["DocumentSearch"])
+app.include_router(document_router, prefix="/api/documents", tags=["Documents"])
+app.include_router(document_search_router, prefix="/api/document-search", tags=["DocumentSearch"])
 app.include_router(notification_router)
-app.include_router(reclamation_router, prefix="/api/v1/reclamations", tags=["Reclamations"])
-app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG"])
+app.include_router(reclamation_router, prefix="/api/reclamations", tags=["Reclamations"])
+app.include_router(rag_router, prefix="/api/rag", tags=["RAG"])

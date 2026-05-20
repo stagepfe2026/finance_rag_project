@@ -71,7 +71,7 @@ export default function DocumentPreviewAside({
   onDeleteFromIndex,
 }: DocumentPreviewAsideProps) {
   const isPdf = document.fileType?.toLowerCase().includes("pdf");
-  const pdfUrl = apiBaseUrl ? `${apiBaseUrl}/api/v1/documents/${document.id}/file` : null;
+  const pdfUrl = apiBaseUrl ? `${apiBaseUrl}/api/documents/${document.id}/file` : null;
 
   return (
     <aside className="w-full rounded border border-[#e5eaf2] bg-white xl:w-[380px] xl:min-w-[380px] flex flex-col max-h-[calc(100vh-120px)] overflow-hidden">

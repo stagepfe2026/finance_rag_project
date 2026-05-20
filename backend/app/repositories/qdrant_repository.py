@@ -20,7 +20,7 @@ class QdrantRepository:
         self.client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
         self.logger = logging.getLogger(__name__)
 
-    def _normalize_collection_name(self, category: str) -> str:
+    def _to_collection_name(self, category: str) -> str:
         return category.lower().replace(" ", "_")
 
     def ensure_collection(self, collection_name: str, vector_size: int):
@@ -40,7 +40,7 @@ class QdrantRepository:
         existing = [c.name for c in collections]
         return collection_name in existing
 
-    def upsert_chunks(
+    def save_chunks(
         self,
         category: str,
         document_id: str,
@@ -90,8 +90,8 @@ class QdrantRepository:
         self.client.upsert(collection_name=collection_name, points=points)
         return len(points)
 
-    def delete_document_chunks(self, category: str, document_id: str) -> None:
-        collection_name = self._normalize_collection_name(category)
+    def delete_by_document(self, category: str, document_id: str) -> None:
+        collection_name = self._to_collection_name(category)
         if not self.collection_exists(collection_name):
             return
 
@@ -111,7 +111,7 @@ class QdrantRepository:
         collections = self.client.get_collections().collections
         return [collection.name for collection in collections]
 
-    def search_chunks(
+    def search(
         self,
         category: str,
         query_vector: list[float],
@@ -119,7 +119,7 @@ class QdrantRepository:
         document_id: str | None = None,
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> list[dict]:
-        collection_name = self._normalize_collection_name(category)
+        collection_name = self._to_collection_name(category)
 
         if not self.collection_exists(collection_name):
             return []
@@ -158,12 +158,12 @@ class QdrantRepository:
             if self._matches_query_mode(chunk, query_mode)
         ]
 
-    def scroll_all_chunks(
+    def get_all_chunks(
         self,
         category: str,
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> list[dict]:
-        collection_name = self._normalize_collection_name(category)
+        collection_name = self._to_collection_name(category)
         if not self.collection_exists(collection_name):
             return []
 
@@ -283,7 +283,7 @@ class QdrantRepository:
                 return None
         return None
 
-    def search_chunks_for_document(
+    def search_within_document(
         self,
         *,
         category: str,
@@ -292,7 +292,7 @@ class QdrantRepository:
         limit: int,
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> list[dict]:
-        return self.search_chunks(
+        return self.search(
             category=category,
             query_vector=query_vector,
             limit=limit,
@@ -300,7 +300,7 @@ class QdrantRepository:
             query_mode=query_mode,
         )
 
-    def search_chunks_by_category(
+    def search_by_categories(
         self,
         categories: list[str],
         query_vector: list[float],
@@ -309,7 +309,7 @@ class QdrantRepository:
     ) -> list[dict]:
         all_results = []
         for category in categories:
-            category_results = self.search_chunks(
+            category_results = self.search(
                 category=category,
                 query_vector=query_vector,
                 limit=limit_per_category,
@@ -319,14 +319,14 @@ class QdrantRepository:
 
         return all_results
 
-    def get_document_chunks(
+    def get_chunks_for_document(
         self,
         *,
         category: str,
         document_id: str,
         limit: int = 2,
     ) -> list[dict]:
-        collection_name = self._normalize_collection_name(category)
+        collection_name = self._to_collection_name(category)
         if not self.collection_exists(collection_name):
             return []
 

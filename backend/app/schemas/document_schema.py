@@ -44,24 +44,24 @@ class DocumentOut(BaseModel):
     id: str
     title: str = Field(..., min_length=1)
     category: DocumentCategory
-    documentStatus: DocumentStatus
+    status: DocumentStatus
     legalStatus: LegalStatus = LegalStatus.actif
-    documentType: LegalDocumentType = LegalDocumentType.autre
-    realizedAt: datetime | None = None
+    legalType: LegalDocumentType = LegalDocumentType.autre
+    issuedAt: datetime | None = None
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
     version: str = ""
-    relationType: LegalRelationType = LegalRelationType.none
-    relatedDocumentId: str | None = None
+    relationToTarget: LegalRelationType = LegalRelationType.none
+    targetDocumentId: str | None = None
     filePath: str
     fileSize: int
     fileType: str
-    isFavored: bool = False
+    isFavorite: bool = False
     createdAt: datetime
     deletedAt: datetime | None = None
     indexedAt: datetime | None = None
-    chunksCount: int | None = None
-    indexError: str | None = None
+    chunkCount: int | None = None
+    lastIndexError: str | None = None
 
 
 class DocumentListResponse(BaseModel):
@@ -74,31 +74,31 @@ class DocumentPreviewOut(BaseModel):
     title: str
     category: DocumentCategory
     legalStatus: LegalStatus = LegalStatus.actif
-    documentType: LegalDocumentType = LegalDocumentType.autre
+    legalType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
     version: str = ""
-    relationType: LegalRelationType = LegalRelationType.none
-    relatedDocumentId: str | None = None
+    relationToTarget: LegalRelationType = LegalRelationType.none
+    targetDocumentId: str | None = None
     fileType: str
     createdAt: datetime
-    content: str
+    extractedText: str
 
 
 class DocumentSearchItemOut(BaseModel):
     id: str
     title: str
     category: DocumentCategory
-    realizedAt: datetime | None = None
+    issuedAt: datetime | None = None
     legalStatus: LegalStatus = LegalStatus.actif
-    documentType: LegalDocumentType = LegalDocumentType.autre
+    legalType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
     version: str = ""
-    relationType: LegalRelationType = LegalRelationType.none
-    relatedDocumentId: str | None = None
+    relationToTarget: LegalRelationType = LegalRelationType.none
+    targetDocumentId: str | None = None
     createdAt: datetime
-    isFavored: bool = False
+    isFavorite: bool = False
     snippets: list[str] = Field(default_factory=list)
 
 

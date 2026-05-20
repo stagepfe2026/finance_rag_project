@@ -14,7 +14,7 @@ def _as_utc_datetime(value: Any) -> datetime:
 @dataclass
 class ConversationModel:
     user_id: str
-    summary: str
+    title: str
     created_at: datetime
     updated_at: datetime
     is_archived: bool = False
@@ -27,7 +27,7 @@ class ConversationModel:
         return cls(
             id=str(raw.get("_id")) if raw.get("_id") is not None else None,
             user_id=str(raw.get("userId", "")),
-            summary=str(raw.get("summary", "Nouvelle discussion")),
+            title=str(raw.get("title", "Nouvelle discussion")),
             created_at=_as_utc_datetime(raw.get("createdAt")),
             updated_at=_as_utc_datetime(raw.get("updatedAt")),
             is_archived=bool(raw.get("isArchived", False)),
@@ -38,7 +38,7 @@ class ConversationModel:
     def to_mongo_insert(self) -> dict[str, Any]:
         return {
             "userId": self.user_id,
-            "summary": self.summary,
+            "title": self.title,
             "createdAt": self.created_at,
             "updatedAt": self.updated_at,
             "isArchived": self.is_archived,
@@ -57,7 +57,7 @@ class ChatMessageModel:
     feedback: str | None = None
     feedback_at: datetime | None = None
     feedback_user_id: str | None = None
-    status: str = "completed"  # "generating" | "completed" | "failed"
+    status: str = "completed"
     id: str | None = None
 
     @classmethod
@@ -74,7 +74,7 @@ class ChatMessageModel:
             feedback=str(raw.get("feedback")) if raw.get("feedback") in {"like", "dislike"} else None,
             feedback_at=_as_utc_datetime(raw.get("feedbackAt")) if raw.get("feedbackAt") else None,
             feedback_user_id=str(raw.get("feedbackUserId")) if raw.get("feedbackUserId") else None,
-            status=str(raw.get("status", "completed")),  # default for old messages
+            status=str(raw.get("status", "completed")),
         )
 
     def to_mongo_insert(self) -> dict[str, Any]:

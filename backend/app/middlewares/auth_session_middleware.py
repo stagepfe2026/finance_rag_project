@@ -24,19 +24,19 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
         raw_token = request.cookies.get(settings.auth_session_cookie_name)
         if raw_token:
             token_hash = hash_session_token(raw_token)
-            session = self.sessions_repo.get_active_session_by_token_hash(token_hash)
+            session = self.sessions_repo.find_by_token(token_hash)
             if session:
                 now = datetime.now(timezone.utc)
 
                 if session.absolute_expires_at <= now or session.refresh_expires_at <= now:
-                    self.sessions_repo.close_session(
+                    self.sessions_repo.close(
                         session.id or "",
                         reason="SESSION_MAX_DURATION_EXPIRED",
                         closed_before_expiry=False,
                     )
                     request.state.session_error_code = "SESSION_MAX_DURATION_EXPIRED"
                 elif session.idle_expires_at <= now:
-                    self.sessions_repo.close_session(
+                    self.sessions_repo.close(
                         session.id or "",
                         reason="SESSION_IDLE_TIMEOUT",
                         closed_before_expiry=False,
@@ -49,7 +49,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                             session.refresh_expires_at,
                             session.absolute_expires_at,
                         )
-                        self.sessions_repo.refresh_tokens(
+                        self.sessions_repo.renew_tokens(
                             session.id or "",
                             access_expires_at=new_access_expiry,
                         )
@@ -64,7 +64,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                         session.refresh_expires_at,
                         session.absolute_expires_at,
                     )
-                    self.sessions_repo.touch_activity(
+                    self.sessions_repo.extend_activity(
                         session.id or "",
                         access_expires_at=new_access_expiry,
                         idle_expires_at=new_idle_expiry,
@@ -73,7 +73,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                     session.idle_expires_at = new_idle_expiry
                     session.last_activity_at = now
 
-                    user = self.users_repo.find_active_by_id(session.user_id)
+                    user = self.users_repo.get_by_id(session.user_id)
                     if user:
                         request.state.current_user = user.to_public_dict()
                         request.state.current_session = session

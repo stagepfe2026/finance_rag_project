@@ -43,13 +43,13 @@ class AdminDashboardIndexedDocumentOut(BaseModel):
     id: str
     title: str
     category: str
-    documentStatus: str
+    status: str
     createdAt: str
     indexedAt: str | None
     fileType: str
     publicationDate: str | None
     effectiveDate: str | None
-    chunksCount: int | None
+    chunkCount: int | None
 
 
 class AdminDashboardLatestAccessOut(BaseModel):
@@ -63,7 +63,7 @@ class AdminDashboardLatestAccessOut(BaseModel):
 
 class AdminDashboardUrgentCaseOut(BaseModel):
     id: str
-    ticketNumber: str
+    referenceNumber: str
     subject: str
     priority: str
     status: str

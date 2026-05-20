@@ -14,7 +14,7 @@ class NotificationRepository:
         self.collection.create_index([("userId", 1), ("createdAt", -1)])
         self.collection.create_index([("userId", 1), ("isRead", 1), ("createdAt", -1)])
 
-    def create_many(self, notifications: list[NotificationModel]) -> list[NotificationModel]:
+    def create(self, notifications: list[NotificationModel]) -> list[NotificationModel]:
         if not notifications:
             return []
 
@@ -27,7 +27,7 @@ class NotificationRepository:
         cursor = self.collection.find({"userId": user_id}).sort("createdAt", -1).limit(limit)
         return [NotificationModel.from_mongo(raw) for raw in cursor]
 
-    def mark_as_read(self, notification_id: str, user_id: str) -> NotificationModel | None:
+    def mark_read(self, notification_id: str, user_id: str) -> NotificationModel | None:
         if not ObjectId.is_valid(notification_id):
             return None
 

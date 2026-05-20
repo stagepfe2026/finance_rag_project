@@ -43,7 +43,7 @@ This project now starts on a protected login flow and uses a simple, readable se
 ### Local login flow
 1. User opens the app.
 2. Router redirects to `/login` if there is no authenticated session.
-3. Login page submits credentials to `POST /api/v1/auth/login`.
+3. Login page submits credentials to `POST /api/auth/login`.
 4. Backend verifies the user and creates a session in MongoDB.
 5. Backend sets:
    - HttpOnly session cookie
@@ -51,7 +51,7 @@ This project now starts on a protected login flow and uses a simple, readable se
 6. Frontend stores only session state in memory and redirects by role.
 
 ### OIDC flow
-1. Frontend triggers `GET /api/v1/auth/oidc/login`.
+1. Frontend triggers `GET /api/auth/oidc/login`.
 2. Backend builds the authorization URL and stores transient state in a cookie.
 3. User authenticates with the identity provider.
 4. Provider redirects to backend callback.
@@ -111,7 +111,7 @@ Sessions are stored in the `auth_sessions` collection with a structure similar t
 - `frontend/src/services/auth.service.ts`
 
 ### Backend
-- `backend/app/api/v1/controllers/auth_controller.py`
+- `backend/app/api/routers/auth_router.py`
 - `backend/app/services/auth_service.py`
 - `backend/app/middlewares/auth_session_middleware.py`
 - `backend/app/repositories/users_repository.py`

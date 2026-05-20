@@ -37,7 +37,7 @@ function readErrorMessage(data: unknown, fallback: string) {
 }
 
 export async function fetchChatFeedbackStats(): Promise<ChatFeedbackStats> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/feedback/stats`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/feedback/stats`, {
     credentials: "include",
   });
   const data = await parseJson(response);

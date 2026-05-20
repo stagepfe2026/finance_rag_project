@@ -18,57 +18,57 @@ class DocumentRepository:
 
         return {"$or": [{"_id": ObjectId(document_id)}, {"_id": document_id}]}
 
-    def create(self, document: DocumentModel) -> DocumentModel:
+    def save(self, document: DocumentModel) -> DocumentModel:
         payload = document.to_mongo_insert()
         result = self.collection.insert_one(payload)
         document.id = str(result.inserted_id)
         return document
 
-    def mark_processing(self, document_id: str) -> DocumentModel | None:
+    def set_as_processing(self, document_id: str) -> DocumentModel | None:
         self.collection.update_one(
             self._id_filter(document_id),
             {
                 "$set": {
-                    "documentStatus": DocumentStatus.processing.value,
-                    "indexError": None,
+                    "status": DocumentStatus.processing.value,
+                    "lastIndexError": None,
                 }
             },
         )
         return self.get_by_id(document_id)
 
-    def mark_indexed(
+    def set_as_indexed(
         self,
         document_id: str,
-        chunks_count: int,
-        content: str | None = None,
+        chunk_count: int,
+        extracted_text: str | None = None,
     ) -> DocumentModel | None:
         self.collection.update_one(
             self._id_filter(document_id),
             {
                 "$set": {
-                    "documentStatus": DocumentStatus.indexed.value,
+                    "status": DocumentStatus.indexed.value,
                     "indexedAt": datetime.now(UTC),
-                    "chunksCount": chunks_count,
-                    "indexError": None,
-                    "content": content,
+                    "chunkCount": chunk_count,
+                    "lastIndexError": None,
+                    "extractedText": extracted_text,
                 }
             },
         )
         return self.get_by_id(document_id)
 
-    def mark_failed(self, document_id: str, error_message: str) -> DocumentModel | None:
+    def set_as_failed(self, document_id: str, error_message: str) -> DocumentModel | None:
         self.collection.update_one(
             self._id_filter(document_id),
             {
                 "$set": {
-                    "documentStatus": DocumentStatus.failed.value,
-                    "indexError": error_message,
+                    "status": DocumentStatus.failed.value,
+                    "lastIndexError": error_message,
                 }
             },
         )
         return self.get_by_id(document_id)
 
-    def mark_abrogated_deleted(self, document_id: str) -> DocumentModel | None:
+    def remove(self, document_id: str) -> DocumentModel | None:
         now = datetime.now(UTC)
         self.collection.update_one(
             {**self._id_filter(document_id), "deletedAt": None},
@@ -76,7 +76,7 @@ class DocumentRepository:
                 "$set": {
                     "legalStatus": LegalStatus.abroge.value,
                     "deletedAt": now,
-                    "indexError": None,
+                    "lastIndexError": None,
                 }
             },
         )
@@ -91,7 +91,7 @@ class DocumentRepository:
             return None
         return DocumentModel.from_mongo(raw)
 
-    def get_by_ids(self, document_ids: list[str]) -> list[DocumentModel]:
+    def get_many_by_ids(self, document_ids: list[str]) -> list[DocumentModel]:
         valid_ids = [document_id for document_id in document_ids if document_id.strip()]
         if not valid_ids:
             return []
@@ -105,12 +105,12 @@ class DocumentRepository:
         cursor = self.collection.find({"_id": {"$in": id_values}})
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
-    def duplicate_exists(
+    def already_exists(
         self,
         *,
         title: str,
         category: str,
-        document_type: str,
+        legal_type: str,
         version: str,
     ) -> bool:
         normalized_title = " ".join(title.split()).strip()
@@ -118,12 +118,12 @@ class DocumentRepository:
             "deletedAt": None,
             "title": {"$regex": f"^{re.escape(normalized_title)}$", "$options": "i"},
             "category": category,
-            "documentType": document_type,
+            "legalType": legal_type,
             "version": version.strip(),
         }
         return self.collection.count_documents(query, limit=1) > 0
 
-    def list_documents(
+    def list_all(
         self,
         *,
         search: str | None = None,
@@ -136,19 +136,19 @@ class DocumentRepository:
         cursor = self.collection.find(query).sort("createdAt", -1).skip(skip).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
-    def list_recent_indexed(self, *, limit: int = 6) -> list[DocumentModel]:
+    def latest_indexed(self, *, limit: int = 6) -> list[DocumentModel]:
         cursor = (
-            self.collection.find({"deletedAt": None, "documentStatus": DocumentStatus.indexed.value})
+            self.collection.find({"deletedAt": None, "status": DocumentStatus.indexed.value})
             .sort("indexedAt", -1)
             .limit(limit)
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
-    def list_recent_documents(self, *, limit: int = 8) -> list[DocumentModel]:
+    def latest_created(self, *, limit: int = 8) -> list[DocumentModel]:
         cursor = self.collection.find({"deletedAt": None}).sort("createdAt", -1).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
-    def list_due_future_documents(self, *, now: datetime) -> list[DocumentModel]:
+    def pending_activation(self, *, now: datetime) -> list[DocumentModel]:
         cursor = self.collection.find(
             {
                 "deletedAt": None,
@@ -158,7 +158,7 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
-    def count_documents(
+    def count_all(
         self,
         *,
         search: str | None = None,
@@ -168,7 +168,7 @@ class DocumentRepository:
         query = self._build_list_query(search=search, category=category, status=status)
         return self.collection.count_documents(query)
 
-    def search_documents(
+    def search(
         self,
         *,
         query: str | None = None,
@@ -195,7 +195,7 @@ class DocumentRepository:
         cursor = self.collection.find(mongo_query).sort(sort_config).skip(skip).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
-    def count_search_documents(
+    def count_search_results(
         self,
         *,
         query: str | None = None,
@@ -217,28 +217,28 @@ class DocumentRepository:
         )
         return self.collection.count_documents(mongo_query)
 
-    def set_favorite(self, document_id: str, user_id: str, is_favored: bool) -> DocumentModel | None:
+    def update_favorite_status(self, document_id: str, user_id: str, is_favorite: bool) -> DocumentModel | None:
         if not document_id.strip():
             return None
 
-        update_operator = {"$addToSet": {"favoriteUserIds": user_id}} if is_favored else {"$pull": {"favoriteUserIds": user_id}}
+        update_operator = {"$addToSet": {"favoriteUserIds": user_id}} if is_favorite else {"$pull": {"favoriteUserIds": user_id}}
         self.collection.update_one(
             {**self._id_filter(document_id), "deletedAt": None},
             update_operator,
         )
         return self.get_by_id(document_id)
 
-    def update_legal_metadata(
+    def update_metadata(
         self,
         document_id: str,
         *,
         legal_status: str | None = None,
-        document_type: str | None = None,
+        legal_type: str | None = None,
         date_publication: datetime | None = None,
         date_entree_vigueur: datetime | None = None,
         version: str | None = None,
-        relation_type: str | None = None,
-        related_document_id: str | None = None,
+        relation_to_target: str | None = None,
+        target_document_id: str | None = None,
     ) -> DocumentModel | None:
         if not document_id.strip():
             return None
@@ -246,35 +246,35 @@ class DocumentRepository:
         updates: dict[str, object] = {}
         if legal_status is not None:
             updates["legalStatus"] = legal_status
-        if document_type is not None:
-            updates["documentType"] = document_type
+        if legal_type is not None:
+            updates["legalType"] = legal_type
         if date_publication is not None:
             updates["datePublication"] = date_publication
         if date_entree_vigueur is not None:
             updates["dateEntreeVigueur"] = date_entree_vigueur
         if version is not None:
             updates["version"] = version
-        if relation_type is not None:
-            updates["relationType"] = relation_type
-        if related_document_id is not None:
-            updates["relatedDocumentId"] = related_document_id
+        if relation_to_target is not None:
+            updates["relationToTarget"] = relation_to_target
+        if target_document_id is not None:
+            updates["targetDocumentId"] = target_document_id
 
         if updates:
             self.collection.update_one(self._id_filter(document_id), {"$set": updates})
         return self.get_by_id(document_id)
 
-    def apply_incoming_relation(
+    def register_as_target(
         self,
         target_document_id: str,
-        relation_type: str,
+        relation_to_target: str,
         source_document_id: str,
     ) -> DocumentModel | None:
         if not target_document_id.strip():
             return None
 
-        if relation_type == LegalRelationType.remplace.value:
+        if relation_to_target == LegalRelationType.remplace.value:
             legal_status = LegalStatus.remplace.value
-        elif relation_type == LegalRelationType.abroge.value:
+        elif relation_to_target == LegalRelationType.abroge.value:
             legal_status = LegalStatus.abroge.value
         else:
             return self.get_by_id(target_document_id)
@@ -284,22 +284,22 @@ class DocumentRepository:
             {
                 "$set": {
                     "legalStatus": legal_status,
-                    "relationType": relation_type,
-                    "relatedDocumentId": source_document_id,
+                    "relationToTarget": relation_to_target,
+                    "targetDocumentId": source_document_id,
                 }
             },
         )
         return self.get_by_id(target_document_id)
 
-    def find_relation_sources_for_target(self, target_document_id: str) -> list[DocumentModel]:
+    def find_documents_pointing_to(self, target_document_id: str) -> list[DocumentModel]:
         if not target_document_id.strip():
             return []
 
         cursor = self.collection.find(
             {
                 "deletedAt": None,
-                "relatedDocumentId": target_document_id,
-                "relationType": {
+                "targetDocumentId": target_document_id,
+                "relationToTarget": {
                     "$in": [
                         LegalRelationType.remplace.value,
                         LegalRelationType.abroge.value,
@@ -328,7 +328,7 @@ class DocumentRepository:
             query["category"] = category
 
         if status:
-            query["documentStatus"] = status
+            query["status"] = status
 
         return query
 
@@ -345,7 +345,7 @@ class DocumentRepository:
     ) -> dict:
         mongo_query: dict = {
             "deletedAt": None,
-            "documentStatus": DocumentStatus.indexed.value,
+            "status": DocumentStatus.indexed.value,
         }
         filters: list[dict] = []
 
@@ -355,7 +355,7 @@ class DocumentRepository:
                 {
                     "$or": [
                         {"title": {"$regex": normalized_query, "$options": "i"}},
-                        {"content": {"$regex": normalized_query, "$options": "i"}},
+                        {"extractedText": {"$regex": normalized_query, "$options": "i"}},
                         {"category": {"$regex": normalized_query, "$options": "i"}},
                     ]
                 }

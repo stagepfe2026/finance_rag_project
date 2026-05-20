@@ -4,6 +4,7 @@ from bson import ObjectId
 
 from app.core.database import get_reclamations_collection
 from app.models.reclamation_model import ReclamationModel
+from app.repositories.index_helpers import create_partial_unique_string_index
 
 
 class ReclamationRepository:
@@ -14,7 +15,7 @@ class ReclamationRepository:
         self.collection.create_index([("userId", 1), ("createdAt", -1)])
         self.collection.create_index([("deletedAt", 1), ("createdAt", -1)])
         self.collection.create_index([("status", 1), ("priority", 1), ("createdAt", -1)])
-        self.collection.create_index("ticketNumber", unique=True)
+        create_partial_unique_string_index(self.collection, "referenceNumber")
 
     def create(self, reclamation: ReclamationModel) -> ReclamationModel:
         result = self.collection.insert_one(reclamation.to_mongo_insert())
@@ -47,17 +48,17 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None})
         return ReclamationModel.from_mongo(raw) if raw else None
 
-    def mark_reply_read_for_user(self, reclamation_id: str, user_id: str) -> ReclamationModel | None:
+    def acknowledge_reply(self, reclamation_id: str, user_id: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
 
         object_id = ObjectId(reclamation_id)
         query = {"_id": object_id, "userId": user_id, "deletedAt": None}
-        self.collection.update_one(query, {"$set": {"isReplyReadByUser": True}})
+        self.collection.update_one(query, {"$set": {"replyAcknowledged": True}})
         raw = self.collection.find_one(query)
         return ReclamationModel.from_mongo(raw) if raw else None
 
-    def mark_failed(self, reclamation_id: str, user_id: str, description: str) -> ReclamationModel | None:
+    def flag_as_failed(self, reclamation_id: str, user_id: str, description: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
 
@@ -72,13 +73,13 @@ class ReclamationRepository:
             {"_id": ObjectId(reclamation_id), "userId": user_id},
             {
                 "$set": {"status": "FAILED", "updatedAt": now},
-                "$push": {"activityLog": activity_item},
+                "$push": {"history": activity_item},
             },
         )
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id})
         return ReclamationModel.from_mongo(raw) if raw else None
 
-    def soft_delete_for_user(self, reclamation_id: str, user_id: str) -> bool:
+    def delete_for_user(self, reclamation_id: str, user_id: str) -> bool:
         if not ObjectId.is_valid(reclamation_id):
             return False
 
@@ -97,20 +98,20 @@ class ReclamationRepository:
                     "deletedByUserId": user_id,
                     "updatedAt": now,
                 },
-                "$push": {"activityLog": activity_item},
+                "$push": {"history": activity_item},
             },
         )
         return result.modified_count > 0
 
-    def update_pending_for_user(
+    def edit_for_user(
         self,
         reclamation_id: str,
         user_id: str,
         *,
         subject: str,
         description: str,
-        problem_type: str,
-        custom_problem_type: str | None,
+        issue_category: str,
+        custom_issue_category: str | None,
         priority: str,
         attachment_payload: dict | None = None,
     ) -> ReclamationModel | None:
@@ -127,8 +128,8 @@ class ReclamationRepository:
         update_fields = {
             "subject": subject,
             "description": description,
-            "problemType": problem_type,
-            "customProblemType": custom_problem_type,
+            "issueCategory": issue_category,
+            "customIssueCategory": custom_issue_category,
             "priority": priority,
             "updatedAt": now,
         }
@@ -146,7 +147,7 @@ class ReclamationRepository:
             {"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None, "status": "PENDING"},
             {
                 "$set": update_fields,
-                "$push": {"activityLog": activity_item},
+                "$push": {"history": activity_item},
             },
         )
         if result.modified_count == 0:
@@ -155,7 +156,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None})
         return ReclamationModel.from_mongo(raw) if raw else None
 
-    def take_reclamation(self, reclamation_id: str, admin_id: str, admin_name: str) -> ReclamationModel | None:
+    def assign_to_admin(self, reclamation_id: str, admin_id: str, admin_name: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
 
@@ -176,7 +177,7 @@ class ReclamationRepository:
                     "takenByAdminName": admin_name,
                     "updatedAt": now,
                 },
-                "$push": {"activityLog": activity_item},
+                "$push": {"history": activity_item},
             },
         )
         if result.modified_count == 0:
@@ -184,7 +185,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id)})
         return ReclamationModel.from_mongo(raw) if raw else None
 
-    def mark_sla_overdue_notified(self, reclamation_id: str | None) -> None:
+    def record_sla_alert_sent(self, reclamation_id: str | None) -> None:
         if not reclamation_id or not ObjectId.is_valid(reclamation_id):
             return
         self.collection.update_one(
@@ -192,7 +193,7 @@ class ReclamationRepository:
             {"$set": {"slaOverdueNotifiedAt": datetime.now(UTC)}},
         )
 
-    def respond_as_admin(
+    def save_admin_reply(
         self,
         reclamation_id: str,
         *,
@@ -217,13 +218,13 @@ class ReclamationRepository:
                     "status": status,
                     "adminReply": admin_reply,
                     "adminReplyAt": now,
-                    "adminReplyBy": admin_reply_by,
-                    "lastUpdatedByAdminAt": now,
-                    "lastUpdatedByAdminName": admin_reply_by,
-                    "isReplyReadByUser": False,
+                    "repliedByAdminId": admin_reply_by,
+                    "lastAdminActionAt": now,
+                    "lastAdminActorName": admin_reply_by,
+                    "replyAcknowledged": False,
                     "updatedAt": now,
                 },
-                "$push": {"activityLog": activity_item},
+                "$push": {"history": activity_item},
             },
         )
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "deletedAt": None})

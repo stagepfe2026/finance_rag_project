@@ -42,7 +42,7 @@ function readErrorMessage(data: unknown, fallback: string) {
 }
 
 export async function fetchReclamations(): Promise<Reclamation[]> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -56,7 +56,7 @@ export async function fetchReclamations(): Promise<Reclamation[]> {
 }
 
 export async function markReclamationReplyAsRead(reclamationId: string): Promise<Reclamation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}/mark-reply-read`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations/${reclamationId}/mark-reply-read`, {
     method: "POST",
     credentials: "include",
   });
@@ -84,7 +84,7 @@ export async function createReclamation(input: CreateReclamationInput): Promise<
     formData.append("attachment", input.attachment);
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -113,7 +113,7 @@ export async function updateReclamation(reclamationId: string, input: UpdateRecl
     formData.append("attachment", input.attachment);
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations/${reclamationId}`, {
     method: "PUT",
     credentials: "include",
     body: formData,
@@ -128,7 +128,7 @@ export async function updateReclamation(reclamationId: string, input: UpdateRecl
 }
 
 export async function deleteReclamation(reclamationId: string): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations/${reclamationId}`, {
     method: "DELETE",
     credentials: "include",
   });

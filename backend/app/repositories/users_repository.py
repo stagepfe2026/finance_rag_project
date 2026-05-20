@@ -5,17 +5,18 @@ from pymongo.errors import DuplicateKeyError
 
 from app.core.database import get_users_collection
 from app.models import UserModel
+from app.repositories.index_helpers import create_partial_unique_string_index
 
 
 class UsersRepository:
-    def find_active_by_email(self, email: str) -> UserModel | None:
+    def get_by_email(self, email: str) -> UserModel | None:
         normalized = email.strip().lower()
         raw = get_users_collection().find_one({"email": normalized, "deletedAt": None})
         if not raw:
             return None
         return UserModel.from_mongo(raw)
 
-    def find_active_by_id(self, user_id: str) -> UserModel | None:
+    def get_by_id(self, user_id: str) -> UserModel | None:
         object_id = self._parse_user_id(user_id)
         if not object_id:
             return None
@@ -25,7 +26,7 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
-    def list_active_by_roles(self, roles: list[str]) -> list[UserModel]:
+    def list_by_roles(self, roles: list[str]) -> list[UserModel]:
         normalized_roles = [role for role in roles if role]
         if not normalized_roles:
             return []
@@ -33,7 +34,7 @@ class UsersRepository:
         cursor = get_users_collection().find({"role": {"$in": normalized_roles}, "deletedAt": None})
         return [UserModel.from_mongo(raw) for raw in cursor]
 
-    def list_all_active(self) -> list[UserModel]:
+    def list_all(self) -> list[UserModel]:
         cursor = get_users_collection().find({"deletedAt": None})
         return [UserModel.from_mongo(raw) for raw in cursor]
 
@@ -45,21 +46,21 @@ class UsersRepository:
         prenom: str,
         email: str,
         telephone: str,
-        profile_image_url: str,
+        avatar_url: str,
         adresse: str,
-        date_naissance: str,
+        birth_date: str,
         direction: str,
         service: str,
         poste: str,
         matricule: str,
         bureau: str,
-        responsable: str,
-        membre_depuis: str,
-        langue_preferee: str,
-        theme_prefere: str,
-        notifications_email: bool,
-        notifications_sms: bool,
-        two_factor_enabled: bool,
+        manager: str,
+        member_since: str,
+        preferred_language: str,
+        preferred_theme: str,
+        email_notifications_on: bool,
+        sms_notifications_on: bool,
+        is_two_factor_enabled: bool,
     ) -> UserModel | None:
         object_id = self._parse_user_id(user_id)
         if not object_id:
@@ -77,21 +78,21 @@ class UsersRepository:
                         "prenom": prenom,
                         "email": normalized,
                         "telephone": telephone,
-                        "profileImageUrl": profile_image_url,
+                        "avatarUrl": avatar_url,
                         "adresse": adresse,
-                        "dateNaissance": date_naissance,
+                        "birthDate": birth_date,
                         "direction": direction,
                         "service": service,
                         "poste": poste,
                         "matricule": matricule,
                         "bureau": bureau,
-                        "responsable": responsable,
-                        "membreDepuis": membre_depuis,
-                        "languePreferee": langue_preferee,
-                        "themePrefere": theme_prefere,
-                        "notificationsEmail": notifications_email,
-                        "notificationsSms": notifications_sms,
-                        "twoFactorEnabled": two_factor_enabled,
+                        "manager": manager,
+                        "memberSince": member_since,
+                        "preferredLanguage": preferred_language,
+                        "preferredTheme": preferred_theme,
+                        "emailNotificationsOn": email_notifications_on,
+                        "smsNotificationsOn": sms_notifications_on,
+                        "isTwoFactorEnabled": is_two_factor_enabled,
                     }
                 },
             )
@@ -106,7 +107,7 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
-    def update_password(self, *, user_id: str, password_hash: str) -> UserModel | None:
+    def change_password(self, *, user_id: str, password_hash: str) -> UserModel | None:
         object_id = self._parse_user_id(user_id)
         if not object_id:
             return None
@@ -116,7 +117,7 @@ class UsersRepository:
             {
                 "$set": {
                     "password": password_hash,
-                    "passwordUpdatedAt": datetime.now(timezone.utc),
+                    "passwordChangedAt": datetime.now(timezone.utc),
                 }
             },
         )
@@ -128,7 +129,7 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
-    def upsert_user(
+    def save_oidc_user(
         self,
         *,
         nom: str,
@@ -137,22 +138,22 @@ class UsersRepository:
         password_hash: str,
         role: str,
         telephone: str = "",
-        profile_image_url: str = "",
+        avatar_url: str = "",
         adresse: str = "",
-        date_naissance: str = "",
+        birth_date: str = "",
         direction: str = "",
         service: str = "",
         poste: str = "",
         matricule: str = "",
         bureau: str = "",
-        responsable: str = "",
-        membre_depuis: str = "",
-        langue_preferee: str = "fr",
-        theme_prefere: str = "light",
-        notifications_email: bool = True,
-        notifications_sms: bool = False,
-        two_factor_enabled: bool = False,
-        password_updated_at: datetime | None = None,
+        manager: str = "",
+        member_since: str = "",
+        preferred_language: str = "fr",
+        preferred_theme: str = "light",
+        email_notifications_on: bool = True,
+        sms_notifications_on: bool = False,
+        is_two_factor_enabled: bool = False,
+        password_changed_at: datetime | None = None,
     ) -> str:
         normalized = email.strip().lower()
         collection = get_users_collection()
@@ -166,22 +167,22 @@ class UsersRepository:
                     "password": password_hash,
                     "role": role,
                     "telephone": telephone,
-                    "profileImageUrl": profile_image_url,
+                    "avatarUrl": avatar_url,
                     "adresse": adresse,
-                    "dateNaissance": date_naissance,
+                    "birthDate": birth_date,
                     "direction": direction,
                     "service": service,
                     "poste": poste,
                     "matricule": matricule,
                     "bureau": bureau,
-                    "responsable": responsable,
-                    "membreDepuis": membre_depuis,
-                    "languePreferee": langue_preferee,
-                    "themePrefere": theme_prefere,
-                    "notificationsEmail": notifications_email,
-                    "notificationsSms": notifications_sms,
-                    "twoFactorEnabled": two_factor_enabled,
-                    "passwordUpdatedAt": password_updated_at or datetime.now(timezone.utc),
+                    "manager": manager,
+                    "memberSince": member_since,
+                    "preferredLanguage": preferred_language,
+                    "preferredTheme": preferred_theme,
+                    "emailNotificationsOn": email_notifications_on,
+                    "smsNotificationsOn": sms_notifications_on,
+                    "isTwoFactorEnabled": is_two_factor_enabled,
+                    "passwordChangedAt": password_changed_at or datetime.now(timezone.utc),
                     "deletedAt": None,
                 },
                 "$setOnInsert": {"createdAt": datetime.now(timezone.utc)},
@@ -192,7 +193,7 @@ class UsersRepository:
         return str(raw["_id"])
 
     def ensure_indexes(self) -> None:
-        get_users_collection().create_index("email", unique=True)
+        create_partial_unique_string_index(get_users_collection(), "email")
 
     @staticmethod
     def _parse_user_id(user_id: str) -> ObjectId | None:

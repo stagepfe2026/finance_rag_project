@@ -39,26 +39,30 @@ class ReclamationAttachmentOut(BaseModel):
 
 class ReclamationOut(BaseModel):
     _id: str
-    ticketNumber: str
+    referenceNumber: str
     userId: str
     userEmail: str
     subject: str
     description: str
-    problemType: ReclamationProblemType
-    customProblemType: str | None = None
+    issueCategory: ReclamationProblemType
+    customIssueCategory: str | None = None
     priority: ReclamationPriority
     status: ReclamationStatus
     attachment: ReclamationAttachmentOut | None = None
+    attachmentName: str | None = None
+    attachmentPath: str | None = None
+    attachmentSize: int | None = None
+    attachmentContentType: str | None = None
     adminReply: str | None = None
     adminReplyAt: str | None = None
-    adminReplyBy: str | None = None
-    lastUpdatedByAdminAt: str | None = None
-    lastUpdatedByAdminName: str | None = None
-    isReplyReadByUser: bool
+    repliedByAdminId: str | None = None
+    lastAdminActionAt: str | None = None
+    lastAdminActorName: str | None = None
+    replyAcknowledged: bool
     createdAt: str
     updatedAt: str
     deletedAt: str | None = None
-    activityLog: list[ReclamationActivityOut] = Field(default_factory=list)
+    history: list[ReclamationActivityOut] = Field(default_factory=list)
     takenAt: str | None = None
     takenByAdminName: str | None = None
     slaDeadlineAt: str = ""

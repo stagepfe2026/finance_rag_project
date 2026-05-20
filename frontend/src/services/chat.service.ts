@@ -46,7 +46,7 @@ function sanitizeFileName(name: string) {
 }
 
 export async function fetchConversations(): Promise<Conversation[]> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/conversations`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -61,7 +61,7 @@ export async function fetchConversations(): Promise<Conversation[]> {
 }
 
 export async function renameConversation(conversationId: string, summary: string): Promise<Conversation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations/${conversationId}`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/conversations/${conversationId}`, {
     method: "PATCH",
     credentials: "include",
     headers: {
@@ -79,7 +79,7 @@ export async function renameConversation(conversationId: string, summary: string
 }
 
 export async function archiveConversation(conversationId: string): Promise<Conversation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations/${conversationId}/archive`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/conversations/${conversationId}/archive`, {
     method: "POST",
     credentials: "include",
   });
@@ -93,7 +93,7 @@ export async function archiveConversation(conversationId: string): Promise<Conve
 }
 
 export async function restoreConversation(conversationId: string): Promise<Conversation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations/${conversationId}/restore`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/conversations/${conversationId}/restore`, {
     method: "POST",
     credentials: "include",
   });
@@ -107,7 +107,7 @@ export async function restoreConversation(conversationId: string): Promise<Conve
 }
 
 export async function deleteConversation(conversationId: string): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations/${conversationId}`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/conversations/${conversationId}`, {
     method: "DELETE",
     credentials: "include",
   });
@@ -119,7 +119,7 @@ export async function deleteConversation(conversationId: string): Promise<void> 
 }
 
 export async function fetchConversationMessages(conversationId: string): Promise<ChatMessage[]> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations/${conversationId}/messages`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/conversations/${conversationId}/messages`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -139,7 +139,7 @@ export async function askChatQuestion(input: {
   responseMode: ResponseMode;
   queryMode?: QueryMode;
 }): Promise<AskChatResult> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/ask`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/ask`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -162,7 +162,7 @@ export async function askChatQuestion(input: {
 }
 
 export async function submitChatFeedback(messageId: string, feedback: ChatFeedback | null): Promise<ChatMessage> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/messages/${messageId}/feedback`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/messages/${messageId}/feedback`, {
     method: "PATCH",
     credentials: "include",
     headers: {
@@ -181,7 +181,7 @@ export async function submitChatFeedback(messageId: string, feedback: ChatFeedba
 
 export async function fetchGeneratingMessages(): Promise<Array<{ _id: string; conversationId: string }>> {
   try {
-    const response = await fetch(`${apiBaseUrl}/api/v1/chat/messages/generating`, {
+    const response = await fetch(`${apiBaseUrl}/api/chat/messages/generating`, {
       credentials: "include",
     });
     const data = await parseJson(response);
@@ -196,7 +196,7 @@ export async function fetchGeneratingMessages(): Promise<Array<{ _id: string; co
 }
 
 export async function downloadChatSource(documentId: string, fileName: string) {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/sources/${documentId}/download`, {
+  const response = await fetch(`${apiBaseUrl}/api/chat/sources/${documentId}/download`, {
     credentials: "include",
   });
 

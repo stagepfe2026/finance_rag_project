@@ -21,7 +21,7 @@ function readErrorMessage(data: unknown, fallback: string) {
 }
 
 export async function fetchNotifications(limit = 20): Promise<NotificationsResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/notifications?limit=${limit}`, {
+  const response = await fetch(`${apiBaseUrl}/api/notifications?limit=${limit}`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -34,7 +34,7 @@ export async function fetchNotifications(limit = 20): Promise<NotificationsRespo
 }
 
 export async function markNotificationAsRead(notificationId: string) {
-  const response = await fetch(`${apiBaseUrl}/api/v1/notifications/${notificationId}/read`, {
+  const response = await fetch(`${apiBaseUrl}/api/notifications/${notificationId}/read`, {
     method: "POST",
     credentials: "include",
   });
@@ -54,7 +54,7 @@ export function createNotificationsWebSocket(
   },
 ) {
   const wsUrl = apiBaseUrl.replace(/^http/i, "ws");
-  const socket = new WebSocket(`${wsUrl}/api/v1/notifications/ws`);
+  const socket = new WebSocket(`${wsUrl}/api/notifications/ws`);
 
   socket.onmessage = (event) => {
     try {

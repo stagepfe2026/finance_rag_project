@@ -122,7 +122,7 @@ export async function indexDocument({
     payload.append("related_document_id", relatedDocumentId.trim());
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents/index`, {
+  const response = await fetch(`${apiBaseUrl}/api/documents/index`, {
     method: "POST",
     credentials: "include",
     body: payload,
@@ -147,7 +147,7 @@ export async function previewWordDocument({
   const payload = new FormData();
   payload.append("file", file);
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents/preview-word`, {
+  const response = await fetch(`${apiBaseUrl}/api/documents/preview-word`, {
     method: "POST",
     credentials: "include",
     body: payload,
@@ -184,7 +184,7 @@ export async function fetchDocuments({
   params.set("limit", String(limit));
 
   const query = params.toString();
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents${query ? `?${query}` : ""}`, {
+  const response = await fetch(`${apiBaseUrl}/api/documents${query ? `?${query}` : ""}`, {
     credentials: "include",
   });
   const data = (await parseJson(response)) as DocumentsListResponse | { detail?: string } | null;
@@ -235,7 +235,7 @@ export async function searchDocuments({
   params.set("skip", String(skip));
   params.set("limit", String(limit));
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/document-search?${params.toString()}`, {
+  const response = await fetch(`${apiBaseUrl}/api/document-search?${params.toString()}`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -258,7 +258,7 @@ export async function fetchUserDocumentPreview({
   apiBaseUrl: string;
   documentId: string;
 }): Promise<DocumentPreview> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/document-search/${documentId}/preview`, {
+  const response = await fetch(`${apiBaseUrl}/api/document-search/${documentId}/preview`, {
     credentials: "include",
   });
   const data = (await parseJson(response)) as DocumentPreview | { detail?: string } | null;
@@ -279,7 +279,7 @@ export async function setDocumentFavorite({
   documentId: string;
   isFavored: boolean;
 }): Promise<DocumentActionResult> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/document-search/${documentId}/favorite`, {
+  const response = await fetch(`${apiBaseUrl}/api/document-search/${documentId}/favorite`, {
     method: isFavored ? "POST" : "DELETE",
     credentials: "include",
   });
@@ -299,7 +299,7 @@ export async function fetchDocumentPreview({
   apiBaseUrl: string;
   documentId: string;
 }): Promise<DocumentPreview> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/preview`, {
+  const response = await fetch(`${apiBaseUrl}/api/documents/${documentId}/preview`, {
     credentials: "include",
   });
   const data = (await parseJson(response)) as DocumentPreview | { detail?: string } | null;
@@ -318,7 +318,7 @@ export async function deleteDocumentFromIndex({
   apiBaseUrl: string;
   documentId: string;
 }): Promise<DocumentActionResult> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/index`, {
+  const response = await fetch(`${apiBaseUrl}/api/documents/${documentId}/index`, {
     method: "DELETE",
     credentials: "include",
   });
@@ -338,7 +338,7 @@ export async function reindexDocument({
   apiBaseUrl: string;
   documentId: string;
 }): Promise<DocumentActionResult> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/documents/${documentId}/reindex`, {
+  const response = await fetch(`${apiBaseUrl}/api/documents/${documentId}/reindex`, {
     method: "POST",
     credentials: "include",
   });

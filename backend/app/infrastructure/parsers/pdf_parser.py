@@ -3,8 +3,11 @@
 from pypdf import PdfReader
 
 
-class PdfParser:
-    def parse(self, file_path: str) -> str:
+from app.infrastructure.parsers.base_document_parser import BaseDocumentParser
+
+
+class PdfParser(BaseDocumentParser):
+    def extract_text(self, file_path: str) -> str:
         reader = PdfReader(file_path)
         text = []
         for page in reader.pages:

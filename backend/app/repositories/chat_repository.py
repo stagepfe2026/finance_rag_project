@@ -16,16 +16,16 @@ class ChatRepository:
         self.messages.create_index([("conversationId", 1), ("createdAt", 1)])
         self.messages.create_index([("role", 1), ("feedback", 1), ("feedbackAt", -1)])
 
-    def create_conversation(self, conversation: ConversationModel) -> ConversationModel:
+    def create(self, conversation: ConversationModel) -> ConversationModel:
         result = self.conversations.insert_one(conversation.to_mongo_insert())
         conversation.id = str(result.inserted_id)
         return conversation
 
-    def list_conversations_for_user(self, user_id: str) -> list[ConversationModel]:
+    def list_for_user(self, user_id: str) -> list[ConversationModel]:
         cursor = self.conversations.find({"userId": user_id, "deletedAt": None}).sort("updatedAt", -1)
         return [ConversationModel.from_mongo(raw) for raw in cursor]
 
-    def list_recent_conversations(self, *, limit: int = 250) -> list[ConversationModel]:
+    def list_recent(self, *, limit: int = 250) -> list[ConversationModel]:
         cursor = self.conversations.find({}).sort("updatedAt", -1).limit(limit)
         return [ConversationModel.from_mongo(raw) for raw in cursor]
 
@@ -45,12 +45,12 @@ class ChatRepository:
             return None
         return ConversationModel.from_mongo(raw)
 
-    def update_conversation_after_message(self, conversation_id: str, summary: str | None = None) -> ConversationModel | None:
+    def refresh_after_message(self, conversation_id: str, title: str | None = None) -> ConversationModel | None:
         if not ObjectId.is_valid(conversation_id):
             return None
         update_fields: dict[str, object] = {"updatedAt": datetime.now(UTC)}
-        if summary is not None:
-            update_fields["summary"] = summary
+        if title is not None:
+            update_fields["title"] = title
         self.conversations.update_one(
             {"_id": ObjectId(conversation_id), "deletedAt": None},
             {"$set": update_fields},
@@ -58,17 +58,17 @@ class ChatRepository:
         raw = self.conversations.find_one({"_id": ObjectId(conversation_id), "deletedAt": None})
         return ConversationModel.from_mongo(raw) if raw else None
 
-    def rename_conversation(self, conversation_id: str, summary: str) -> ConversationModel | None:
+    def rename(self, conversation_id: str, title: str) -> ConversationModel | None:
         if not ObjectId.is_valid(conversation_id):
             return None
         self.conversations.update_one(
             {"_id": ObjectId(conversation_id), "deletedAt": None},
-            {"$set": {"summary": summary, "updatedAt": datetime.now(UTC)}},
+            {"$set": {"title": title, "updatedAt": datetime.now(UTC)}},
         )
         raw = self.conversations.find_one({"_id": ObjectId(conversation_id), "deletedAt": None})
         return ConversationModel.from_mongo(raw) if raw else None
 
-    def archive_conversation(self, conversation_id: str) -> ConversationModel | None:
+    def archive(self, conversation_id: str) -> ConversationModel | None:
         if not ObjectId.is_valid(conversation_id):
             return None
         now = datetime.now(UTC)
@@ -79,7 +79,7 @@ class ChatRepository:
         raw = self.conversations.find_one({"_id": ObjectId(conversation_id), "deletedAt": None})
         return ConversationModel.from_mongo(raw) if raw else None
 
-    def restore_conversation(self, conversation_id: str) -> ConversationModel | None:
+    def restore(self, conversation_id: str) -> ConversationModel | None:
         if not ObjectId.is_valid(conversation_id):
             return None
         now = datetime.now(UTC)
@@ -90,7 +90,7 @@ class ChatRepository:
         raw = self.conversations.find_one({"_id": ObjectId(conversation_id), "deletedAt": None})
         return ConversationModel.from_mongo(raw) if raw else None
 
-    def delete_conversation(self, conversation_id: str) -> bool:
+    def delete(self, conversation_id: str) -> bool:
         if not ObjectId.is_valid(conversation_id):
             return False
         result = self.conversations.update_one(
@@ -99,16 +99,16 @@ class ChatRepository:
         )
         return result.modified_count > 0
 
-    def create_message(self, message: ChatMessageModel) -> ChatMessageModel:
+    def save(self, message: ChatMessageModel) -> ChatMessageModel:
         result = self.messages.insert_one(message.to_mongo_insert())
         message.id = str(result.inserted_id)
         return message
 
-    def list_messages_for_conversation(self, conversation_id: str) -> list[ChatMessageModel]:
+    def list_for_conversation(self, conversation_id: str) -> list[ChatMessageModel]:
         cursor = self.messages.find({"conversationId": conversation_id}).sort("createdAt", 1)
         return [ChatMessageModel.from_mongo(raw) for raw in cursor]
 
-    def get_message_for_user(self, message_id: str, user_id: str) -> ChatMessageModel | None:
+    def get_for_user(self, message_id: str, user_id: str) -> ChatMessageModel | None:
         if not ObjectId.is_valid(message_id):
             return None
         raw = self.messages.find_one({"_id": ObjectId(message_id), "role": "assistant"})
@@ -120,7 +120,7 @@ class ChatRepository:
             return None
         return ChatMessageModel.from_mongo(raw)
 
-    def set_message_feedback(
+    def save_feedback(
         self,
         message_id: str,
         user_id: str,
@@ -148,7 +148,7 @@ class ChatRepository:
         raw = self.messages.find_one({"_id": ObjectId(message_id), "role": "assistant"})
         return ChatMessageModel.from_mongo(raw) if raw else None
 
-    def update_assistant_message(
+    def update_content(
         self,
         message_id: str,
         *,
@@ -165,7 +165,7 @@ class ChatRepository:
         raw = self.messages.find_one({"_id": ObjectId(message_id)})
         return ChatMessageModel.from_mongo(raw) if raw else None
 
-    def list_generating_messages_for_user(self, user_id: str) -> list[ChatMessageModel]:
+    def list_in_progress_for_user(self, user_id: str) -> list[ChatMessageModel]:
         conv_ids = [
             str(doc["_id"])
             for doc in self.conversations.find(
@@ -179,7 +179,7 @@ class ChatRepository:
         )
         return [ChatMessageModel.from_mongo(raw) for raw in cursor]
 
-    def list_rated_assistant_messages(self) -> list[ChatMessageModel]:
+    def list_with_feedback(self) -> list[ChatMessageModel]:
         cursor = self.messages.find({"role": "assistant", "feedback": {"$in": ["like", "dislike"]}}).sort(
             "feedbackAt",
             -1,

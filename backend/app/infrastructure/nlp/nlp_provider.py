@@ -3,7 +3,7 @@ import re
 import spacy
 
 
-class NLPProvider:
+class FrenchNlpProvider:
     def __init__(self):
         self.nlp = spacy.load("fr_core_news_md")
 
@@ -15,7 +15,7 @@ class NLPProvider:
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()
 
-    def sentence_segmentation(self, text: str) -> list[str]:
+    def split_into_sentences(self, text: str) -> list[str]:
         doc = self.nlp(text)
         return [sent.text.strip() for sent in doc.sents if sent.text.strip()]
 

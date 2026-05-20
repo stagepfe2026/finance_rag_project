@@ -1,12 +1,14 @@
 import requests
 
+from app.infrastructure.embeddings.base_embedding_provider import BaseEmbeddingProvider
 
-class OllamaEmbeddingProvider:
+
+class OllamaEmbeddingProvider(BaseEmbeddingProvider):
     def __init__(self, base_url: str, model_name: str):
         self.base_url = base_url.rstrip("/")
         self.model_name = model_name
 
-    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+    def embed(self, texts: list[str]) -> list[list[float]]:
         normalized_texts = [text.strip() for text in texts]
         if not normalized_texts or any(not text for text in normalized_texts):
             raise ValueError("Embedding input contains empty chunks.")

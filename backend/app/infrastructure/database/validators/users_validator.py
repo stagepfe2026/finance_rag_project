@@ -1,0 +1,32 @@
+USERS_VALIDATOR = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["nom", "prenom", "email", "password", "role", "createdAt"],
+        "properties": {
+            "nom": {"bsonType": "string"},
+            "prenom": {"bsonType": "string"},
+            "email": {"bsonType": "string", "pattern": "^.+@.+\\..+$"},
+            "password": {"bsonType": "string"},
+            "role": {"enum": ["ADMIN", "FINANCE_USER"]},
+            "telephone": {"bsonType": "string"},
+            "avatarUrl": {"bsonType": "string"},
+            "adresse": {"bsonType": "string"},
+            "birthDate": {"bsonType": "string"},
+            "direction": {"bsonType": "string"},
+            "service": {"bsonType": "string"},
+            "poste": {"bsonType": "string"},
+            "matricule": {"bsonType": "string"},
+            "bureau": {"bsonType": "string"},
+            "manager": {"bsonType": "string"},
+            "memberSince": {"bsonType": "string"},
+            "preferredLanguage": {"bsonType": "string"},
+            "preferredTheme": {"bsonType": "string"},
+            "emailNotificationsOn": {"bsonType": "bool"},
+            "smsNotificationsOn": {"bsonType": "bool"},
+            "isTwoFactorEnabled": {"bsonType": "bool"},
+            "passwordChangedAt": {"bsonType": "date"},
+            "createdAt": {"bsonType": "date"},
+            "deletedAt": {"bsonType": ["date", "null"]},
+        },
+    }
+}

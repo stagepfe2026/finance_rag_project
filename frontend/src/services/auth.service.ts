@@ -92,7 +92,7 @@ function readErrorMessage(data: unknown, fallback: string) {
 }
 
 export async function loginRequest(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/login`, {
+  const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -110,7 +110,7 @@ export async function loginRequest(email: string, password: string): Promise<Aut
 }
 
 export async function fetchSession(): Promise<SessionInfo> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/session`, {
+  const response = await fetch(`${apiBaseUrl}/api/auth/session`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -128,7 +128,7 @@ export async function fetchSession(): Promise<SessionInfo> {
 }
 
 export async function refreshSessionRequest(): Promise<AuthResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
+  const response = await fetch(`${apiBaseUrl}/api/auth/refresh`, {
     method: "POST",
     credentials: "include",
   });
@@ -156,7 +156,7 @@ export async function updateProfileRequest(payload: ProfileUpdatePayload): Promi
   const csrfCookieName = import.meta.env.VITE_AUTH_CSRF_COOKIE_NAME ?? "rag_finance_csrf";
   const csrfToken = readCookie(csrfCookieName);
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/profile`, {
+  const response = await fetch(`${apiBaseUrl}/api/auth/profile`, {
     method: "PATCH",
     credentials: "include",
     headers: {
@@ -178,7 +178,7 @@ export async function logoutRequest(): Promise<AuthResponse> {
   const csrfCookieName = import.meta.env.VITE_AUTH_CSRF_COOKIE_NAME ?? "rag_finance_csrf";
   const csrfToken = readCookie(csrfCookieName);
 
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/logout`, {
+  const response = await fetch(`${apiBaseUrl}/api/auth/logout`, {
     method: "POST",
     credentials: "include",
     headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
@@ -193,7 +193,7 @@ export async function logoutRequest(): Promise<AuthResponse> {
 }
 
 export async function beginOidcLogin(): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/oidc/login`, {
+  const response = await fetch(`${apiBaseUrl}/api/auth/oidc/login`, {
     credentials: "include",
   });
   const data = await parseJson(response);

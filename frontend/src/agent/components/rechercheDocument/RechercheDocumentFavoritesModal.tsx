@@ -31,7 +31,7 @@ function formatDate(value: string) {
 
 function openDocumentInNewTab(apiBaseUrl: string, item: DocumentSearchItem) {
   window.open(
-    `${apiBaseUrl}/api/v1/document-search/${item.id}/file`,
+    `${apiBaseUrl}/api/document-search/${item.id}/file`,
     "_blank",
     "noopener,noreferrer",
   );

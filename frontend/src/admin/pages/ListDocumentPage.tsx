@@ -72,12 +72,12 @@ export default function ListDocumentPage() {
                 onClose={vm.handleClosePreview}
                 onReindex={
                   vm.selectedDocument.legalStatus === "actif" || vm.selectedDocument.legalStatus === "remplace"
-                    ? () => void vm.handleReindex(vm.selectedDocument!)
+                    ? () => vm.handleReindex(vm.selectedDocument!)
                     : undefined
                 }
                 onDeleteFromIndex={
                   vm.selectedDocument.legalStatus === "actif" || vm.selectedDocument.legalStatus === "remplace"
-                    ? () => void vm.handleDeleteFromIndex(vm.selectedDocument!)
+                    ? () => vm.handleDeleteFromIndex(vm.selectedDocument!)
                     : undefined
                 }
               />

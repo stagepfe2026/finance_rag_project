@@ -3,8 +3,10 @@ import json
 
 import requests
 
+from app.infrastructure.generation.base_generation_provider import BaseGenerationProvider
 
-class OllamaGenerationProvider:
+
+class OllamaGenerationProvider(BaseGenerationProvider):
     def __init__(self, base_url: str, model_name: str):
         self.base_url = base_url.rstrip("/")
         self.model_name = model_name

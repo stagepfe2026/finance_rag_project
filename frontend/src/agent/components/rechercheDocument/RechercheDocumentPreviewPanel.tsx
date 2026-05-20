@@ -121,7 +121,7 @@ export default function RechercheDocumentPreviewPanel({
 
       <div className="mt-3 border-t border-slate-200 pt-3">
         <a
-          href={`${apiBaseUrl}/api/v1/document-search/${item.id}/file`}
+          href={`${apiBaseUrl}/api/document-search/${item.id}/file`}
           target="_blank"
           rel="noreferrer"
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#9d0208] px-3 py-2.5 text-[12px] font-medium text-white transition hover:bg-[#870106]"

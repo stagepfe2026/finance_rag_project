@@ -25,7 +25,7 @@ function readErrorMessage(data: unknown, fallback: string) {
 }
 
 export async function fetchAdminReclamations(): Promise<Reclamation[]> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations`, {
     credentials: "include",
   });
   const data = await parseJson(response);
@@ -38,7 +38,7 @@ export async function fetchAdminReclamations(): Promise<Reclamation[]> {
 }
 
 export async function takeReclamationAsAdmin(reclamationId: string): Promise<Reclamation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}/take`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations/${reclamationId}/take`, {
     method: "POST",
     credentials: "include",
   });
@@ -56,7 +56,7 @@ export async function resolveReclamationAsAdmin(
   adminReply: string,
   status: "PENDING" | "IN_PROGRESS" | "RESOLVED",
 ): Promise<Reclamation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/reclamations/${reclamationId}/resolve`, {
+  const response = await fetch(`${apiBaseUrl}/api/reclamations/${reclamationId}/resolve`, {
     method: "POST",
     credentials: "include",
     headers: {

@@ -60,7 +60,7 @@ export async function fetchAuditActivities(
   params.set("limit", String(filters.limit ?? 250));
 
   const query = params.toString();
-  const response = await fetch(`${apiBaseUrl}/api/v1/audit${query ? `?${query}` : ""}`, {
+  const response = await fetch(`${apiBaseUrl}/api/audit${query ? `?${query}` : ""}`, {
     credentials: "include",
   });
   const data = await parseJson(response);

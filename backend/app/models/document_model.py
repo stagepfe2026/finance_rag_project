@@ -31,27 +31,28 @@ def _normalize_legal_status(value: object) -> str:
 class DocumentModel:
     title: str
     category: str
-    document_status: str
+    status: str
     legal_status: str
-    document_type: str
-    realized_at: datetime | None
+    legal_type: str
+    issued_at: datetime | None
     date_publication: datetime | None
     date_entree_vigueur: datetime | None
     version: str
-    relation_type: str
-    related_document_id: str | None
+    relation_to_target: str
+    target_document_id: str | None
     file_path: str
     file_size: int
     file_type: str
     created_at: datetime
-    is_favored: bool = False
+    description: str = ""
+    is_favorite: bool = False
     favorite_user_ids: list[str] = field(default_factory=list)
     deleted_at: datetime | None = None
     indexed_at: datetime | None = None
-    chunks_count: int | None = None
-    index_error: str | None = None
+    chunk_count: int | None = None
+    last_index_error: str | None = None
     id: str | None = None
-    content: str | None = None
+    extracted_text: str | None = None
 
     @classmethod
     def new_processing(
@@ -60,36 +61,38 @@ class DocumentModel:
         title: str,
         category: str,
         legal_status: str,
-        document_type: str,
-        realized_at: datetime | None = None,
+        legal_type: str,
+        issued_at: datetime | None = None,
         date_publication: datetime | None = None,
         date_entree_vigueur: datetime | None = None,
         version: str = "",
-        relation_type: str = LegalRelationType.none.value,
-        related_document_id: str | None = None,
+        relation_to_target: str = LegalRelationType.none.value,
+        target_document_id: str | None = None,
         file_path: str,
         file_size: int,
         file_type: str,
-        content: str | None = None,
+        description: str = "",
+        extracted_text: str | None = None,
     ) -> "DocumentModel":
         return cls(
             title=title.strip(),
             category=category,
-            document_status=DocumentStatus.processing.value,
+            status=DocumentStatus.processing.value,
             legal_status=legal_status,
-            document_type=document_type,
-            realized_at=realized_at,
+            legal_type=legal_type,
+            issued_at=issued_at,
             date_publication=date_publication,
             date_entree_vigueur=date_entree_vigueur,
             version=version.strip(),
-            relation_type=relation_type,
-            related_document_id=related_document_id,
+            relation_to_target=relation_to_target,
+            target_document_id=target_document_id,
             file_path=file_path,
             file_size=file_size,
             file_type=file_type,
             created_at=datetime.now(UTC),
-            is_favored=False,
-            content=content,
+            description=description,
+            is_favorite=False,
+            extracted_text=extracted_text,
         )
 
     @classmethod
@@ -98,24 +101,25 @@ class DocumentModel:
             id=str(raw.get("_id")) if raw.get("_id") is not None else None,
             title=str(raw.get("title", "")),
             category=str(raw.get("category", "other")),
-            document_status=str(raw.get("documentStatus", DocumentStatus.processing.value)),
+            status=str(raw.get("status", DocumentStatus.processing.value)),
             legal_status=_normalize_legal_status(raw.get("legalStatus", LegalStatus.actif.value)),
-            document_type=str(raw.get("documentType", LegalDocumentType.autre.value)),
-            realized_at=raw.get("realizedAt"),
+            legal_type=str(raw.get("legalType", LegalDocumentType.autre.value)),
+            issued_at=raw.get("issuedAt"),
             date_publication=raw.get("datePublication"),
             date_entree_vigueur=raw.get("dateEntreeVigueur"),
             version=str(raw.get("version", "")),
-            relation_type=str(raw.get("relationType", LegalRelationType.none.value)),
-            related_document_id=(
-                str(raw.get("relatedDocumentId"))
-                if raw.get("relatedDocumentId") is not None
+            relation_to_target=str(raw.get("relationToTarget", LegalRelationType.none.value)),
+            target_document_id=(
+                str(raw.get("targetDocumentId"))
+                if raw.get("targetDocumentId") is not None
                 else None
             ),
             file_path=str(raw.get("filePath", "")),
             file_size=int(raw.get("fileSize", 0)),
             file_type=str(raw.get("fileType", "application/octet-stream")),
             created_at=raw.get("createdAt") or datetime.now(UTC),
-            is_favored=False,
+            description=str(raw.get("description", "")),
+            is_favorite=bool(raw.get("isFavorite", False)),
             favorite_user_ids=[
                 str(item)
                 for item in raw.get("favoriteUserIds", [])
@@ -123,35 +127,36 @@ class DocumentModel:
             ],
             deleted_at=raw.get("deletedAt"),
             indexed_at=raw.get("indexedAt"),
-            chunks_count=raw.get("chunksCount"),
-            index_error=raw.get("indexError"),
-            content=raw.get("content"),
+            chunk_count=raw.get("chunkCount"),
+            last_index_error=raw.get("lastIndexError"),
+            extracted_text=raw.get("extractedText"),
         )
 
     def to_mongo_insert(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "category": self.category,
-            "documentStatus": self.document_status,
+            "status": self.status,
             "legalStatus": self.legal_status,
-            "documentType": self.document_type,
-            "realizedAt": self.realized_at,
+            "legalType": self.legal_type,
+            "issuedAt": self.issued_at,
             "datePublication": self.date_publication,
             "dateEntreeVigueur": self.date_entree_vigueur,
             "version": self.version,
-            "relationType": self.relation_type,
-            "relatedDocumentId": self.related_document_id,
+            "relationToTarget": self.relation_to_target,
+            "targetDocumentId": self.target_document_id,
             "filePath": self.file_path,
             "fileSize": self.file_size,
             "fileType": self.file_type,
-            "isFavored": self.is_favored,
+            "description": self.description,
+            "isFavorite": self.is_favorite,
             "favoriteUserIds": self.favorite_user_ids,
             "createdAt": self.created_at,
             "deletedAt": self.deleted_at,
             "indexedAt": self.indexed_at,
-            "chunksCount": self.chunks_count,
-            "indexError": self.index_error,
-            "content": self.content,
+            "chunkCount": self.chunk_count,
+            "lastIndexError": self.last_index_error,
+            "extractedText": self.extracted_text,
         }
 
     def _get_category_enum(self) -> DocumentCategory:
@@ -172,24 +177,24 @@ class DocumentModel:
             id=self.id or "",
             title=self.title,
             category=self._get_category_enum(),
-            documentStatus=DocumentStatus(self.document_status),
+            status=DocumentStatus(self.status),
             legalStatus=LegalStatus(self.legal_status),
-            documentType=LegalDocumentType(self.document_type),
-            realizedAt=self.realized_at,
+            legalType=LegalDocumentType(self.legal_type),
+            issuedAt=self.issued_at,
             datePublication=self.date_publication,
             dateEntreeVigueur=self.date_entree_vigueur,
             version=self.version,
-            relationType=LegalRelationType(self.relation_type),
-            relatedDocumentId=self.related_document_id,
+            relationToTarget=LegalRelationType(self.relation_to_target),
+            targetDocumentId=self.target_document_id,
             filePath=self.file_path,
             fileSize=self.file_size,
             fileType=self.file_type,
-            isFavored=self.is_favored if is_favored is None else is_favored,
+            isFavorite=self.is_favorite if is_favored is None else is_favored,
             createdAt=self.created_at,
             deletedAt=self.deleted_at,
             indexedAt=self.indexed_at,
-            chunksCount=self.chunks_count,
-            indexError=self.index_error,
+            chunkCount=self.chunk_count,
+            lastIndexError=self.last_index_error,
         )
 
     def to_preview_schema(self) -> DocumentPreviewOut:
@@ -198,15 +203,15 @@ class DocumentModel:
             title=self.title,
             category=self._get_category_enum(),
             legalStatus=LegalStatus(self.legal_status),
-            documentType=LegalDocumentType(self.document_type),
+            legalType=LegalDocumentType(self.legal_type),
             datePublication=self.date_publication,
             dateEntreeVigueur=self.date_entree_vigueur,
             version=self.version,
-            relationType=LegalRelationType(self.relation_type),
-            relatedDocumentId=self.related_document_id,
+            relationToTarget=LegalRelationType(self.relation_to_target),
+            targetDocumentId=self.target_document_id,
             fileType=self.file_type,
             createdAt=self.created_at,
-            content=self.content or "",
+            extractedText=self.extracted_text or "",
         )
 
     def to_search_item_schema(
@@ -219,15 +224,15 @@ class DocumentModel:
             id=self.id or "",
             title=self.title,
             category=self._get_category_enum(),
-            realizedAt=self.realized_at,
+            issuedAt=self.issued_at,
             legalStatus=LegalStatus(self.legal_status),
-            documentType=LegalDocumentType(self.document_type),
+            legalType=LegalDocumentType(self.legal_type),
             datePublication=self.date_publication,
             dateEntreeVigueur=self.date_entree_vigueur,
             version=self.version,
-            relationType=LegalRelationType(self.relation_type),
-            relatedDocumentId=self.related_document_id,
+            relationToTarget=LegalRelationType(self.relation_to_target),
+            targetDocumentId=self.target_document_id,
             createdAt=self.created_at,
-            isFavored=self.is_favored if is_favored is None else is_favored,
+            isFavorite=self.is_favorite if is_favored is None else is_favored,
             snippets=snippets,
         )
