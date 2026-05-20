@@ -10,21 +10,14 @@ import {
   fetchUserDocumentPreview,
   searchDocuments,
 } from "../../services/documents.service";
-
-import RechercheDocumentFilters from "../components/rechercheDocument/RechercheDocumentFilters";
-import RechercheDocumentLayout from "../components/rechercheDocument/RechercheDocumentLayout";
-import RechercheDocumentPreviewPanel from "../components/rechercheDocument/RechercheDocumentPreviewPanel";
-import RechercheDocumentResultsHeader from "../components/rechercheDocument/RechercheDocumentResultsHeader";
-import RechercheDocumentResultsList from "../components/rechercheDocument/RechercheDocumentResultsList";
-import RechercheDocumentSearchBar from "../components/rechercheDocument/RechercheDocumentSearchBar";
 import { useAuth } from "../../auth/AuthContext";
-import type { UserLayoutContextValue } from "../layouts/UserLayout";
+import type { UserLayoutContextValue } from "../layouts/AgentLayout";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const RECENT_DOCUMENT_SEARCHES_KEY = "recent-document-searches";
 const MAX_RECENT_DOCUMENT_SEARCHES = 5;
 
-export default function RechercheDocumentPage() {
+export function useRechercheDocumentViewModel() {
   const { user } = useAuth();
   const { toggleFavoriteDocument } = useOutletContext<UserLayoutContextValue>();
   const [searchParams] = useSearchParams();
@@ -47,6 +40,7 @@ export default function RechercheDocumentPage() {
 
   const [pageError, setPageError] = useState("");
   const [previewError, setPreviewError] = useState("");
+
   const recentSearchesStorageKey = useMemo(
     () => `${RECENT_DOCUMENT_SEARCHES_KEY}:${user?.id ?? "anonymous"}`,
     [user?.id],
@@ -113,12 +107,12 @@ export default function RechercheDocumentPage() {
   const hasActiveSearch = useMemo(
     () =>
       Boolean(
-        requestedDocumentId
-        || query.trim()
-          || titleFilter.trim()
-          || dateFrom
-          || dateTo
-          || selectedCategories.length > 0,
+        requestedDocumentId ||
+          query.trim() ||
+          titleFilter.trim() ||
+          dateFrom ||
+          dateTo ||
+          selectedCategories.length > 0,
       ),
     [requestedDocumentId, query, titleFilter, dateFrom, dateTo, selectedCategories],
   );
@@ -159,9 +153,9 @@ export default function RechercheDocumentPage() {
         setTotal(response.total);
 
         setSelectedDocument((current) =>
-          response.items.find((item) => item.id === requestedDocumentId)
-            ?? response.items.find((item) => item.id === current?.id)
-            ?? null,
+          response.items.find((item) => item.id === requestedDocumentId) ??
+          response.items.find((item) => item.id === current?.id) ??
+          null,
         );
       } catch (error) {
         if (!cancelled) {
@@ -229,8 +223,12 @@ export default function RechercheDocumentPage() {
     try {
       const nextValue = await toggleFavoriteDocument(item);
 
-      setResults((current) => current.map((entry) => (entry.id === item.id ? { ...entry, isFavored: nextValue } : entry)));
-      setSelectedDocument((current) => (current?.id === item.id ? { ...current, isFavored: nextValue } : current));
+      setResults((current) =>
+        current.map((entry) => (entry.id === item.id ? { ...entry, isFavored: nextValue } : entry)),
+      );
+      setSelectedDocument((current) =>
+        current?.id === item.id ? { ...current, isFavored: nextValue } : current,
+      );
     } catch (error) {
       setPageError(error instanceof Error ? error.message : "Erreur pendant la mise a jour du favori.");
     }
@@ -245,58 +243,32 @@ export default function RechercheDocumentPage() {
     setSortBy("recent");
   }
 
-  return (
-    <>
-      <RechercheDocumentLayout
-        filters={
-          <RechercheDocumentFilters
-            selectedCategories={selectedCategories}
-            titleFilter={titleFilter}
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-            results={results}
-            onCategoriesChange={setSelectedCategories}
-            onTitleChange={setTitleFilter}
-            onDateFromChange={setDateFrom}
-            onDateToChange={setDateTo}
-            onReset={handleReset}
-          />
-        }
-        searchBar={
-          <RechercheDocumentSearchBar
-            query={query}
-            recentSearches={recentSearches}
-            sortBy={sortBy}
-            onQueryChange={setQuery}
-            onSortChange={setSortBy}
-          />
-        }
-        resultsHeader={<RechercheDocumentResultsHeader total={total} query={query} error={pageError} />}
-        results={
-          <RechercheDocumentResultsList
-            items={results}
-            hasActiveSearch={hasActiveSearch}
-            query={query}
-            selectedId={selectedDocument?.id ?? null}
-            isLoading={isLoading}
-            onSelect={setSelectedDocument}
-            onToggleFavorite={(item) => void handleToggleFavorite(item)}
-          />
-        }
-        preview={selectedDocument ? (
-          <RechercheDocumentPreviewPanel
-            item={selectedDocument}
-            preview={preview}
-            query={query}
-            hasActiveSearch={hasActiveSearch}
-            isLoading={previewLoading}
-            error={previewError}
-            apiBaseUrl={apiBaseUrl}
-            onClose={() => setSelectedDocument(null)}
-            onToggleFavorite={(item) => void handleToggleFavorite(item)}
-          />
-        ) : null}
-      />
-    </>
-  );
+  return {
+    query,
+    setQuery,
+    recentSearches,
+    selectedCategories,
+    setSelectedCategories,
+    titleFilter,
+    setTitleFilter,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    sortBy,
+    setSortBy,
+    results,
+    total,
+    selectedDocument,
+    setSelectedDocument,
+    preview,
+    isLoading,
+    previewLoading,
+    pageError,
+    previewError,
+    hasActiveSearch,
+    handleToggleFavorite,
+    handleReset,
+    apiBaseUrl,
+  };
 }

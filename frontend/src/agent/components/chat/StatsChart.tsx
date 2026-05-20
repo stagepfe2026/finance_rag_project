@@ -1,7 +1,7 @@
 import type { ApexOptions } from "apexcharts";
 import ReactApexChart from "react-apexcharts";
 
-import { useUserDarkMode } from "../hooks/useUserDarkMode";
+import { useAgentDarkMode } from "../../viewmodels/useAgentDarkMode";
 
 export type StatsChartKind = "bar" | "pie" | "line";
 
@@ -110,7 +110,7 @@ function buildOptions(kind: StatsChartKind, labels: string[], isDark: boolean): 
 }
 
 export default function StatsChart({ data, title = "Visualisation statistique", kind = "bar" }: StatsChartProps) {
-  const isDark = useUserDarkMode();
+  const isDark = useAgentDarkMode();
   const cleanData = data.filter((point) => Number.isFinite(point.value));
 
   if (cleanData.length === 0) {

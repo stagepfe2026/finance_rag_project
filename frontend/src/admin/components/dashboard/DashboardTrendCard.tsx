@@ -3,7 +3,7 @@ import type { ApexOptions } from "apexcharts";
 import Chart from "react-apexcharts";
 
 import type { AdminDashboardTrendPoint } from "../../../models/admin-dashboard";
-import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
+import { useAdminDarkMode } from "../../viewmodels/useAdminDarkMode";
 import { DARK, LIGHT, buildChartTheme, buildFill, buildStroke } from "../../utils/chartTheme";
 
 type Props = { trend: AdminDashboardTrendPoint[]; isLoading: boolean };

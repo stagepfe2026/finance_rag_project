@@ -5,18 +5,14 @@ import buildingImage from "../../assets/building_cimf.png";
 import { documentCategoryLabels, type DocumentItem } from "../../models/document";
 import { fetchUserDashboard } from "../../services/dashboard.service";
 import { createNotificationsWebSocket } from "../../services/notifications.service";
-import NotificationsPanel from "../components/acceuil/NotificationsPanel";
-import QuickActionsSection from "../components/acceuil/QuickActionsSection";
-import RecentDocumentsTable from "../components/acceuil/RecentDocumentsTable";
-import SearchBar from "../components/acceuil/SearchBar";
-import WelcomeBanner from "../components/acceuil/WelcomeBanner";
 import type {
   NotificationItem,
   QuickAction,
   RecentDocumentItem,
-} from "../components/acceuil/types/acceuil.types";
+} from "../../models/acceuil";
 
-function formatRelativeDate(value: string) {
+// ─── Pure helper functions ────────────────────────────────────────────────────
+export function formatRelativeDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
@@ -33,7 +29,7 @@ function formatRelativeDate(value: string) {
   return `Il y a ${diffDays} j`;
 }
 
-function formatDocumentDate(document: DocumentItem) {
+export function formatDocumentDate(document: DocumentItem) {
   const value = document.indexedAt || document.createdAt;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -43,7 +39,8 @@ function formatDocumentDate(document: DocumentItem) {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short" }).format(date);
 }
 
-export default function AccueilPage() {
+// ─── ViewModel ───────────────────────────────────────────────────────────────
+export function useAcceuilViewModel() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Utilisateur");
   const [recentDocuments, setRecentDocuments] = useState<RecentDocumentItem[]>([]);
@@ -158,25 +155,14 @@ export default function AccueilPage() {
     setNotifications((current) => current.filter((item) => item.id !== notificationId));
   }
 
-  return (
-    <div className="min-h-[calc(100vh-89px)] bg-slate-50 px-5 py-5">
-      <div className="mx-auto flex min-h-[calc(100vh-129px)] w-full flex-col space-y-4">
-        <WelcomeBanner userName={userName} imageSrc={buildingImage} />
-
-        {pageError ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pageError}</div> : null}
-
-        <div className="grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-          <div className="flex min-h-0 flex-col space-y-4">
-            <SearchBar onSearch={handleSearch} />
-            <QuickActionsSection actions={quickActions} />
-            <RecentDocumentsTable documents={recentDocuments} />
-          </div>
-
-          <div className="flex min-h-0 flex-col space-y-4">
-            <NotificationsPanel items={notifications} onDismiss={handleDismissNotification} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return {
+    userName,
+    recentDocuments,
+    notifications,
+    pageError,
+    quickActions,
+    buildingImage,
+    handleSearch,
+    handleDismissNotification,
+  };
 }

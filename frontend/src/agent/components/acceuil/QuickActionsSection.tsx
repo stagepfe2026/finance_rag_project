@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import SectionCard from "./SectionCard";
-import type { QuickAction } from "./types/acceuil.types";
+import type { QuickAction } from "../../../models/acceuil";
 
 type Props = {
   actions: QuickAction[];

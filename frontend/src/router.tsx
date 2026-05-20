@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import AdminLayout from "./admin/layouts/AdminLayout";
-import UserLayout from "./user/layouts/UserLayout";
+import AgentLayout from "./agent/layouts/AgentLayout";
 
 import { PublicOnlyRoute, RequireAuth, RoleHomeRedirect } from "./auth/guards";
 
@@ -15,7 +15,7 @@ import ImportDocumentPage from "./admin/pages/ImportDocumentPage";
 import ListDocumentPage from "./admin/pages/ListDocumentPage";
 
 
-import { userRoutes } from "./user/routes/userRoutes";
+import { agentRoutes } from "./agent/routes/agentRoutes";
 import ReclamationPage from "./admin/pages/ReclamationPage";
 
 export const router = createBrowserRouter([
@@ -58,8 +58,8 @@ export const router = createBrowserRouter([
     element: <RequireAuth allowedRoles={["FINANCE_USER", "ADMIN"]} />,
     children: [
       {
-        element: <UserLayout />,
-        children: userRoutes,
+        element: <AgentLayout />,
+        children: agentRoutes,
       },
     ],
   },

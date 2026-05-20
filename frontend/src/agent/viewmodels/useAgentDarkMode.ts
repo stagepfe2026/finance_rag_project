@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function useUserDarkMode(): boolean {
+export function useAgentDarkMode(): boolean {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === "undefined") return false;
     return document.body.classList.contains("user-dark-theme");

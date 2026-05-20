@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 
 import SectionCard from "./SectionCard";
-import type { RecentDocumentItem } from "./types/acceuil.types";
+import type { RecentDocumentItem } from "../../../models/acceuil";
 
 interface RecentDocumentsTableProps {
   documents: RecentDocumentItem[];

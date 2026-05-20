@@ -16,15 +16,14 @@ import {
   markReclamationReplyAsRead,
   updateReclamation,
 } from "../../services/reclamation.service";
-import Snackbar from "../components/chat/Snackbar";
-import ReclamationForm from "../components/reclamation/create/ReclamationForm";
-import ReclamationDesk from "../components/reclamation/ReclamationDesk";
 
-const pageSize = 8;
-const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
-const maxFileSize = 5 * 1024 * 1024;
+// ─── Constants ────────────────────────────────────────────────────────────────
+export const pageSize = 8;
+export const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
+export const maxFileSize = 5 * 1024 * 1024;
 
-type FormValues = {
+// ─── Types ────────────────────────────────────────────────────────────────────
+export type FormValues = {
   subject: string;
   description: string;
   problemType: ReclamationProblemType | "";
@@ -33,20 +32,20 @@ type FormValues = {
   attachment: File | null;
 };
 
-type FieldErrors = Partial<
+export type FieldErrors = Partial<
   Record<
     "subject" | "description" | "problemType" | "customProblemType" | "priority" | "attachment",
     string
   >
 >;
 
-type SnackbarState = {
+export type SnackbarState = {
   open: boolean;
   message: string;
   tone: "success" | "error" | "info";
 };
 
-const initialValues: FormValues = {
+export const initialValues: FormValues = {
   subject: "",
   description: "",
   problemType: "",
@@ -55,15 +54,21 @@ const initialValues: FormValues = {
   attachment: null,
 };
 
-function hasUnreadReply(reclamation: Reclamation) {
+// ─── Pure helper functions ────────────────────────────────────────────────────
+export function hasUnreadReply(reclamation: Reclamation) {
   return Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
 }
 
-function hasReadReply(reclamation: Reclamation) {
+export function hasReadReply(reclamation: Reclamation) {
   return Boolean(reclamation.adminReply) && reclamation.isReplyReadByUser;
 }
 
-export default function ReclamationPage() {
+export function countWords(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+// ─── ViewModel ───────────────────────────────────────────────────────────────
+export function useReclamationViewModel() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -225,10 +230,6 @@ export default function ReclamationPage() {
       return { ...current, [field]: value };
     });
     setFormErrors((current) => ({ ...current, [field]: undefined }));
-  }
-
-  function countWords(value: string) {
-    return value.trim().split(/\s+/).filter(Boolean).length;
   }
 
   function validateForm() {
@@ -435,57 +436,42 @@ export default function ReclamationPage() {
     setIsCreating(true);
   }
 
-  return (
-    <>
-      <ReclamationDesk
-        reclamations={paginatedReclamations}
-        selectedReclamation={selectedReclamation}
-        search={search}
-        statusFilter={statusFilter}
-        readFilter={readFilter}
-        page={page}
-        pageSize={pageSize}
-        totalPages={totalPages}
-        totalResults={filteredReclamations.length}
-        isLoading={isLoading}
-        pageError={pageError}
-        onSearchChange={setSearch}
-        onStatusChange={setStatusFilter}
-        onReadFilterChange={setReadFilter}
-        onResetFilters={() => {
-          setSearch("");
-          setStatusFilter("ALL");
-          setReadFilter("ALL");
-        }}
-        onPageChange={setPage}
-        onSelect={handleConsult}
-        onEdit={openEditModal}
-        onDelete={handleAskDelete}
-        onRefresh={() => void loadReclamations()}
-        onCreate={openCreateModal}
-        onCloseDetails={() => setSelectedReclamation(null)}
-        onCloseCreate={closeCreateModal}
-        deleteTarget={deleteTarget}
-        isDeleting={isDeleting}
-        onCloseDeleteModal={handleCloseDeleteModal}
-        onConfirmDelete={() => void handleConfirmDelete()}
-        isCreating={isCreating}
-        createForm={(
-          <ReclamationForm
-            values={formValues}
-            errors={formErrors}
-            submitError=""
-            successMessage=""
-            isSubmitting={isSubmitting}
-            onChange={updateField}
-            onSubmit={() => void (editingReclamation ? handleUpdateSubmit() : handleCreateSubmit())}
-            onClose={closeCreateModal}
-            modeLabel={editingReclamation ? "Modifier reclamation" : "Nouvelle reclamation"}
-          />
-        )}
-      />
-
-      <Snackbar open={snackbar.open} message={snackbar.message} tone={snackbar.tone} />
-    </>
-  );
+  return {
+    reclamations,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    readFilter,
+    setReadFilter,
+    selectedReclamation,
+    setSelectedReclamation,
+    isCreating,
+    editingReclamation,
+    page,
+    setPage,
+    pageError,
+    isLoading,
+    deleteTarget,
+    isDeleting,
+    formValues,
+    formErrors,
+    isSubmitting,
+    snackbar,
+    filteredReclamations,
+    totalPages,
+    paginatedReclamations,
+    loadReclamations,
+    handleConsult,
+    handleAskDelete,
+    handleCloseDeleteModal,
+    updateField,
+    validateForm,
+    handleCreateSubmit,
+    handleUpdateSubmit,
+    handleConfirmDelete,
+    openCreateModal,
+    closeCreateModal,
+    openEditModal,
+  };
 }

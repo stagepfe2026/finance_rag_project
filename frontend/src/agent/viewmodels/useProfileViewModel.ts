@@ -1,24 +1,22 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { RotateCcw, Save } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthContext";
 import { updateProfileRequest } from "../../services/auth.service";
-import ProfileInformationGrid from "../components/profile/ProfileInformationGrid";
-import ProfileSnackbar from "../components/profile/ProfileSnackbar";
-import ProfileSummaryCard from "../components/profile/ProfileSummaryCard";
 import {
   buildProfileForm,
   type ProfileFormState,
   type ProfileTextFieldName,
 } from "../components/profile/profileForm";
 
-type ProfileSnackbarState = {
+// ─── Types ────────────────────────────────────────────────────────────────────
+export type ProfileSnackbarState = {
   open: boolean;
   message: string;
   tone: "success" | "error" | "info";
 };
 
-function resizeProfileImage(file: File) {
+// ─── Pure helper function ─────────────────────────────────────────────────────
+export function resizeProfileImage(file: File) {
   return new Promise<string>((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
       reject(new Error("Veuillez selectionner une image valide."));
@@ -53,7 +51,8 @@ function resizeProfileImage(file: File) {
   });
 }
 
-export default function UserProfilePage() {
+// ─── ViewModel ───────────────────────────────────────────────────────────────
+export function useProfileViewModel() {
   const { user, refreshSession } = useAuth();
   const [form, setForm] = useState<ProfileFormState>(() => buildProfileForm(user));
   const [snackbar, setSnackbar] = useState<ProfileSnackbarState>({ open: false, message: "", tone: "info" });
@@ -80,14 +79,6 @@ export default function UserProfilePage() {
       window.clearTimeout(timer);
     };
   }, [snackbar.open, snackbar.message]);
-
-  if (!user) {
-    return (
-      <div className="min-h-[calc(100vh-89px)] bg-slate-50 px-4 py-5 text-xs text-slate-500">
-        Chargement du profil...
-      </div>
-    );
-  }
 
   function clearMessages() {
     setSnackbar((current) => ({ ...current, open: false }));
@@ -147,47 +138,14 @@ export default function UserProfilePage() {
     clearMessages();
   }
 
-  return (
-    <div className="min-h-[calc(100vh-89px)] bg-slate-50 px-4 py-4">
-      <form onSubmit={handleSubmit} className="mx-auto grid w-full gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
-        <ProfileSummaryCard
-          user={user}
-          imageUrl={form.profileImageUrl}
-          onImageChange={(file) => void handleImageChange(file)}
-        />
-
-        <div className="min-w-0 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight text-[#273043]">Mes informations personnelles</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Reinitialiser les informations personnelles"
-                onClick={handleReset}
-                disabled={isSaving}
-                className="inline-flex h-8 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#273043] transition hover:border-[#273043] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <RotateCcw size={15} />
-                Reinitialiser
-              </button>
-              <button
-                type="submit"
-                aria-label={isSaving ? "Enregistrement du profil en cours" : "Enregistrer les informations personnelles"}
-                disabled={isSaving}
-                className="inline-flex h-8 items-center justify-center gap-2 rounded-xl bg-[#9d0208] px-4 text-sm font-semibold text-white transition hover:bg-[#7f0207] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Save size={15} />
-                {isSaving ? "Enregistrement..." : "Enregistrer"}
-              </button>
-            </div>
-          </div>
-
-          <ProfileInformationGrid form={form} onFieldChange={updateField} />
-        </div>
-      </form>
-      <ProfileSnackbar open={snackbar.open} message={snackbar.message} tone={snackbar.tone} />
-    </div>
-  );
+  return {
+    user,
+    form,
+    snackbar,
+    isSaving,
+    updateField,
+    handleSubmit,
+    handleImageChange,
+    handleReset,
+  };
 }

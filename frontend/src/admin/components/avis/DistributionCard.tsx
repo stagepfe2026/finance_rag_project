@@ -1,5 +1,5 @@
 import type { ChatFeedbackDistributionItem } from "../../../models/chat-feedback";
-import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
+import { useAdminDarkMode } from "../../viewmodels/useAdminDarkMode";
 
 const COLORS = ["#071f3d", "#9d0208", "#f06f80", "#8d7f83", "#d995a0"];
 const DARK_COLORS = ["#93c5fd", "#f87171", "#fb7185", "#cbd5e1", "#fbbf24"];

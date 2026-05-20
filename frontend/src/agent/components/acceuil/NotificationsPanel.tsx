@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import SectionCard from "./SectionCard";
-import type { NotificationItem } from "./types/acceuil.types";
+import type { NotificationItem } from "../../../models/acceuil";
 
 interface NotificationsPanelProps {
   items: NotificationItem[];

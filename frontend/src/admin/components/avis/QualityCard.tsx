@@ -1,5 +1,5 @@
 import type { ChatFeedbackStats } from "../../../models/chat-feedback";
-import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
+import { useAdminDarkMode } from "../../viewmodels/useAdminDarkMode";
 
 const NAVY = "#071f3d";
 const RED = "#9d0208";

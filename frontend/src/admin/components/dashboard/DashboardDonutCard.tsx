@@ -1,4 +1,4 @@
-import { useAdminDarkMode } from "../../hooks/useAdminDarkMode";
+import { useAdminDarkMode } from "../../viewmodels/useAdminDarkMode";
 
 type DonutItem = { label: string; value: number; color: string };
 

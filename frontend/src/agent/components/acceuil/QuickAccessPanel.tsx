@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import SectionCard from "./SectionCard";
-import type { QuickAccessItem } from "./types/acceuil.types";
+import type { QuickAccessItem } from "../../../models/acceuil";
 
 interface QuickAccessPanelProps {
   items: QuickAccessItem[];

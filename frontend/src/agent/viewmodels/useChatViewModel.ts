@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useOutletContext, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 import type { ChatFeedback, ChatMessage, Conversation, ResponseMode } from "../../models/chat";
 import {
@@ -12,21 +12,30 @@ import {
   restoreConversation,
   submitChatFeedback,
 } from "../../services/chat.service";
-import type { UserLayoutContextValue } from "./UserLayout";
-import ChatMain from "../components/chat/ChatMain";
-import ArchivedConversationsModal from "../components/chat/ArchivedConversationsModal";
-import ConversationActionModal from "../components/chat/ConversationActionModal";
-import ChatSidebar from "../components/chat/ChatSidebar";
-import Snackbar from "../components/chat/Snackbar";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const POLL_INTERVAL_MS = 2500;
 
-function upsertConversation(list: Conversation[], nextConversation: Conversation) {
+// ─── Types ────────────────────────────────────────────────────────────────────
+export type SnackbarState = {
+  open: boolean;
+  message: string;
+  tone: "success" | "error" | "info";
+};
+
+export type ConversationModalState = {
+  mode: "rename" | "archive" | "delete" | null;
+  conversation: Conversation | null;
+  busy: boolean;
+};
+
+// ─── Pure helper functions ────────────────────────────────────────────────────
+export function upsertConversation(list: Conversation[], nextConversation: Conversation) {
   const remaining = list.filter((item) => item._id !== nextConversation._id);
   return [nextConversation, ...remaining];
 }
 
-function buildTemporaryMessage(input: {
+export function buildTemporaryMessage(input: {
   id: string;
   conversationId: string;
   role: "user" | "assistant";
@@ -44,7 +53,7 @@ function buildTemporaryMessage(input: {
   };
 }
 
-function getNextSelectedConversationId(
+export function getNextSelectedConversationId(
   conversations: Conversation[],
   removedConversationId?: string,
   currentSelectedId?: string | null,
@@ -60,20 +69,10 @@ function getNextSelectedConversationId(
   return conversations.find((item) => !item.isArchived)?._id ?? conversations[0]?._id ?? null;
 }
 
-type SnackbarState = {
-  open: boolean;
-  message: string;
-  tone: "success" | "error" | "info";
-};
-
-type ConversationModalState = {
-  mode: "rename" | "archive" | "delete" | null;
-  conversation: Conversation | null;
-  busy: boolean;
-};
-
-export default function ChatLayout() {
-  const { registerGeneratingMessage } = useOutletContext<UserLayoutContextValue>();
+// ─── ViewModel ───────────────────────────────────────────────────────────────
+export function useChatViewModel(
+  registerGeneratingMessage: (messageId: string, conversationId: string) => void,
+) {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialActionHandledRef = useRef(false);
 
@@ -212,7 +211,6 @@ export default function ChatLayout() {
 
     const timer = setInterval(async () => {
       if (cancelled) return;
-      // Only poll the conversation the user is currently viewing
       if (selectedConversationIdRef.current !== conversationId) {
         clearInterval(timer);
         return;
@@ -372,13 +370,11 @@ export default function ChatLayout() {
         responseMode,
       });
 
-      // Register the generating assistant message with UserLayout for global notification
       if (result.assistantMessage.status === "generating") {
         registerGeneratingMessage(result.assistantMessage._id, result.conversation._id);
       }
 
       setConversations((current) => upsertConversation(current, result.conversation));
-      // Only update selectedConversationId + URL if the user hasn't switched away
       if (selectedConversationIdRef.current === selectedConversationId || !selectedConversationId) {
         setSelectedConversationId(result.conversation._id);
         setSearchParams({ conversationId: result.conversation._id }, { replace: true });
@@ -387,7 +383,6 @@ export default function ChatLayout() {
         const withoutTemps = current.filter(
           (m) => m._id !== tempUserMessage._id && m._id !== tempAssistantMessage._id,
         );
-        // Mark generating message as pending for the spinner
         const assistantMsg =
           result.assistantMessage.status === "generating"
             ? { ...result.assistantMessage, pending: true }
@@ -442,63 +437,60 @@ export default function ChatLayout() {
     }
   }
 
-  return (
-    <>
-      <div className="h-[calc(100vh-81px)] w-full overflow-hidden bg-slate-50 px-3 py-3">
-        <div className="flex h-full min-h-0 gap-3 overflow-hidden">
-          <ChatSidebar
-            isOpen={isHistoryOpen}
-            activeConversations={activeConversations}
-            selectedConversationId={selectedConversationId}
-            search={search}
-            isLoading={isLoadingConversations}
-            archivedCount={archivedConversations.length}
-            onToggle={() => setIsHistoryOpen((current) => !current)}
-            onSearchChange={setSearch}
-            onSelectConversation={(conversationId) => {
-              setSelectedConversationId(conversationId);
-              if (conversationId) setSearchParams({ conversationId }, { replace: true });
-            }}
-            onOpenArchiveModal={() => setIsArchiveModalOpen(true)}
-            onCreateConversation={handleCreateConversation}
-            onRenameConversation={handleRenameConversation}
-            onArchiveConversation={handleArchiveConversation}
-            onRestoreConversation={handleRestoreConversation}
-            onDeleteConversation={handleDeleteConversation}
-          />
-          <div className="min-w-0 flex-1">
-            <ChatMain
-              conversation={selectedConversation}
-              messages={messages}
-              isLoading={isLoadingMessages}
-              isSubmitting={isSubmitting}
-              error={pageError}
-              responseMode={responseMode}
-              onResponseModeChange={setResponseMode}
-              onSubmit={handleSendMessage}
-              onFeedback={handleMessageFeedback}
-              onNotify={showSnackbar}
-            />
-          </div>
-        </div>
-      </div>
+  function handleSelectConversation(conversationId: string) {
+    setSelectedConversationId(conversationId);
+    if (conversationId) setSearchParams({ conversationId }, { replace: true });
+  }
 
-      <ConversationActionModal
-        mode={conversationModal.mode}
-        conversation={conversationModal.conversation}
-        open={Boolean(conversationModal.mode && conversationModal.conversation)}
-        busy={conversationModal.busy}
-        onClose={closeConversationModal}
-        onConfirm={handleConversationModalConfirm}
-      />
-      <ArchivedConversationsModal
-        open={isArchiveModalOpen}
-        conversations={archivedConversations}
-        busyConversationId={restoringConversationId}
-        onClose={() => setIsArchiveModalOpen(false)}
-        onRestore={handleRestoreConversation}
-      />
-      <Snackbar open={snackbar.open} message={snackbar.message} tone={snackbar.tone} />
-    </>
-  );
+  function handleOpenArchiveModal() {
+    setIsArchiveModalOpen(true);
+  }
+
+  function handleCloseArchiveModal() {
+    setIsArchiveModalOpen(false);
+  }
+
+  function handleToggleHistory() {
+    setIsHistoryOpen((current) => !current);
+  }
+
+  return {
+    conversations,
+    selectedConversationId,
+    setSelectedConversationId,
+    messages,
+    search,
+    setSearch,
+    responseMode,
+    setResponseMode,
+    isLoadingConversations,
+    isLoadingMessages,
+    isSubmitting,
+    pageError,
+    snackbar,
+    conversationModal,
+    isArchiveModalOpen,
+    isHistoryOpen,
+    restoringConversationId,
+    filteredConversations,
+    activeConversations,
+    archivedConversations,
+    selectedConversation,
+    showSnackbar,
+    openConversationModal,
+    closeConversationModal,
+    handleCreateConversation,
+    handleRenameConversation,
+    handleArchiveConversation,
+    handleRestoreConversation,
+    handleDeleteConversation,
+    handleConversationModalConfirm,
+    handleSendMessage,
+    handleMessageFeedback,
+    handleSelectConversation,
+    handleOpenArchiveModal,
+    handleCloseArchiveModal,
+    handleToggleHistory,
+    setSearchParams,
+  };
 }

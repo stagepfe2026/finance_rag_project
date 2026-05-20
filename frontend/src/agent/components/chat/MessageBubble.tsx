@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { ChatFeedback, ChatMessage } from "../../../models/chat";
-import StructuredAssistantResponse from "../../chat/StructuredAssistantResponse";
+import StructuredAssistantResponse from "./StructuredAssistantResponse";
 import MessageActions from "./MessageActions";
 
 type MessageBubbleProps = {
