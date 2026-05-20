@@ -6,7 +6,7 @@ import AccueilPage from "../pages/AcceuilPage";
 import UserProfilePage from "../pages/UserProfilePage";
 import UserGuidePage from "../pages/UserGuidePage";
 
-export const userRoutes = [
+export const agentRoutes = [
   {
     index: true,
     element: <AccueilPage />,

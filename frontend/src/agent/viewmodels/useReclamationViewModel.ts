@@ -18,9 +18,9 @@ import {
 } from "../../services/reclamation.service";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-export const pageSize = 8;
-export const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
-export const maxFileSize = 5 * 1024 * 1024;
+const pageSize = 8;
+const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
+const maxFileSize = 5 * 1024 * 1024;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type FormValues = {
@@ -45,7 +45,7 @@ export type SnackbarState = {
   tone: "success" | "error" | "info";
 };
 
-export const initialValues: FormValues = {
+const initialValues: FormValues = {
   subject: "",
   description: "",
   problemType: "",
@@ -55,15 +55,15 @@ export const initialValues: FormValues = {
 };
 
 // ─── Pure helper functions ────────────────────────────────────────────────────
-export function hasUnreadReply(reclamation: Reclamation) {
+function hasUnreadReply(reclamation: Reclamation) {
   return Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
 }
 
-export function hasReadReply(reclamation: Reclamation) {
+function hasReadReply(reclamation: Reclamation) {
   return Boolean(reclamation.adminReply) && reclamation.isReplyReadByUser;
 }
 
-export function countWords(value: string) {
+function countWords(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 

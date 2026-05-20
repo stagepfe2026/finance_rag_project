@@ -7,14 +7,14 @@ export type AdminDashboardSummary = {
   pendingReclamations: number;
 };
 
-export type AdminDashboardReclamationBreakdown = {
+type AdminDashboardReclamationBreakdown = {
   pending: number;
   inProgress: number;
   resolved: number;
   urgent: number;
 };
 
-export type AdminDashboardDocumentBreakdown = {
+type AdminDashboardDocumentBreakdown = {
   indexed: number;
   processing: number;
   failed: number;
@@ -40,7 +40,7 @@ export type AdminDashboardIndexedDocument = {
   chunksCount: number | null;
 };
 
-export type AdminDashboardLatestAccess = {
+type AdminDashboardLatestAccess = {
   userId: string;
   userName: string;
   email: string;
@@ -60,7 +60,7 @@ export type AdminDashboardUrgentCase = {
   createdAt: string;
 };
 
-export type AdminDashboardSlaStats = {
+type AdminDashboardSlaStats = {
   overdueCount: number;
   dueSoonCount: number;
   urgentPendingCount: number;

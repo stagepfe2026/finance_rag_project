@@ -16,6 +16,7 @@ export type SensitiveAuditGroupId =
   | "index_removed"
   | "reclamations_handled";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const SENSITIVE_AUDIT_GROUPS: Array<{
   id: SensitiveAuditGroupId;
   label: string;

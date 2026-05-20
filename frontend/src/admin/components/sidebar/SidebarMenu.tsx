@@ -1,7 +1,14 @@
+import type { LucideIcon } from "lucide-react";
 import SidebarItem from "./SidebarItem";
 
+type MenuItem = {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+};
+
 type Props = {
-  items: any[];
+  items: MenuItem[];
   isCollapsed: boolean;
 };
 

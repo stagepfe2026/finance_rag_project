@@ -60,20 +60,6 @@ export async function fetchConversations(): Promise<Conversation[]> {
     : [];
 }
 
-export async function createConversation(): Promise<Conversation> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations`, {
-    method: "POST",
-    credentials: "include",
-  });
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw new Error(readErrorMessage(data, "Impossible de creer la conversation."));
-  }
-
-  return (data as ApiEnvelope<Conversation>).data;
-}
-
 export async function renameConversation(conversationId: string, summary: string): Promise<Conversation> {
   const response = await fetch(`${apiBaseUrl}/api/v1/chat/conversations/${conversationId}`, {
     method: "PATCH",

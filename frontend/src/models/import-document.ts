@@ -1,7 +1,6 @@
 import { documentCategoryLabels, type DocumentCategoryValue } from "./document";
 
 export type CategoryValue = DocumentCategoryValue;
-export type LegalStatusValue = "actif" | "futur" | "remplace" | "abroge";
 export type LegalDocumentTypeValue = "" | "loi" | "decret" | "arrete" | "note" | "circulaire";
 export type LegalRelationTypeValue = "none" | "remplace" | "abroge";
 
@@ -20,7 +19,7 @@ export type PreviewItem = {
   imageUrl: string;
 };
 
-export type StepStatus = "todo" | "current" | "done" | "error";
+type StepStatus = "todo" | "current" | "done" | "error";
 
 export type ProgressStep = {
   label: string;
@@ -43,11 +42,6 @@ export const categoryOptions: CategoryOption[] = [
   { value: "other", label: documentCategoryLabels.other },
 ];
 
-export const legalStatusOptions: SelectOption[] = [
-  { value: "actif", label: "Actif" },
-  { value: "futur", label: "Futur" },
-  { value: "remplace", label: "Remplacé" },
-];
 
 export const legalDocumentTypeOptions: SelectOption[] = [
   { value: "loi", label: "Loi" },

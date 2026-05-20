@@ -35,7 +35,7 @@ const emptyPreview: DocumentPreview = {
 };
 
 // ─── Pure helper functions ────────────────────────────────────────────────────
-export function formatDocumentDate(document: DocumentItem) {
+function formatDocumentDate(document: DocumentItem) {
   const rawDate = document.realizedAt || document.indexedAt || document.createdAt;
   if (!rawDate) return "-";
 
@@ -49,7 +49,7 @@ export function formatDocumentDate(document: DocumentItem) {
   }).format(parsedDate);
 }
 
-export function formatDateTime(value: string) {
+function formatDateTime(value: string) {
   const parsedDate = new Date(value);
   if (Number.isNaN(parsedDate.getTime())) return "-";
 
@@ -59,7 +59,7 @@ export function formatDateTime(value: string) {
   }).format(parsedDate);
 }
 
-export function formatFileSize(size: number) {
+function formatFileSize(size: number) {
   if (!Number.isFinite(size) || size <= 0) return "-";
 
   const units = ["B", "KB", "MB", "GB"];
@@ -74,7 +74,7 @@ export function formatFileSize(size: number) {
   return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-export function normalizeFileType(fileType: string) {
+function normalizeFileType(fileType: string) {
   const value = (fileType || "").toLowerCase();
 
   if (value.includes("pdf")) return "PDF";
@@ -91,7 +91,7 @@ export function normalizeFileType(fileType: string) {
   return value ? value.toUpperCase().slice(0, 10) : "-";
 }
 
-export function sanitizeFilenamePart(value: string) {
+function sanitizeFilenamePart(value: string) {
   return value
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -101,7 +101,7 @@ export function sanitizeFilenamePart(value: string) {
     .toLowerCase();
 }
 
-export function makeFilename(extension: "pdf" | "xlsx") {
+function makeFilename(extension: "pdf" | "xlsx") {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   return `documents-export-${sanitizeFilenamePart(stamp)}.${extension}`;
 }
@@ -168,7 +168,7 @@ export function useListDocumentViewModel() {
     return () => {
       cancelled = true;
     };
-  }, [search, category, status]);
+  }, [search, category, status, closeSnackbar]);
 
   const indexedCount = useMemo(
     () => documents.filter((document) => document.documentStatus === "indexed").length,
@@ -399,7 +399,7 @@ export function useListDocumentViewModel() {
           4: { cellWidth: 42, halign: "center" },
           5: { cellWidth: 50, halign: "right" },
         },
-        didParseCell: (data: any) => {
+        didParseCell: (data) => {
           if (data.section === "body" && data.column.index === 2) {
             const value = String(data.cell.raw || "").toLowerCase();
 

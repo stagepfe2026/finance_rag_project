@@ -20,14 +20,15 @@ export default function ReclamationAttachmentField({
 
   useEffect(() => {
     if (!file || !isImage) {
-      setPreviewUrl(null);
-      return;
+      const frame = window.requestAnimationFrame(() => setPreviewUrl(null));
+      return () => window.cancelAnimationFrame(frame);
     }
 
     const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+    const frame = window.requestAnimationFrame(() => setPreviewUrl(objectUrl));
 
     return () => {
+      window.cancelAnimationFrame(frame);
       URL.revokeObjectURL(objectUrl);
     };
   }, [file, isImage]);

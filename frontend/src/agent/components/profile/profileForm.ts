@@ -7,8 +7,6 @@ export type ProfileTextFieldName = Exclude<
   "notificationsEmail" | "notificationsSms" | "twoFactorEnabled"
 >;
 
-export type ProfileToggleName = "notificationsEmail" | "notificationsSms" | "twoFactorEnabled";
-
 export function buildProfileForm(user: AuthUser | null): ProfileFormState {
   return {
     nom: user?.nom ?? "",

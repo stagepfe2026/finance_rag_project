@@ -12,9 +12,10 @@ export default function AuditChart({ trend }: { trend: AuditTrendPoint[] }) {
   const categories = useMemo(() => trend.map((p) => p.label), [trend]);
   const maxCount = useMemo(() => Math.max(...trend.map((p) => p.count), 1), [trend]);
 
-  const seriesColors = isDark
-    ? [DARK.navy, DARK.red, DARK.black, DARK.gray]
-    : [LIGHT.navy, LIGHT.red, LIGHT.black, LIGHT.gray];
+  const seriesColors = useMemo(
+    () => (isDark ? [DARK.navy, DARK.red, DARK.black, DARK.gray] : [LIGHT.navy, LIGHT.red, LIGHT.black, LIGHT.gray]),
+    [isDark],
+  );
 
   const series = useMemo(
     () => [

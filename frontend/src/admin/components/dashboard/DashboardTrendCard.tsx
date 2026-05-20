@@ -13,9 +13,10 @@ export default function DashboardTrendCard({ trend, isLoading }: Props) {
 
   const categories = useMemo(() => trend.map((p) => p.label), [trend]);
 
-  const seriesColors = isDark
-    ? [DARK.navy, DARK.red]
-    : [LIGHT.navy, LIGHT.red];
+  const seriesColors = useMemo(
+    () => (isDark ? [DARK.navy, DARK.red] : [LIGHT.navy, LIGHT.red]),
+    [isDark],
+  );
 
   const series = useMemo(
     () => [

@@ -23,7 +23,7 @@ export type ChatFeedbackDistributionItem = {
   percentage: number;
 };
 
-export type ChatFeedbackRecentDislike = {
+type ChatFeedbackRecentDislike = {
   messageId: string;
   conversationId: string;
   content: string;

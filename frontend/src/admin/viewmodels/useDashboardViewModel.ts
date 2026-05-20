@@ -19,11 +19,11 @@ const EMPTY: AdminDashboard = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-export function toDateInput(d: Date) {
+function toDateInput(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function subtractDays(s: string, n: number) {
+function subtractDays(s: string, n: number) {
   const d = new Date(`${s}T00:00:00`);
   d.setDate(d.getDate() - n);
   return toDateInput(d);

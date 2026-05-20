@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import type { ProfileFormState, ProfileTextFieldName } from "./profileForm";
+import type { ProfileTextFieldName } from "./profileForm";
 
 type ProfileSectionProps = {
   title: string;
@@ -33,12 +33,6 @@ type ProfileTextareaFieldProps = {
   onChange: (name: ProfileTextFieldName, value: string) => void;
 };
 
-type ProfileToggleFieldProps = {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-};
 
 const fieldClassName =
   "mt-1 h-8 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#9d0208] focus:ring-2 focus:ring-[#9d0208]/10";
@@ -116,35 +110,4 @@ export function ProfileTextareaField({
   );
 }
 
-export function ProfileToggleField({ label, description, checked, onChange }: ProfileToggleFieldProps) {
-  return (
-    <button
-      type="button"
-      aria-label={`${checked ? "Desactiver" : "Activer"} ${label}`}
-      aria-pressed={checked}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition hover:border-[#9d0208]"
-    >
-      <span>
-        <span className="block text-[12px] font-semibold text-slate-900">{label}</span>
-        <span className="mt-0.5 block text-[11px] text-slate-500">{description}</span>
-      </span>
-      <span
-        className={[
-          "relative inline-flex h-5 w-9 shrink-0 rounded-full p-0.5 transition",
-          checked ? "bg-[#9d0208]" : "bg-slate-200",
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "h-4 w-4 rounded-full bg-white shadow-sm transition",
-            checked ? "translate-x-4" : "translate-x-0",
-          ].join(" ")}
-        />
-      </span>
-    </button>
-  );
-}
-
 export type ProfileFieldChange = (name: ProfileTextFieldName, value: string) => void;
-export type ProfileToggleChange = (name: keyof Pick<ProfileFormState, "notificationsEmail" | "notificationsSms" | "twoFactorEnabled">, value: boolean) => void;

@@ -16,7 +16,7 @@ export type ProfileSnackbarState = {
 };
 
 // ─── Pure helper function ─────────────────────────────────────────────────────
-export function resizeProfileImage(file: File) {
+function resizeProfileImage(file: File) {
   return new Promise<string>((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
       reject(new Error("Veuillez selectionner une image valide."));
@@ -64,6 +64,7 @@ export function useProfileViewModel() {
 
   useEffect(() => {
     setForm(buildProfileForm(user));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   useEffect(() => {

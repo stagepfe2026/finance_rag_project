@@ -4,7 +4,7 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function getSearchTerms(query: string) {
+function getSearchTerms(query: string) {
   return query
     .split(/\s+/)
     .map((term) => term.trim())

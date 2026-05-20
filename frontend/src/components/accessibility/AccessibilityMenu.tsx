@@ -1,5 +1,5 @@
 import { Contrast, Eye, PersonStanding, Volume2, ZoomIn } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type AccessibilityMenuProps = {
   highContrastClassName: string;
@@ -8,6 +8,20 @@ type AccessibilityMenuProps = {
 };
 
 const ZOOM_LEVELS = [1, 1.1, 1.25] as const;
+
+function speak(text: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    return false;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "fr-FR";
+  utterance.rate = 0.95;
+  window.speechSynthesis.speak(utterance);
+  return true;
+}
 
 function getReadableElementText(element: HTMLElement) {
   const labelledBy = element.getAttribute("aria-labelledby");
@@ -77,7 +91,6 @@ export default function AccessibilityMenu({
 
     return window.localStorage.getItem(eyeComfortStorageKey) === "true";
   });
-  const voiceDisableAnnouncementRef = useRef(false);
   const zoomLevel = ZOOM_LEVELS[zoomLevelIndex];
 
   useEffect(() => {
@@ -126,36 +139,17 @@ export default function AccessibilityMenu({
     };
   }, [eyeComfortStorageKey, isEyeComfortEnabled]);
 
-  function speak(text: string) {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      return false;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "fr-FR";
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
-    return true;
-  }
-
-  function handleToggleVoice() {
+  const handleToggleVoice = useCallback(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setIsVoiceHelpOpen(true);
       return;
     }
 
-    setIsVoiceEnabled((current) => {
-      const nextValue = !current;
-      if (!nextValue) {
-        voiceDisableAnnouncementRef.current = true;
-      }
-      speak(nextValue ? "Mode voix active." : "Mode voix desactive.");
-      return nextValue;
-    });
+    const nextValue = !isVoiceEnabled;
+    speak(nextValue ? "Mode voix active." : "Mode voix desactive.");
+    setIsVoiceEnabled(nextValue);
     setIsVoiceHelpOpen(true);
-  }
+  }, [isVoiceEnabled]);
 
   function handleCycleZoom() {
     setZoomLevelIndex((current) => (current + 1) % ZOOM_LEVELS.length);
@@ -163,14 +157,6 @@ export default function AccessibilityMenu({
 
   useEffect(() => {
     if (!isVoiceEnabled) {
-      if (voiceDisableAnnouncementRef.current) {
-        voiceDisableAnnouncementRef.current = false;
-        return;
-      }
-
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
       return;
     }
 

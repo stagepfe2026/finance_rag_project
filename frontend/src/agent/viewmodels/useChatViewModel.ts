@@ -30,12 +30,12 @@ export type ConversationModalState = {
 };
 
 // ─── Pure helper functions ────────────────────────────────────────────────────
-export function upsertConversation(list: Conversation[], nextConversation: Conversation) {
+function upsertConversation(list: Conversation[], nextConversation: Conversation) {
   const remaining = list.filter((item) => item._id !== nextConversation._id);
   return [nextConversation, ...remaining];
 }
 
-export function buildTemporaryMessage(input: {
+function buildTemporaryMessage(input: {
   id: string;
   conversationId: string;
   role: "user" | "assistant";
@@ -53,7 +53,7 @@ export function buildTemporaryMessage(input: {
   };
 }
 
-export function getNextSelectedConversationId(
+function getNextSelectedConversationId(
   conversations: Conversation[],
   removedConversationId?: string,
   currentSelectedId?: string | null,

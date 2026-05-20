@@ -18,8 +18,6 @@ export function useAdminDarkMode(): boolean {
     const root = document.querySelector(".admin-theme-root");
     if (!root) return;
 
-    setIsDark(root.classList.contains("admin-dark-theme"));
-
     const observer = new MutationObserver(() => {
       setIsDark(root.classList.contains("admin-dark-theme"));
     });

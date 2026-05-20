@@ -12,7 +12,7 @@ import type {
 } from "../../models/acceuil";
 
 // ─── Pure helper functions ────────────────────────────────────────────────────
-export function formatRelativeDate(value: string) {
+function formatRelativeDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
@@ -29,7 +29,7 @@ export function formatRelativeDate(value: string) {
   return `Il y a ${diffDays} j`;
 }
 
-export function formatDocumentDate(document: DocumentItem) {
+function formatDocumentDate(document: DocumentItem) {
   const value = document.indexedAt || document.createdAt;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {

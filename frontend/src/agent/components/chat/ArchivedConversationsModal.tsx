@@ -44,15 +44,16 @@ export default function ArchivedConversationsModal({
   const totalPages = Math.max(1, Math.ceil(conversations.length / ITEMS_PER_PAGE));
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    setPage(1);
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => setPage(1));
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   useEffect(() => {
-    setPage((current) => Math.min(current, totalPages));
+    const frame = window.requestAnimationFrame(() => {
+      setPage((current) => Math.min(current, totalPages));
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [totalPages]);
 
   useEffect(() => {

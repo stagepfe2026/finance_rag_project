@@ -46,7 +46,8 @@ export default function ChatMain({
       window.setTimeout(() => searchInputRef.current?.focus(), 120);
       return;
     }
-    setSearchQuery("");
+    const frame = window.requestAnimationFrame(() => setSearchQuery(""));
+    return () => window.cancelAnimationFrame(frame);
   }, [isSearchOpen]);
 
   const searchResultsCount = useMemo(() => {

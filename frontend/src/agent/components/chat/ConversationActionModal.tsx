@@ -22,9 +22,9 @@ export default function ConversationActionModal({
   const [summary, setSummary] = useState("");
 
   useEffect(() => {
-    if (open && mode === "rename") {
-      setSummary(conversation?.summary ?? "");
-    }
+    if (!open || mode !== "rename") return;
+    const frame = window.requestAnimationFrame(() => setSummary(conversation?.summary ?? ""));
+    return () => window.cancelAnimationFrame(frame);
   }, [conversation?.summary, mode, open]);
 
   useEffect(() => {

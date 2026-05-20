@@ -22,9 +22,3 @@ export interface RecentDocumentItem {
   date: string;
   link: string;
 }
-
-export interface QuickAccessItem {
-  id: string;
-  label: string;
-  link: string;
-}

@@ -8,14 +8,14 @@ export type ReclamationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 export type ReclamationStatus = "PENDING" | "IN_PROGRESS" | "RESOLVED" | "FAILED";
 export type ReclamationReadFilter = "ALL" | "READ" | "UNREAD";
 
-export type ReclamationAttachment = {
+type ReclamationAttachment = {
   name: string;
   size: number | null;
   contentType: string | null;
   url: string | null;
 };
 
-export type ReclamationActivity = {
+type ReclamationActivity = {
   id: string;
   description: string;
   actorName: string;

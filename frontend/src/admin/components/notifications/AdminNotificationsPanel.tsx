@@ -60,13 +60,22 @@ export default function AdminNotificationsPanel({
 
   useEffect(() => {
     if (open) {
-      setIsMounted(true);
-      const frame = window.requestAnimationFrame(() => setIsVisible(true));
-      return () => window.cancelAnimationFrame(frame);
+      let frame2: number | undefined;
+      const frame1 = window.requestAnimationFrame(() => {
+        setIsMounted(true);
+        frame2 = window.requestAnimationFrame(() => setIsVisible(true));
+      });
+      return () => {
+        window.cancelAnimationFrame(frame1);
+        if (frame2 !== undefined) window.cancelAnimationFrame(frame2);
+      };
     }
-    setIsVisible(false);
+    const frame = window.requestAnimationFrame(() => setIsVisible(false));
     const timer = window.setTimeout(() => setIsMounted(false), 220);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, [open]);
 
   useEffect(() => {

@@ -8,15 +8,8 @@ import { PublicOnlyRoute, RequireAuth, RoleHomeRedirect } from "./auth/guards";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
-import DashboardPage from "./admin/pages/DashboardPage";
-import AuditPage from "./admin/pages/AuditPage";
-import ChatFeedbackPage from "./admin/pages/ChatFeedbackPage";
-import ImportDocumentPage from "./admin/pages/ImportDocumentPage";
-import ListDocumentPage from "./admin/pages/ListDocumentPage";
-
-
 import { agentRoutes } from "./agent/routes/agentRoutes";
-import ReclamationPage from "./admin/pages/ReclamationPage";
+import { adminRoutes } from "./admin/routes/adminRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -40,15 +33,7 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AdminLayout />,
-        children: [
-          { index: true, element: <DashboardPage /> },
-          { path: "dashboard", element: <DashboardPage /> },
-          { path: "audit", element: <AuditPage /> },
-          { path: "avis-chat", element: <ChatFeedbackPage /> },
-          { path: "documents/import", element: <ImportDocumentPage /> },
-          { path: "documents/list", element: <ListDocumentPage /> },
-          { path: "reclamations", element: <ReclamationPage /> },
-        ],
+        children: adminRoutes,
       },
     ],
   },

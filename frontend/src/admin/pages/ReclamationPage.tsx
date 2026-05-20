@@ -5,8 +5,6 @@ import ReclamationFilters from "../components/réclamation/ReclamationFilters";
 import ReclamationLayout from "../components/réclamation/ReclamationLayout";
 import ReclamationList from "../components/réclamation/ReclamationList";
 
-const PAGE_SIZE = 8;
-
 export default function ReclamationPage() {
   const vm = useReclamationViewModel();
   return (

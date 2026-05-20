@@ -1,4 +1,4 @@
-export type ChatRole = "user" | "assistant";
+type ChatRole = "user" | "assistant";
 export type ResponseMode = "short" | "detailed";
 export type QueryMode = "current" | "future_preview" | "comparison";
 export type ChatFeedback = "like" | "dislike";
@@ -31,7 +31,7 @@ export type ChatSource = {
   final_score: number;
 };
 
-export type ChatMessageStatus = "generating" | "completed" | "failed";
+type ChatMessageStatus = "generating" | "completed" | "failed";
 
 export type ChatMessage = {
   _id: string;

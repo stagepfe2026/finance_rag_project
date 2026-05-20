@@ -1,4 +1,4 @@
-import type { AuditActivity, AuditTrendPoint } from "../../../models/audit";
+import type { AuditActivity } from "../../../models/audit";
 
 export function formatDateTime(value: string) {
   const parsed = new Date(value);
@@ -46,31 +46,6 @@ export function getActionClassName(actionType: string) {
     return "border-[#dfe3ea] bg-white text-[#5f6680]";
   }
   return "border-[#f2d6d4] bg-[#f5e6e7] text-[#9d0208]";
-}
-
-export function buildSmoothLinePath(points: AuditTrendPoint[]) {
-  if (points.length === 0) {
-    return "";
-  }
-
-  const maxCount = Math.max(...points.map((point) => point.count), 1);
-  const coordinates = points.map((point, index) => ({
-    x: (index / Math.max(points.length - 1, 1)) * 100,
-    y: 100 - (point.count / maxCount) * 82 - 8,
-  }));
-
-  if (coordinates.length === 1) {
-    return `M ${coordinates[0].x} ${coordinates[0].y}`;
-  }
-
-  let path = `M ${coordinates[0].x} ${coordinates[0].y}`;
-  for (let index = 0; index < coordinates.length - 1; index += 1) {
-    const current = coordinates[index];
-    const next = coordinates[index + 1];
-    const controlX = (current.x + next.x) / 2;
-    path += ` C ${controlX} ${current.y}, ${controlX} ${next.y}, ${next.x} ${next.y}`;
-  }
-  return path;
 }
 
 export function buildActivityPayload(activity: AuditActivity) {

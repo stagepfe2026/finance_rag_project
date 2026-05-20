@@ -1,9 +1,10 @@
+import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 type Props = {
   label: string;
   to: string;
-  icon: any;
+  icon: LucideIcon;
   isCollapsed: boolean;
 };
 

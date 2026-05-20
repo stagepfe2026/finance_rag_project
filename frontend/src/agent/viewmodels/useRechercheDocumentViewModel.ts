@@ -175,6 +175,7 @@ export function useRechercheDocumentViewModel() {
       cancelled = true;
       window.clearTimeout(timer);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersSignature, hasActiveSearch, searchParams]);
 
   useEffect(() => {
@@ -217,6 +218,7 @@ export function useRechercheDocumentViewModel() {
     return () => {
       cancelled = true;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDocument?.id]);
 
   async function handleToggleFavorite(item: DocumentSearchItem) {

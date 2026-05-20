@@ -16,9 +16,10 @@ export default function TrendChart({ trend, isLoading }: TrendChartProps) {
 
   const categories = useMemo(() => trend.map((p) => p.label), [trend]);
 
-  const seriesColors = isDark
-    ? [DARK.navy, DARK.rose, DARK.red]
-    : [LIGHT.navy, LIGHT.rose, LIGHT.red];
+  const seriesColors = useMemo(
+    () => (isDark ? [DARK.navy, DARK.rose, DARK.red] : [LIGHT.navy, LIGHT.rose, LIGHT.red]),
+    [isDark],
+  );
 
   const series = useMemo(
     () => [

@@ -7,8 +7,6 @@ export function useAgentDarkMode(): boolean {
   });
 
   useEffect(() => {
-    setIsDark(document.body.classList.contains("user-dark-theme"));
-
     const observer = new MutationObserver(() => {
       setIsDark(document.body.classList.contains("user-dark-theme"));
     });
