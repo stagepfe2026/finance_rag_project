@@ -301,7 +301,7 @@ function addPageHeader(
     doc.setFontSize(9);
     doc.setTextColor(...DARK);
     const maxTitleW = pageWidth - margin - (logoW + margin + 12);
-    const titleLines = doc.splitTextToSize(conversation.summary, maxTitleW);
+    const titleLines = doc.splitTextToSize(conversation.title, maxTitleW);
     const titleX = pageWidth - margin;
     const titleY = titleLines.length === 1 ? headerH / 2 + 3 : headerH / 2 - 1;
     doc.text(titleLines.slice(0, 2), titleX, titleY, { align: "right", lineHeightFactor: 1.4 });
@@ -538,5 +538,5 @@ export function exportConversationToPdf(
 
   addPageFooter(doc, pageWidth, pageHeight, margin, pageNumber, exportedAt);
 
-  doc.save(`${sanitizeFileName(conversation.summary)}.pdf`);
+  doc.save(`${sanitizeFileName(conversation.title)}.pdf`);
 }

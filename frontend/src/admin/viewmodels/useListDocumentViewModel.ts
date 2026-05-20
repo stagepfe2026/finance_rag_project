@@ -23,20 +23,20 @@ const emptyPreview: DocumentPreview = {
   title: "Consultation du document",
   category: "other",
   legalStatus: "actif",
-  documentType: "autre",
+  legalType: "autre",
   datePublication: null,
   dateEntreeVigueur: null,
   version: "",
-  relationType: "none",
-  relatedDocumentId: null,
+  relationToTarget: "none",
+  targetDocumentId: null,
   fileType: "",
   createdAt: new Date().toISOString(),
-  content: "",
+  extractedText: "",
 };
 
 // ─── Pure helper functions ────────────────────────────────────────────────────
 function formatDocumentDate(document: DocumentItem) {
-  const rawDate = document.realizedAt || document.indexedAt || document.createdAt;
+  const rawDate = document.issuedAt || document.indexedAt || document.createdAt;
   if (!rawDate) return "-";
 
   const parsedDate = new Date(rawDate);
@@ -171,15 +171,15 @@ export function useListDocumentViewModel() {
   }, [search, category, status, closeSnackbar]);
 
   const indexedCount = useMemo(
-    () => documents.filter((document) => document.documentStatus === "indexed").length,
+    () => documents.filter((document) => document.status === "indexed").length,
     [documents],
   );
   const processingCount = useMemo(
-    () => documents.filter((document) => document.documentStatus === "processing").length,
+    () => documents.filter((document) => document.status === "processing").length,
     [documents],
   );
   const failedCount = useMemo(
-    () => documents.filter((document) => document.documentStatus === "failed").length,
+    () => documents.filter((document) => document.status === "failed").length,
     [documents],
   );
 
@@ -307,7 +307,7 @@ export function useListDocumentViewModel() {
       const rows = documents.map((document) => ({
         title: document.title || "-",
         category: document.category || "-",
-        status: document.documentStatus || "-",
+        status: document.status || "-",
         date: formatDocumentDate(document),
         fileType: normalizeFileType(document.fileType || "-"),
         fileSize: formatFileSize(document.fileSize),
@@ -454,7 +454,7 @@ export function useListDocumentViewModel() {
       const rows = documents.map((document) => ({
         Document: document.title || "-",
         Categorie: document.category || "-",
-        Statut: document.documentStatus || "-",
+        Statut: document.status || "-",
         Date: formatDocumentDate(document),
         Type: normalizeFileType(document.fileType || "-"),
         Taille: formatFileSize(document.fileSize),

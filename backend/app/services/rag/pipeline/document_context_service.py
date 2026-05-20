@@ -38,30 +38,30 @@ class DocumentContextService:
                 continue
 
             related_document = (
-                documents.get(document.related_document_id or "")
-                if document.related_document_id
+                documents.get(document.target_document_id or "")
+                if document.target_document_id
                 else None
             )
-            if related_document is None and document.related_document_id:
-                related_document = self.document_repository.get_by_id(document.related_document_id)
+            if related_document is None and document.target_document_id:
+                related_document = self.document_repository.get_by_id(document.target_document_id)
 
             effective_legal_status = self.legal_status_service.resolve_status(document)
             enriched_chunks.append(
                 {
                     **chunk,
                     "document_title": document.title,
-                    "document_type": document.document_type,
-                    "document_type_label": document.document_type,
+                    "document_type": document.legal_type,
+                    "document_type_label": document.legal_type,
                     "legal_status": effective_legal_status,
                     "date_publication": document.date_publication,
                     "date_entree_vigueur": document.date_entree_vigueur,
                     "version": document.version,
-                    "relation_type": document.relation_type,
-                    "related_document_id": document.related_document_id,
+                    "relation_type": document.relation_to_target,
+                    "related_document_id": document.target_document_id,
                     "related_document_title": (
                         related_document.title if related_document is not None else chunk.get("related_document_title", "")
                     ),
-                    "realized_at": document.realized_at,
+                    "realized_at": document.issued_at,
                 }
             )
 

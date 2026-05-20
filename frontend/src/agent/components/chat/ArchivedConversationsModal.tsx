@@ -121,7 +121,7 @@ export default function ArchivedConversationsModal({
                       <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#faf5f4] text-[#5b524e]">
                         <MessageSquareText size={16} />
                       </span>
-                      <span className="truncate text-[13px] text-[#3d3532]">{conversation.summary}</span>
+                      <span className="truncate text-[13px] text-[#3d3532]">{conversation.title}</span>
                     </div>
 
                     <span className="text-[13px] text-[#5f5652]">{formatArchiveDate(conversation.archivedAt)}</span>
@@ -129,7 +129,7 @@ export default function ArchivedConversationsModal({
                     <div className="flex justify-center">
                       <button
                         type="button"
-                        aria-label={`Restaurer la conversation ${conversation.summary}`}
+                        aria-label={`Restaurer la conversation ${conversation.title}`}
                         onClick={() => void onRestore(conversation)}
                         disabled={busyConversationId === conversation._id}
                         className="rounded-xl border border-[#efb4af] px-4 py-2 text-[12px] font-semibold text-[#9d0208] transition hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-60"

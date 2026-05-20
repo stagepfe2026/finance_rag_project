@@ -75,11 +75,11 @@ class ReclamationService:
         reclamation = ReclamationModel(
             user_id=user_id,
             user_email=user_email,
-            ticket_number=ticket_number,
+            reference_number=ticket_number,
             subject=normalized_subject,
             description=normalized_description,
-            problem_type=normalized_problem_type,
-            custom_problem_type=normalized_custom_problem_type,
+            issue_category=normalized_problem_type,
+            custom_issue_category=normalized_custom_problem_type,
             priority=normalized_priority,
             status="PENDING",
             attachment_name=attachment_payload["name"] if attachment_payload else None,
@@ -88,15 +88,15 @@ class ReclamationService:
             attachment_content_type=attachment_payload["content_type"] if attachment_payload else None,
             admin_reply=None,
             admin_reply_at=None,
-            admin_reply_by=None,
-            last_updated_by_admin_at=None,
-            last_updated_by_admin_name=None,
-            is_reply_read_by_user=True,
+            replied_by_admin_id=None,
+            last_admin_action_at=None,
+            last_admin_actor_name=None,
+            reply_acknowledged=True,
             created_at=now,
             updated_at=now,
             deleted_at=None,
             deleted_by_user_id=None,
-            activity_log=[
+            history=[
                 {
                     "id": uuid4().hex,
                     "description": "Reclamation creee",
@@ -257,8 +257,8 @@ class ReclamationService:
             user_id,
             subject=normalized_subject,
             description=normalized_description,
-            problem_type=normalized_problem_type,
-            custom_problem_type=normalized_custom_problem_type,
+            issue_category=normalized_problem_type,
+            custom_issue_category=normalized_custom_problem_type,
             priority=normalized_priority,
             attachment_payload=attachment_payload,
         )
@@ -289,7 +289,7 @@ class ReclamationService:
         updated = self.repository.save_admin_reply(
             reclamation_id,
             admin_reply=normalized_reply,
-            admin_reply_by=admin_name,
+            replied_by_admin_id=admin_name,
             status=normalized_status,
         )
         if updated is None:
@@ -317,13 +317,13 @@ class ReclamationService:
 
         return {
             "_id": reclamation.id,
-            "referenceNumber": reclamation.ticket_number,
+            "referenceNumber": reclamation.reference_number,
             "userId": reclamation.user_id,
             "userEmail": reclamation.user_email,
             "subject": reclamation.subject,
             "description": reclamation.description,
-            "issueCategory": reclamation.problem_type,
-            "customIssueCategory": reclamation.custom_problem_type,
+            "issueCategory": reclamation.issue_category,
+            "customIssueCategory": reclamation.custom_issue_category,
             "priority": reclamation.priority,
             "status": reclamation.status,
             "attachmentName": reclamation.attachment_name,
@@ -333,12 +333,12 @@ class ReclamationService:
             "attachment": attachment,
             "adminReply": reclamation.admin_reply,
             "adminReplyAt": reclamation.admin_reply_at.isoformat() if reclamation.admin_reply_at else None,
-            "repliedByAdminId": reclamation.admin_reply_by,
+            "repliedByAdminId": reclamation.replied_by_admin_id,
             "lastAdminActionAt": (
-                reclamation.last_updated_by_admin_at.isoformat() if reclamation.last_updated_by_admin_at else None
+                reclamation.last_admin_action_at.isoformat() if reclamation.last_admin_action_at else None
             ),
-            "lastAdminActorName": reclamation.last_updated_by_admin_name,
-            "replyAcknowledged": reclamation.is_reply_read_by_user,
+            "lastAdminActorName": reclamation.last_admin_actor_name,
+            "replyAcknowledged": reclamation.reply_acknowledged,
             "createdAt": reclamation.created_at.isoformat(),
             "updatedAt": reclamation.updated_at.isoformat(),
             "deletedAt": reclamation.deleted_at.isoformat() if reclamation.deleted_at else None,
@@ -349,7 +349,7 @@ class ReclamationService:
                     "actorName": str(item.get("actorName", "")),
                     "createdAt": self._serialize_datetime(item.get("createdAt")),
                 }
-                for item in reclamation.activity_log
+                for item in reclamation.history
             ],
             "takenAt": reclamation.first_handled_at.isoformat() if reclamation.first_handled_at else None,
             "takenByAdminName": reclamation.taken_by_admin_name,

@@ -112,16 +112,16 @@ class AuthService:
             email=email,
             password_hash=hash_password(generate_state_token()),
             role=role,
-            profile_image_url=str(claims.get("picture", "")),
+            avatar_url=str(claims.get("picture", "")),
         )
 
         self.sessions_repo.close_all_for_user(user_id, reason="LOGIN_ROTATION")
         session_payload = self._create_session(
             user_id=user_id,
             auth_method="oidc",
-            oidc_subject=str(claims.get("sub", "")) or None,
-            oidc_access_token=token_data.get("access_token"),
-            oidc_refresh_token=token_data.get("refresh_token"),
+            sso_subject=str(claims.get("sub", "")) or None,
+            sso_access_token=token_data.get("access_token"),
+            sso_refresh_token=token_data.get("refresh_token"),
         )
         user = self.users_repo.get_by_id(user_id)
         return {
@@ -158,7 +158,7 @@ class AuthService:
             self.sessions_repo.close(
                 current_session.id or "",
                 reason="REFRESH_TOKEN_EXPIRED",
-                closed_before_expiry=False,
+                is_early_closure=False,
             )
             raise ValueError("REFRESH_EXPIRED")
 
@@ -189,21 +189,21 @@ class AuthService:
                 prenom=str(payload.get("prenom", "")),
                 email=str(payload.get("email", "")),
                 telephone=str(payload.get("telephone", "")),
-                profile_image_url=str(payload.get("avatarUrl", "")),
+                avatar_url=str(payload.get("avatarUrl", "")),
                 adresse=str(payload.get("adresse", "")),
-                date_naissance=str(payload.get("birthDate", "")),
+                birth_date=str(payload.get("birthDate", "")),
                 direction=str(payload.get("direction", "")),
                 service=str(payload.get("service", "")),
                 poste=str(payload.get("poste", "")),
                 matricule=str(payload.get("matricule", "")),
                 bureau=str(payload.get("bureau", "")),
-                responsable=str(payload.get("manager", "")),
-                membre_depuis=str(payload.get("memberSince", "")),
-                langue_preferee=str(payload.get("preferredLanguage", "fr")),
-                theme_prefere=str(payload.get("preferredTheme", "light")),
-                notifications_email=bool(payload.get("emailNotificationsOn", True)),
-                notifications_sms=bool(payload.get("smsNotificationsOn", False)),
-                two_factor_enabled=bool(payload.get("isTwoFactorEnabled", False)),
+                manager=str(payload.get("manager", "")),
+                member_since=str(payload.get("memberSince", "")),
+                preferred_language=str(payload.get("preferredLanguage", "fr")),
+                preferred_theme=str(payload.get("preferredTheme", "light")),
+                email_notifications_on=bool(payload.get("emailNotificationsOn", True)),
+                sms_notifications_on=bool(payload.get("smsNotificationsOn", False)),
+                is_two_factor_enabled=bool(payload.get("isTwoFactorEnabled", False)),
             )
         except ValueError:
             raise
@@ -219,10 +219,10 @@ class AuthService:
         self.sessions_repo.close(
             current_session.id or "",
             reason="USER_LOGOUT",
-            closed_before_expiry=True,
+            is_early_closure=True,
         )
 
-        if current_session.auth_method != "oidc" or not current_session.oidc_refresh_token:
+        if current_session.auth_method != "oidc" or not current_session.sso_refresh_token:
             return None
 
         metadata = await self._get_oidc_metadata()
@@ -246,9 +246,9 @@ class AuthService:
         *,
         user_id: str,
         auth_method: str,
-        oidc_subject: str | None = None,
-        oidc_access_token: str | None = None,
-        oidc_refresh_token: str | None = None,
+        sso_subject: str | None = None,
+        sso_access_token: str | None = None,
+        sso_refresh_token: str | None = None,
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
         absolute_expires_at = now + timedelta(hours=settings.auth_session_absolute_hours)
@@ -269,7 +269,7 @@ class AuthService:
         csrf_token = generate_csrf_token()
         session = SessionModel(
             user_id=user_id,
-            token_hash=hash_session_token(session_token),
+            hashed_token=hash_session_token(session_token),
             csrf_token=csrf_token,
             access_expires_at=access_expires_at,
             refresh_expires_at=refresh_expires_at,
@@ -278,9 +278,9 @@ class AuthService:
             created_at=now,
             last_activity_at=now,
             auth_method=auth_method,
-            oidc_subject=oidc_subject,
-            oidc_access_token=oidc_access_token,
-            oidc_refresh_token=oidc_refresh_token,
+            sso_subject=sso_subject,
+            sso_access_token=sso_access_token,
+            sso_refresh_token=sso_refresh_token,
         )
         session_id = self.sessions_repo.open_session(session)
         session.id = session_id

@@ -99,14 +99,14 @@ class DocumentSearchService:
     def set_document_favorite(
         self,
         document_id: str,
-        is_favored: bool,
+        is_favorite: bool,
         *,
         current_user_id: str,
     ) -> DocumentActionResponse:
         if not current_user_id.strip():
             raise HTTPException(status_code=401, detail="Authentification requise.")
 
-        document = self.document_repository.update_favorite_status(document_id, current_user_id, is_favored)
+        document = self.document_repository.update_favorite_status(document_id, current_user_id, is_favorite)
         if document is None or document.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Document introuvable.")
 
@@ -135,7 +135,7 @@ class DocumentSearchService:
         )
 
     def _build_snippets(self, document: DocumentModel, *, query: str | None) -> list[str]:
-        source = (document.content or "").strip()
+        source = (document.extracted_text or "").strip()
         if not source:
             return []
 

@@ -96,7 +96,7 @@ class ChatService:
             conversation = self.chat_repo.create(
                 ConversationModel(
                     user_id=user_id,
-                    summary=self._make_summary(normalized_content),
+                    title=self._make_summary(normalized_content),
                     created_at=now,
                     updated_at=now,
                 )
@@ -124,7 +124,7 @@ class ChatService:
 
         updated_conversation = self.chat_repo.refresh_after_message(
             conversation.id or "",
-            summary=self._make_summary(normalized_content),
+            title=self._make_summary(normalized_content),
         )
 
         return {

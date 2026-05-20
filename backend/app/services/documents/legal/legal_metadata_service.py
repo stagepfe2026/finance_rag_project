@@ -56,7 +56,7 @@ class LegalMetadataService:
                 detail="La date d entree en vigueur doit etre posterieure ou egale a la date de publication.",
             )
 
-        normalized_legal_status = self.legal_status_service.compute_status_from_effective_date(
+        normalized_legal_status = self.legal_status_service.infer_status_from_date(
             date_entree_vigueur
         )
 

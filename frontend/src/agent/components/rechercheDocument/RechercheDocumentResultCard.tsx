@@ -67,15 +67,15 @@ export default function RechercheDocumentResultCard({
 
         <button
           type="button"
-          aria-label={item.isFavored ? `Retirer ${item.title} des favoris` : `Ajouter ${item.title} aux favoris`}
+          aria-label={item.isFavorite ? `Retirer ${item.title} des favoris` : `Ajouter ${item.title} aux favoris`}
           onClick={(event) => {
             event.stopPropagation();
             onToggleFavorite(item);
           }}
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-[#9d0208] transition hover:bg-red-50"
-          title={item.isFavored ? "Retirer des favoris" : "Ajouter aux favoris"}
+          title={item.isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
-          <Heart size={15} className={item.isFavored ? "fill-current" : ""} />
+          <Heart size={15} className={item.isFavorite ? "fill-current" : ""} />
         </button>
       </div>
 

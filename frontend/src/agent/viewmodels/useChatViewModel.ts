@@ -235,7 +235,7 @@ export function useChatViewModel(
   const filteredConversations = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return conversations;
-    return conversations.filter((c) => c.summary.toLowerCase().includes(keyword));
+    return conversations.filter((c) => c.title.toLowerCase().includes(keyword));
   }, [conversations, search]);
 
   const activeConversations = filteredConversations.filter((c) => !c.isArchived);
@@ -291,7 +291,7 @@ export function useChatViewModel(
 
       if (mode === "rename") {
         const nextSummary = payload?.summary?.trim() ?? "";
-        if (!nextSummary || nextSummary === conversation.summary) {
+        if (!nextSummary || nextSummary === conversation.title) {
           closeConversationModal();
           return;
         }

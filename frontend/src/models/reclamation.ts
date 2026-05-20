@@ -31,26 +31,26 @@ export type ReclamationSlaStatus =
 
 export type Reclamation = {
   _id: string;
-  ticketNumber: string;
+  referenceNumber: string;
   userId: string;
   userEmail: string;
   subject: string;
   description: string;
-  problemType: ReclamationProblemType;
-  customProblemType: string | null;
+  issueCategory: ReclamationProblemType;
+  customIssueCategory: string | null;
   priority: ReclamationPriority;
   status: ReclamationStatus;
   attachment: ReclamationAttachment | null;
   adminReply: string | null;
   adminReplyAt: string | null;
-  adminReplyBy: string | null;
-  lastUpdatedByAdminAt: string | null;
-  lastUpdatedByAdminName: string | null;
-  isReplyReadByUser: boolean;
+  repliedByAdminId: string | null;
+  lastAdminActionAt: string | null;
+  lastAdminActorName: string | null;
+  replyAcknowledged: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  activityLog: ReclamationActivity[];
+  history: ReclamationActivity[];
   takenAt: string | null;
   takenByAdminName: string | null;
   slaDeadlineAt: string | null;

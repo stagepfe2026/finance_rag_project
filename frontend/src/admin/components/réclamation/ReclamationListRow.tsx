@@ -21,7 +21,7 @@ export default function ReclamationListRow({ item, isSelected, onSelect }: Recla
     >
       <td className="border-b border-[#e5eaf2] px-4 py-3">
         <span className="admin-reclamation-ticket-badge rounded bg-[#eef2f8] px-2 py-0.5 text-[10px] font-semibold text-[#071f3d]">
-          {item.ticketNumber}
+          {item.referenceNumber}
         </span>
       </td>
       <td className="border-b border-[#e5eaf2] px-4 py-3 text-xs font-semibold text-[#071f3d]">

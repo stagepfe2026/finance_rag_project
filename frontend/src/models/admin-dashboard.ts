@@ -52,7 +52,7 @@ type AdminDashboardLatestAccess = {
 
 export type AdminDashboardUrgentCase = {
   id: string;
-  ticketNumber: string;
+  referenceNumber: string;
   subject: string;
   priority: string;
   status: string;

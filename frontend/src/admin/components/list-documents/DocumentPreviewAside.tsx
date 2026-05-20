@@ -100,7 +100,7 @@ export default function DocumentPreviewAside({
         <div className="space-y-4 px-4 py-4">
           {/* Status row */}
           <div className="flex items-center justify-between">
-            <DocumentStatusBadge status={document.documentStatus} />
+            <DocumentStatusBadge status={document.status} />
             <span className="text-[10px] text-[#8a96ad]">
               {normalizeFileType(document.fileType)}
               {document.fileSize > 0 && ` · ${formatFileSize(document.fileSize)}`}
@@ -111,7 +111,7 @@ export default function DocumentPreviewAside({
           <div className="grid grid-cols-2 gap-2 text-[12px]">
             <MetaField label="Catégorie" value={documentCategoryLabels[document.category]} />
             <MetaField label="Ajouté le" value={formatDate(document.createdAt)} />
-            <MetaField label="Type juridique" value={legalDocumentTypeLabels[document.documentType]} />
+            <MetaField label="Type juridique" value={legalDocumentTypeLabels[document.legalType]} />
             <MetaField label="Statut juridique" value={legalStatusLabels[document.legalStatus]} />
             {document.datePublication && (
               <MetaField label="Publication" value={formatDate(document.datePublication)} />
@@ -122,25 +122,25 @@ export default function DocumentPreviewAside({
             {document.indexedAt && (
               <MetaField label="Indexé le" value={formatDate(document.indexedAt)} />
             )}
-            {document.chunksCount != null && (
-              <MetaField label="Passages" value={`${document.chunksCount} chunk${document.chunksCount !== 1 ? "s" : ""}`} />
+            {document.chunkCount != null && (
+              <MetaField label="Passages" value={`${document.chunkCount} chunk${document.chunkCount !== 1 ? "s" : ""}`} />
             )}
           </div>
 
           {/* Version / Relation */}
-          {(document.version || document.relationType !== "none") && (
+          {(document.version || document.relationToTarget !== "none") && (
             <div className="rounded border border-[#e5eaf2] bg-[#f7f9fc] px-3 py-2.5 text-[12px] space-y-1">
               {document.version && (
                 <p className="text-[#071f3d]">
                   <span className="text-[#8a96ad]">Version :</span> {document.version}
                 </p>
               )}
-              {document.relationType !== "none" && (
+              {document.relationToTarget !== "none" && (
                 <p className="text-[#071f3d]">
                   <span className="text-[#8a96ad]">Relation :</span>{" "}
-                  {legalRelationTypeLabels[document.relationType]}
-                  {document.relatedDocumentId && (
-                    <span className="ml-1 text-[#8a96ad]">({document.relatedDocumentId})</span>
+                  {legalRelationTypeLabels[document.relationToTarget]}
+                  {document.targetDocumentId && (
+                    <span className="ml-1 text-[#8a96ad]">({document.targetDocumentId})</span>
                   )}
                 </p>
               )}
@@ -148,10 +148,10 @@ export default function DocumentPreviewAside({
           )}
 
           {/* Index error */}
-          {document.indexError && (
+          {document.lastIndexError && (
             <div className="rounded border border-[#f3c6cc] bg-[#fdf2f3] px-3 py-2 text-[11px] text-[#9d0208]">
               <p className="font-semibold">Erreur d'indexation</p>
-              <p className="mt-0.5 leading-5">{document.indexError}</p>
+              <p className="mt-0.5 leading-5">{document.lastIndexError}</p>
             </div>
           )}
 
@@ -167,7 +167,7 @@ export default function DocumentPreviewAside({
                   ? "Chargement de l'aperçu..."
                   : previewError
                     ? previewError
-                    : (preview?.content || "Aucun contenu disponible.")}
+                    : (preview?.extractedText || "Aucun contenu disponible.")}
               </div>
             </div>
           )}

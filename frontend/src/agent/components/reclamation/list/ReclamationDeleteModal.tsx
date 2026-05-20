@@ -29,7 +29,7 @@ export default function ReclamationDeleteModal({
           Voulez-vous vraiment supprimer la reclamation <span className="font-medium text-slate-800">{reclamation.subject}</span> ?
         </p>
         <p className="mt-2 text-xs text-slate-500">
-          Ticket: {reclamation.ticketNumber}
+          Ticket: {reclamation.referenceNumber}
         </p>
 
         <div className="mt-6 flex justify-end gap-3">

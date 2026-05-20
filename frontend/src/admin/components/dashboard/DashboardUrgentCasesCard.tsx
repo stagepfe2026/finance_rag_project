@@ -33,7 +33,7 @@ export default function DashboardUrgentCasesCard({ items }: { items: AdminDashbo
               <div key={item.id} className="px-4 py-3 hover:bg-[#f7f9fc] transition-colors">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-[#071f3d] font-mono">{item.ticketNumber}</p>
+                    <p className="text-[11px] font-bold text-[#071f3d] font-mono">{item.referenceNumber}</p>
                     <p className="mt-0.5 truncate text-[11px] text-[#5f6680]">{item.subject}</p>
                   </div>
                   <span className={`shrink-0 rounded border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${statusCls}`}>

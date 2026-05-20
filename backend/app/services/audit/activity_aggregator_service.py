@@ -102,7 +102,7 @@ class ActivityAggregatorService:
             if session.closed_at is None:
                 continue
 
-            action_type, action_label = self._map_session_close_reason(session.close_reason)
+            action_type, action_label = self._map_session_close_reason(session.closure_reason)
             items.append(
                 self._make_activity(
                     activity_id=f"session:{session.id}:close",
@@ -116,9 +116,9 @@ class ActivityAggregatorService:
                     entity_label=f"Session {session.auth_method.upper()}",
                     summary=f"{user_info['name']} a termine sa session ({action_label.lower()}).",
                     metadata={
-                        "raison": session.close_reason or "-",
+                        "raison": session.closure_reason or "-",
                         "fermeeLe": self._serialize_datetime(session.closed_at),
-                        "fermeeAvantExpiration": bool(session.closed_before_expiry),
+                        "fermeeAvantExpiration": bool(session.is_early_closure),
                     },
                 )
             )
@@ -143,7 +143,7 @@ class ActivityAggregatorService:
                 fallback_role="FINANCE_USER",
             )
 
-            for raw_activity in reclamation.activity_log:
+            for raw_activity in reclamation.history:
                 description = str(raw_activity.get("description", "")).strip()
                 occurred_at = self._coerce_datetime(raw_activity.get("createdAt")) or reclamation.updated_at
                 actor_name = str(raw_activity.get("actorName", "")).strip()
@@ -152,7 +152,7 @@ class ActivityAggregatorService:
                 user_info = (
                     self._resolve_actor_info(
                         users_map,
-                        actor_name=actor_name or reclamation.last_updated_by_admin_name or "Administrateur",
+                        actor_name=actor_name or reclamation.last_admin_actor_name or "Administrateur",
                     )
                     if is_admin_action
                     else default_user
@@ -168,16 +168,16 @@ class ActivityAggregatorService:
                         category="Reclamations",
                         entity_type="RECLAMATION",
                         entity_id=reclamation.id or "",
-                        entity_label=reclamation.ticket_number,
-                        summary=description or f"Activite sur la reclamation {reclamation.ticket_number}.",
+                        entity_label=reclamation.reference_number,
+                        summary=description or f"Activite sur la reclamation {reclamation.reference_number}.",
                         metadata={
-                            "ticket": reclamation.ticket_number,
+                            "ticket": reclamation.reference_number,
                             "sujet": reclamation.subject,
                             "priorite": reclamation.priority,
                             "statut": reclamation.status,
                             "utilisateur": default_user["name"],
                             "emailUtilisateur": default_user["email"],
-                            "adminTraitant": reclamation.admin_reply_by or reclamation.last_updated_by_admin_name or "",
+                            "adminTraitant": reclamation.replied_by_admin_id or reclamation.last_admin_actor_name or "",
                             "reponseAdmin": reclamation.admin_reply or "",
                             "supprimeeLe": self._serialize_datetime(reclamation.deleted_at),
                         },
@@ -208,10 +208,10 @@ class ActivityAggregatorService:
                     category="Chat",
                     entity_type="CHAT_CONVERSATION",
                     entity_id=conversation.id or "",
-                    entity_label=conversation.summary or "Nouvelle discussion",
+                    entity_label=conversation.title or "Nouvelle discussion",
                     summary=f"{user_info['name']} a demarre une conversation chat.",
                     metadata={
-                        "conversation": conversation.summary,
+                        "conversation": conversation.title,
                         "archivee": conversation.is_archived,
                         "supprimeeLe": self._serialize_datetime(conversation.deleted_at),
                     },
@@ -235,11 +235,11 @@ class ActivityAggregatorService:
                         category="Chat",
                         entity_type="CHAT_MESSAGE",
                         entity_id=message.id or "",
-                        entity_label=conversation.summary if conversation else "Message chat",
+                        entity_label=conversation.title if conversation else "Message chat",
                         summary=f"{user_info['name']} a pose une question au chat.",
                         metadata={
                             "conversationId": message.conversation_id,
-                            "conversation": conversation.summary if conversation else "",
+                            "conversation": conversation.title if conversation else "",
                             "extrait": message.content[:240],
                         },
                     )
@@ -261,11 +261,11 @@ class ActivityAggregatorService:
                         category="Chat",
                         entity_type="CHAT_MESSAGE",
                         entity_id=message.id or "",
-                        entity_label=conversation.summary if conversation else "Feedback chat",
+                        entity_label=conversation.title if conversation else "Feedback chat",
                         summary=f"{feedback_user['name']} a donne un avis sur une reponse du chat.",
                         metadata={
                             "conversationId": message.conversation_id,
-                            "conversation": conversation.summary if conversation else "",
+                            "conversation": conversation.title if conversation else "",
                             "feedback": message.feedback,
                             "extrait": message.content[:240],
                         },

@@ -87,7 +87,7 @@ export default function ChatMain({
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-sm font-semibold text-[#273043]">
-              {conversation?.summary || "Nouvelle discussion"}
+              {conversation?.title || "Nouvelle discussion"}
             </h1>
           </div>
 

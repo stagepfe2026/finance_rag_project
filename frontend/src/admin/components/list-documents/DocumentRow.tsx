@@ -11,7 +11,7 @@ type DocumentRowProps = {
 };
 
 function formatDocumentDate(document: DocumentItem) {
-  const rawDate = document.realizedAt || document.indexedAt || document.createdAt;
+  const rawDate = document.issuedAt || document.indexedAt || document.createdAt;
   if (!rawDate) {
     return "-";
   }
@@ -70,7 +70,7 @@ export default function DocumentRow({ document, onConsult, onDeleteFromIndex, on
       <td className="px-4 py-3 text-xs text-[#5f6680]">{formatDocumentDate(document)}</td>
 
       <td className="px-4 py-3">
-        <DocumentStatusBadge status={document.documentStatus} />
+        <DocumentStatusBadge status={document.status} />
       </td>
 
       <td className="px-4 py-3">

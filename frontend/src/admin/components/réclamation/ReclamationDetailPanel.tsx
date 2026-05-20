@@ -54,7 +54,7 @@ export default function ReclamationDetailPanel({
       <div className="admin-reclamation-panel-header flex flex-shrink-0 items-center justify-between border-b border-[#dde3ed] bg-[#f8fafc] px-3.5 py-2.5">
         <div>
           <p className="text-[11px] font-bold tracking-wide text-[#071f3d]">
-            #{reclamation.ticketNumber}
+            #{reclamation.referenceNumber}
           </p>
         </div>
         <div className="flex gap-1.5">
@@ -129,7 +129,7 @@ export default function ReclamationDetailPanel({
             <div>
               <p className="text-[10px] text-[#8a96ad]">Pris en charge par</p>
               <p className="mt-0.5 truncate text-[12px] font-semibold text-[#071f3d]">
-                {reclamation.takenByAdminName ?? reclamation.adminReplyBy ?? "—"}
+                {reclamation.takenByAdminName ?? reclamation.repliedByAdminId ?? "—"}
               </p>
             </div>
             {reclamation.takenAt && (
@@ -192,7 +192,7 @@ export default function ReclamationDetailPanel({
             Historique
           </p>
           <div>
-            {reclamation.activityLog.map((entry) => (
+            {reclamation.history.map((entry) => (
               <div key={entry.id} className="flex gap-2 border-b border-[#f5f7fa] py-1.5 last:border-0">
                 <div className="mt-[5px] h-[5px] w-[5px] shrink-0 rounded-full bg-[#9d0208]" />
                 <div>
@@ -214,7 +214,7 @@ export default function ReclamationDetailPanel({
           <ReclamationReplyBox
             adminReply={adminReply}
             alreadyHandled={alreadyHandled}
-            adminReplyBy={reclamation.adminReplyBy}
+            adminReplyBy={reclamation.repliedByAdminId}
             isSubmitting={isSubmitting}
             onReplyChange={onReplyChange}
             onSubmit={onSubmitReply}

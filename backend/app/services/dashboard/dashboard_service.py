@@ -177,7 +177,7 @@ class DashboardService:
                     "id": document.id or "",
                     "title": document.title,
                     "category": document.category,
-                    "status": document.document_status,
+                    "status": document.status,
                     "createdAt": document.created_at.astimezone(UTC).isoformat(),
                     "indexedAt": document.indexed_at.astimezone(UTC).isoformat() if document.indexed_at else None,
                     "fileType": self._format_file_type(document.file_type),
@@ -191,7 +191,7 @@ class DashboardService:
                         if document.date_entree_vigueur
                         else None
                     ),
-                    "chunkCount": document.chunks_count,
+                    "chunkCount": document.chunk_count,
                 }
                 for document in indexed_documents
             ],
@@ -199,7 +199,7 @@ class DashboardService:
             "urgentCases": [
                 {
                     "id": item.id or "",
-                    "referenceNumber": item.ticket_number,
+                    "referenceNumber": item.reference_number,
                     "subject": item.subject,
                     "priority": item.priority,
                     "status": item.status,

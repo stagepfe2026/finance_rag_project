@@ -53,11 +53,11 @@ export default function AdminLayout() {
         if (rec.priority !== "URGENT" || rec.status !== "PENDING") continue;
         const hoursSince = Math.floor((now - new Date(rec.createdAt).getTime()) / (60 * 60 * 1000));
         if (hoursSince <= 0) continue;
-        const key = `sla_reminder_${rec.ticketNumber}_h${hoursSince}`;
+        const key = `sla_reminder_${rec.referenceNumber}_h${hoursSince}`;
         if (!window.localStorage.getItem(key)) {
           window.localStorage.setItem(key, "1");
           newMessages.push(
-            `Rappel: la reclamation urgente ${rec.ticketNumber} est toujours en attente de prise en charge.`,
+            `Rappel: la reclamation urgente ${rec.referenceNumber} est toujours en attente de prise en charge.`,
           );
         }
       }

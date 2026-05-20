@@ -56,11 +56,11 @@ const initialValues: FormValues = {
 
 // ─── Pure helper functions ────────────────────────────────────────────────────
 function hasUnreadReply(reclamation: Reclamation) {
-  return Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
+  return Boolean(reclamation.adminReply) && !reclamation.replyAcknowledged;
 }
 
 function hasReadReply(reclamation: Reclamation) {
-  return Boolean(reclamation.adminReply) && reclamation.isReplyReadByUser;
+  return Boolean(reclamation.adminReply) && reclamation.replyAcknowledged;
 }
 
 function countWords(value: string) {
@@ -151,7 +151,7 @@ export function useReclamationViewModel() {
       const matchesSearch =
         !keyword ||
         reclamation.subject.toLowerCase().includes(keyword) ||
-        reclamation.ticketNumber.toLowerCase().includes(keyword);
+        reclamation.referenceNumber.toLowerCase().includes(keyword);
 
       const matchesStatus = statusFilter === "ALL" || reclamation.status === statusFilter;
       const matchesRead =
@@ -186,7 +186,7 @@ export function useReclamationViewModel() {
       return;
     }
 
-    const optimisticReclamation = { ...reclamation, isReplyReadByUser: true };
+    const optimisticReclamation = { ...reclamation, replyAcknowledged: true };
     setSelectedReclamation(optimisticReclamation);
     setReclamations((current) =>
       current.map((item) => (item._id === reclamation._id ? optimisticReclamation : item)),
@@ -304,7 +304,7 @@ export function useReclamationViewModel() {
       closeCreateModal();
       setSnackbar({
         open: true,
-        message: `Reclamation creee avec succes. Ticket ${created.ticketNumber}`,
+        message: `Reclamation creee avec succes. Ticket ${created.referenceNumber}`,
         tone: "success",
       });
     } catch (error) {

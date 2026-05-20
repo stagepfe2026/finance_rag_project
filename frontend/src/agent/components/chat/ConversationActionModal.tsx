@@ -23,9 +23,9 @@ export default function ConversationActionModal({
 
   useEffect(() => {
     if (!open || mode !== "rename") return;
-    const frame = window.requestAnimationFrame(() => setSummary(conversation?.summary ?? ""));
+    const frame = window.requestAnimationFrame(() => setSummary(conversation?.title ?? ""));
     return () => window.cancelAnimationFrame(frame);
-  }, [conversation?.summary, mode, open]);
+  }, [conversation?.title, mode, open]);
 
   useEffect(() => {
     if (!open) {
@@ -59,8 +59,8 @@ export default function ConversationActionModal({
     mode === "rename"
       ? "Choisissez un nouveau nom pour mieux organiser vos echanges."
       : mode === "archive"
-        ? `La conversation "${conversation.summary}" sera deplacee dans les archives.`
-        : `La conversation "${conversation.summary}" sera retiree de votre historique.`;
+        ? `La conversation "${conversation.title}" sera deplacee dans les archives.`
+        : `La conversation "${conversation.title}" sera retiree de votre historique.`;
 
   const confirmLabel = mode === "rename" ? "Enregistrer" : mode === "archive" ? "Archiver" : "Supprimer";
   const confirmClassName =

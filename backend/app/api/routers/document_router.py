@@ -194,7 +194,7 @@ async def reindex_document(request: Request, document_id: str):
         doc = result.data
         doc_title = getattr(doc, "title", None) or document_id
         doc_status = getattr(doc, "status", None) or "indexed"
-        chunks_count = getattr(doc, "chunks_count", None) or 0
+        chunks_count = getattr(doc, "chunk_count", None) or 0
         try_log_audit(
             request,
             "log_document_action",

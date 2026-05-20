@@ -28,12 +28,12 @@ class LegalStatusService:
         relation_sources.sort(
             key=lambda item: (
                 self._relation_sort_date(item),
-                1 if item.relation_type == LegalRelationType.abroge.value else 0,
+                1 if item.relation_to_target == LegalRelationType.abroge.value else 0,
             ),
             reverse=True,
         )
         return self.EFFECTIVE_RELATIONS.get(
-            relation_sources[0].relation_type,
+            relation_sources[0].relation_to_target,
             LegalStatus.actif.value,
         )
 
@@ -70,10 +70,10 @@ class LegalStatusService:
         return relation_sources
 
     def _resolve_direct_relation_source(self, document: DocumentModel) -> DocumentModel | None:
-        if document.relation_type not in self.EFFECTIVE_RELATIONS or not document.related_document_id:
+        if document.relation_to_target not in self.EFFECTIVE_RELATIONS or not document.target_document_id:
             return None
 
-        related_document = self.document_repository.get_by_id(document.related_document_id)
+        related_document = self.document_repository.get_by_id(document.target_document_id)
         if related_document is None or related_document.deleted_at is not None:
             return None
 
@@ -89,7 +89,7 @@ class LegalStatusService:
     ) -> bool:
         if source_document.id and source_document.id == target_document.id:
             return False
-        if source_document.relation_type not in self.EFFECTIVE_RELATIONS:
+        if source_document.relation_to_target not in self.EFFECTIVE_RELATIONS:
             return False
         if self.is_scheduled(source_document):
             return False
@@ -110,7 +110,7 @@ class LegalStatusService:
         value = (
             document.date_entree_vigueur
             or document.date_publication
-            or document.realized_at
+            or document.issued_at
             or document.created_at
         )
         return self._to_date(value) or date.min

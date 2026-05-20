@@ -32,7 +32,7 @@ export default function ReclamationTableRow({
   onEdit,
   onDelete,
 }: Props) {
-  const unread = Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
+  const unread = Boolean(reclamation.adminReply) && !reclamation.replyAcknowledged;
   const activityDate = reclamation.adminReplyAt || reclamation.updatedAt;
 
   return (
@@ -57,7 +57,7 @@ export default function ReclamationTableRow({
     >
       <div className="flex items-center">
         <p className="truncate rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
-          {reclamation.ticketNumber}
+          {reclamation.referenceNumber}
         </p>
       </div>
 

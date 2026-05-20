@@ -28,7 +28,7 @@ export default function RechercheDocumentPreviewCard({
         ) : error ? (
           error
         ) : preview ? (
-          <RechercheDocumentHighlightText text={preview.content} query={query} />
+          <RechercheDocumentHighlightText text={preview.extractedText} query={query} />
         ) : (
           "Aucun aperçu disponible."
         )}

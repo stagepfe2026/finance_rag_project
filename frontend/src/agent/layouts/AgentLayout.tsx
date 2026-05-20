@@ -215,7 +215,7 @@ export default function UserLayout() {
   }, [user?.id]);
 
   async function toggleFavoriteDocument(item: DocumentSearchItem) {
-    const nextValue = !item.isFavored;
+    const nextValue = !item.isFavorite;
 
     await setDocumentFavorite({
       apiBaseUrl,

@@ -96,7 +96,7 @@ class DocumentIndexService:
         if self.document_repository.already_exists(
             title=title,
             category=category,
-            document_type=str(prepared_legal_metadata["document_type"]),
+            legal_type=str(prepared_legal_metadata["document_type"]),
             version=str(prepared_legal_metadata["version"]),
         ):
             raise HTTPException(
@@ -112,13 +112,13 @@ class DocumentIndexService:
             title=title,
             category=category,
             legal_status=str(prepared_legal_metadata["legal_status"]),
-            document_type=str(prepared_legal_metadata["document_type"]),
-            realized_at=realized_at,
+            legal_type=str(prepared_legal_metadata["document_type"]),
+            issued_at=realized_at,
             date_publication=prepared_legal_metadata["date_publication"],
             date_entree_vigueur=prepared_legal_metadata["date_entree_vigueur"],
             version=str(prepared_legal_metadata["version"]),
-            relation_type=str(prepared_legal_metadata["relation_type"]),
-            related_document_id=prepared_legal_metadata["related_document_id"],
+            relation_to_target=str(prepared_legal_metadata["relation_type"]),
+            target_document_id=prepared_legal_metadata["related_document_id"],
             file_path=str(stored_file_path),
             file_size=len(content),
             file_type=file.content_type or "application/octet-stream",
@@ -127,31 +127,31 @@ class DocumentIndexService:
 
         try:
             cleaned_text, chunks = self.pipeline_service.parse_and_chunk(str(stored_file_path), extension)
-            related_document_title = self._resolve_related_document_title(document.related_document_id)
+            related_document_title = self._resolve_related_document_title(document.target_document_id)
             effective_legal_status = self.legal_status_service.resolve_status(document)
             inserted_count = self.pipeline_service.embed_and_upsert(
                 category=category,
                 document_id=document.id or "",
                 document_title=document.title,
                 document_name=file.filename or title,
-                document_type=document.document_type,
+                legal_type=document.legal_type,
                 legal_status=effective_legal_status,
                 date_publication=document.date_publication.isoformat() if document.date_publication else None,
                 date_entree_vigueur=(
                     document.date_entree_vigueur.isoformat() if document.date_entree_vigueur else None
                 ),
                 version=document.version,
-                relation_type=document.relation_type,
-                related_document_id=document.related_document_id,
+                relation_to_target=document.relation_to_target,
+                target_document_id=document.target_document_id,
                 related_document_title=related_document_title,
-                realized_at=document.realized_at.isoformat() if document.realized_at else None,
+                issued_at=document.issued_at.isoformat() if document.issued_at else None,
                 chunks=chunks,
             )
 
             stored_document = self.document_repository.set_as_indexed(
                 document.id,
-                chunks_count=len(chunks),
-                content=cleaned_text,
+                chunk_count=len(chunks),
+                extracted_text=cleaned_text,
             )
             if stored_document is not None:
                 self.document_relation_service.apply_legal_succession(stored_document)
@@ -220,8 +220,8 @@ class DocumentIndexService:
                 continue
             updated_count += 1
             related_before = (
-                self.document_repository.get_by_id(updated_document.related_document_id)
-                if updated_document.related_document_id
+                self.document_repository.get_by_id(updated_document.target_document_id)
+                if updated_document.target_document_id
                 else None
             )
             self.document_relation_service.apply_legal_succession(updated_document)
@@ -271,7 +271,7 @@ class DocumentIndexService:
                                     else None,
                                     "raison": "relation juridique",
                                     "sourceDocumentId": updated_document.id,
-                                    "relationToTarget": updated_document.relation_type,
+                                    "relationToTarget": updated_document.relation_to_target,
                                 },
                             )
                         except Exception:
@@ -311,7 +311,7 @@ class DocumentIndexService:
     def get_document_preview(self, document_id: str) -> DocumentPreviewOut:
         document = self._require_document(document_id)
 
-        preview_content = (document.content or "").strip()
+        preview_content = (document.extracted_text or "").strip()
         if not preview_content:
             file_path = self.file_service.resolve_existing_file_path(document.file_path)
             if file_path is None:
@@ -323,19 +323,19 @@ class DocumentIndexService:
         if not preview_content:
             raise HTTPException(status_code=404, detail="Contenu du document introuvable.")
 
-        document.content = preview_content
+        document.extracted_text = preview_content
         return self._with_effective_legal_status(document).to_preview_schema()
 
     def set_document_favorite(
         self,
         document_id: str,
-        is_favored: bool,
+        is_favorite: bool,
         *,
         current_user_id: str,
     ) -> DocumentActionResponse:
         return self.search_service.set_document_favorite(
             document_id,
-            is_favored,
+            is_favorite,
             current_user_id=current_user_id,
         )
 
@@ -371,18 +371,18 @@ class DocumentIndexService:
             self.qdrant_repository.delete_by_document(document.category, document_id)
             updated_document = self.document_repository.set_as_indexed(
                 document_id,
-                chunks_count=len(chunks),
-                content=cleaned_text,
+                chunk_count=len(chunks),
+                extracted_text=cleaned_text,
             )
             if updated_document is not None:
-                related_document_title = self._resolve_related_document_title(updated_document.related_document_id)
+                related_document_title = self._resolve_related_document_title(updated_document.target_document_id)
                 self.qdrant_repository.delete_by_document(updated_document.category, document_id)
                 self.pipeline_service.embed_and_upsert(
                     category=updated_document.category,
                     document_id=document_id,
                     document_title=updated_document.title,
                     document_name=file_path.name,
-                    document_type=updated_document.document_type,
+                    legal_type=updated_document.legal_type,
                     legal_status=self.legal_status_service.resolve_status(updated_document),
                     date_publication=(
                         updated_document.date_publication.isoformat()
@@ -395,10 +395,10 @@ class DocumentIndexService:
                         else None
                     ),
                     version=updated_document.version,
-                    relation_type=updated_document.relation_type,
-                    related_document_id=updated_document.related_document_id,
+                    relation_to_target=updated_document.relation_to_target,
+                    target_document_id=updated_document.target_document_id,
                     related_document_title=related_document_title,
-                    realized_at=updated_document.realized_at.isoformat() if updated_document.realized_at else None,
+                    issued_at=updated_document.issued_at.isoformat() if updated_document.issued_at else None,
                     chunks=chunks,
                 )
                 self.document_relation_service.apply_legal_succession(updated_document)

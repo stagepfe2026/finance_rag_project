@@ -63,7 +63,7 @@ class SessionsRepository:
             {"$set": update_fields},
         )
 
-    def close(self, session_id: str, *, reason: str, closed_before_expiry: bool) -> None:
+    def close(self, session_id: str, *, reason: str, is_early_closure: bool) -> None:
         object_id = self._parse_id(session_id)
         if not object_id:
             return
@@ -74,7 +74,7 @@ class SessionsRepository:
                 "$set": {
                     "closedAt": datetime.now(timezone.utc),
                     "closureReason": reason,
-                    "isEarlyClosure": closed_before_expiry,
+                    "isEarlyClosure": is_early_closure,
                 }
             },
         )

@@ -19,7 +19,7 @@ class ConversationService:
         now = datetime.now(UTC)
         conversation = ConversationModel(
             user_id=user_id,
-            summary="Nouvelle discussion",
+            title="Nouvelle discussion",
             created_at=now,
             updated_at=now,
         )
@@ -73,7 +73,7 @@ class ConversationService:
     def _serialize_conversation(conversation: ConversationModel) -> dict[str, Any]:
         return {
             "_id": conversation.id,
-            "title": conversation.summary,
+            "title": conversation.title,
             "createdAt": conversation.created_at.isoformat(),
             "updatedAt": conversation.updated_at.isoformat(),
             "userId": conversation.user_id,

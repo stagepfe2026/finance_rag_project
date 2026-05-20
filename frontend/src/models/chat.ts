@@ -5,7 +5,7 @@ export type ChatFeedback = "like" | "dislike";
 
 export type Conversation = {
   _id: string;
-  summary: string;
+  title: string;
   createdAt: string;
   updatedAt: string;
   userId: string;

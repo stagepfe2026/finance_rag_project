@@ -11,11 +11,11 @@ class DocumentRelationService:
         self.legal_status_service = LegalStatusService(self.document_repository)
 
     def apply_legal_succession(self, source_document: DocumentModel) -> None:
-        relation_type = source_document.relation_type
-        related_document_id = source_document.related_document_id
+        relation_to_target = source_document.relation_to_target
+        related_document_id = source_document.target_document_id
 
         if (
-            relation_type == LegalRelationType.none.value
+            relation_to_target == LegalRelationType.none.value
             or not related_document_id
             or not source_document.id
         ):
@@ -69,6 +69,6 @@ class DocumentRelationService:
 
         self.document_repository.register_as_target(
             related_document_id,
-            relation_type,
+            relation_to_target,
             source_document.id,
         )

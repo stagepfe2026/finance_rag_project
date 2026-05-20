@@ -198,7 +198,7 @@ class ReclamationRepository:
         reclamation_id: str,
         *,
         admin_reply: str,
-        admin_reply_by: str,
+        replied_by_admin_id: str,
         status: str,
     ) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
@@ -208,7 +208,7 @@ class ReclamationRepository:
         activity_item = {
             "id": ObjectId().binary.hex(),
             "description": f"Reclamation mise a jour par l administrateur ({status})",
-            "actorName": admin_reply_by,
+            "actorName": replied_by_admin_id,
             "createdAt": now,
         }
         self.collection.update_one(
@@ -218,9 +218,9 @@ class ReclamationRepository:
                     "status": status,
                     "adminReply": admin_reply,
                     "adminReplyAt": now,
-                    "repliedByAdminId": admin_reply_by,
+                    "repliedByAdminId": replied_by_admin_id,
                     "lastAdminActionAt": now,
-                    "lastAdminActorName": admin_reply_by,
+                    "lastAdminActorName": replied_by_admin_id,
                     "replyAcknowledged": False,
                     "updatedAt": now,
                 },

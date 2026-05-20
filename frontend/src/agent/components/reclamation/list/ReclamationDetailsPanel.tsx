@@ -84,7 +84,7 @@ function getHistoryItems(reclamation: Reclamation) {
     items.push({
       title: "Reclamation traitee",
       date: reclamation.adminReplyAt || reclamation.updatedAt,
-      actor: reclamation.adminReplyBy || reclamation.lastUpdatedByAdminName || "Systeme Admin",
+      actor: reclamation.repliedByAdminId || reclamation.lastAdminActorName || "Systeme Admin",
       tone: "success" as const,
     });
   }
@@ -92,8 +92,8 @@ function getHistoryItems(reclamation: Reclamation) {
   if (reclamation.status === "IN_PROGRESS" || reclamation.status === "RESOLVED") {
     items.push({
       title: "En cours de traitement",
-      date: reclamation.lastUpdatedByAdminAt || reclamation.updatedAt,
-      actor: reclamation.lastUpdatedByAdminName || "Systeme Admin",
+      date: reclamation.lastAdminActionAt || reclamation.updatedAt,
+      actor: reclamation.lastAdminActorName || "Systeme Admin",
       tone: "info" as const,
     });
   }
@@ -130,7 +130,7 @@ type Props = {
 export default function ReclamationDetailsPanel({ reclamation, onClose }: Props) {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
   const attachmentUrl = reclamation.attachment?.url ? `${apiBaseUrl}${reclamation.attachment.url}` : null;
-  const unread = Boolean(reclamation.adminReply) && !reclamation.isReplyReadByUser;
+  const unread = Boolean(reclamation.adminReply) && !reclamation.replyAcknowledged;
   const historyItems = getHistoryItems(reclamation);
 
   return (
@@ -171,7 +171,7 @@ export default function ReclamationDetailsPanel({ reclamation, onClose }: Props)
 
         <DetailField label="Ticket">
           <span className="inline-flex rounded-full bg-[#f3efee] px-2.5 py-1 text-[11px] font-semibold text-[#6d6662]">
-            {reclamation.ticketNumber}
+            {reclamation.referenceNumber}
           </span>
         </DetailField>
 

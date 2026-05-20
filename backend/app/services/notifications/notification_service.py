@@ -69,7 +69,7 @@ class NotificationService:
         notifications = [
             NotificationModel(
                 user_id=user.id or "",
-                type="document_indexed",
+                notification_type="document_indexed",
                 title="Nouveau document indexe",
                 description=f"{document.title} est maintenant disponible dans la base documentaire.",
                 link="/user/documents/recherche",
@@ -93,10 +93,10 @@ class NotificationService:
 
         notification = NotificationModel(
             user_id=reclamation.user_id,
-            type="reclamation_updated",
+            notification_type="reclamation_updated",
             title="Reclamation mise a jour",
             description=(
-                f"La reclamation numero {reclamation.ticket_number} est {status_label} "
+                f"La reclamation numero {reclamation.reference_number} est {status_label} "
                 f"apres reponse de {admin_name}."
             ),
             link="/user/reclamations",
@@ -110,10 +110,10 @@ class NotificationService:
         notifications = [
             NotificationModel(
                 user_id=admin.id or "",
-                type="urgent_reclamation",
+                notification_type="urgent_reclamation",
                 title="Reclamation urgente recue",
                 description=(
-                    f"Ticket {reclamation.ticket_number} — {reclamation.subject[:80]}"
+                    f"Ticket {reclamation.reference_number} — {reclamation.subject[:80]}"
                 ),
                 link="/admin/reclamations",
                 is_read=False,
@@ -128,10 +128,10 @@ class NotificationService:
             action_label="Notification reclamation urgente",
             entity_type="RECLAMATION",
             entity_id=reclamation.id or "",
-            entity_label=reclamation.ticket_number,
-            summary=f"Notification de reclamation urgente envoyee pour {reclamation.ticket_number}.",
+            entity_label=reclamation.reference_number,
+            summary=f"Notification de reclamation urgente envoyee pour {reclamation.reference_number}.",
             metadata={
-                "ticket": reclamation.ticket_number,
+                "ticket": reclamation.reference_number,
                 "priorite": reclamation.priority,
                 "destinataires": len(notifications),
             },
@@ -143,10 +143,10 @@ class NotificationService:
         notifications = [
             NotificationModel(
                 user_id=admin.id or "",
-                type="sla_overdue",
+                notification_type="sla_overdue",
                 title="SLA depasse",
                 description=(
-                    f"SLA depasse pour la reclamation {reclamation.ticket_number} — {reclamation.subject[:60]}"
+                    f"SLA depasse pour la reclamation {reclamation.reference_number} — {reclamation.subject[:60]}"
                 ),
                 link="/admin/reclamations",
                 is_read=False,
@@ -161,10 +161,10 @@ class NotificationService:
             action_label="Notification SLA depasse",
             entity_type="RECLAMATION",
             entity_id=reclamation.id or "",
-            entity_label=reclamation.ticket_number,
-            summary=f"Notification SLA depasse envoyee pour la reclamation {reclamation.ticket_number}.",
+            entity_label=reclamation.reference_number,
+            summary=f"Notification SLA depasse envoyee pour la reclamation {reclamation.reference_number}.",
             metadata={
-                "ticket": reclamation.ticket_number,
+                "ticket": reclamation.reference_number,
                 "priorite": reclamation.priority,
                 "destinataires": len(notifications),
             },
@@ -176,7 +176,7 @@ class NotificationService:
         notifications = [
             NotificationModel(
                 user_id=admin.id or "",
-                type="indexation_failed",
+                notification_type="indexation_failed",
                 title="Echec d indexation",
                 description=f"Le document « {document_title[:80]} » n a pas pu etre indexe : {error[:120]}",
                 link="/admin/documents",
@@ -212,7 +212,7 @@ class NotificationService:
         notifications = [
             NotificationModel(
                 user_id=uid,
-                type="document_deprecated",
+                notification_type="document_deprecated",
                 title="Document mis a jour",
                 description=(
                     f"Le document « {deprecated_document.title[:60]} » que vous avez en favoris "
@@ -260,7 +260,7 @@ class NotificationService:
     def serialize_notification(self, notification: NotificationModel) -> dict:
         return {
             "id": notification.id or "",
-            "notificationType": notification.type,
+            "notificationType": notification.notification_type,
             "title": notification.title,
             "description": notification.description,
             "link": notification.link,

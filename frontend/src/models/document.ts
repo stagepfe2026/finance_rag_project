@@ -9,24 +9,24 @@ export type DocumentItem = {
   id: string;
   title: string;
   category: DocumentCategoryValue;
-  documentStatus: DocumentStatusValue;
+  status: DocumentStatusValue;
   legalStatus: LegalStatusValue;
-  documentType: LegalDocumentTypeValue;
-  realizedAt: string | null;
+  legalType: LegalDocumentTypeValue;
+  issuedAt: string | null;
   datePublication: string | null;
   dateEntreeVigueur: string | null;
   version: string;
-  relationType: LegalRelationTypeValue;
-  relatedDocumentId: string | null;
+  relationToTarget: LegalRelationTypeValue;
+  targetDocumentId: string | null;
   filePath: string;
   fileSize: number;
   fileType: string;
-  isFavored: boolean;
+  isFavorite: boolean;
   createdAt: string;
   deletedAt: string | null;
   indexedAt: string | null;
-  chunksCount: number | null;
-  indexError: string | null;
+  chunkCount: number | null;
+  lastIndexError: string | null;
 };
 
 export type DocumentsListResponse = {
@@ -39,31 +39,31 @@ export type DocumentPreview = {
   title: string;
   category: DocumentCategoryValue;
   legalStatus: LegalStatusValue;
-  documentType: LegalDocumentTypeValue;
+  legalType: LegalDocumentTypeValue;
   datePublication: string | null;
   dateEntreeVigueur: string | null;
   version: string;
-  relationType: LegalRelationTypeValue;
-  relatedDocumentId: string | null;
+  relationToTarget: LegalRelationTypeValue;
+  targetDocumentId: string | null;
   fileType: string;
   createdAt: string;
-  content: string;
+  extractedText: string;
 };
 
 export type DocumentSearchItem = {
   id: string;
   title: string;
   category: DocumentCategoryValue;
-  realizedAt: string | null;
+  issuedAt: string | null;
   legalStatus: LegalStatusValue;
-  documentType: LegalDocumentTypeValue;
+  legalType: LegalDocumentTypeValue;
   datePublication: string | null;
   dateEntreeVigueur: string | null;
   version: string;
-  relationType: LegalRelationTypeValue;
-  relatedDocumentId: string | null;
+  relationToTarget: LegalRelationTypeValue;
+  targetDocumentId: string | null;
   createdAt: string;
-  isFavored: boolean;
+  isFavorite: boolean;
   snippets: string[];
 };
 

@@ -32,14 +32,14 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                     self.sessions_repo.close(
                         session.id or "",
                         reason="SESSION_MAX_DURATION_EXPIRED",
-                        closed_before_expiry=False,
+                        is_early_closure=False,
                     )
                     request.state.session_error_code = "SESSION_MAX_DURATION_EXPIRED"
                 elif session.idle_expires_at <= now:
                     self.sessions_repo.close(
                         session.id or "",
                         reason="SESSION_IDLE_TIMEOUT",
-                        closed_before_expiry=False,
+                        is_early_closure=False,
                     )
                     request.state.session_error_code = "SESSION_IDLE_TIMEOUT"
                 else:
