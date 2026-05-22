@@ -120,7 +120,7 @@ class RetrievalFilterService:
         best_reranker_score = max(chunk.get("reranker_score", 0.0) for chunk in final_chunks)
         best_vector_score = max(chunk.get("vector_score", 0.0) for chunk in final_chunks)
 
-        if best_reranker_score >= settings.min_reranker_score or best_vector_score >= 0.58:
+        if best_reranker_score >= settings.min_reranker_score or best_vector_score >= settings.fallback_min_vector_score:
             return False
 
         context_text = " ".join(chunk["text"] for chunk in final_chunks).lower()
@@ -131,8 +131,7 @@ class RetrievalFilterService:
         ]
         unsupported_tokens = [token for token in answer_tokens if token not in context_text]
 
-        # Only reject clearly off-context answers. Short grounded answers should pass through.
-        if len(cleaned_answer) <= 240:
+        if len(cleaned_answer) <= settings.fallback_max_answer_length:
             return False
 
-        return len(unsupported_tokens) > 35
+        return len(unsupported_tokens) > settings.fallback_max_unsupported_tokens

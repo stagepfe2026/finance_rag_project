@@ -12,11 +12,20 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     generation_model_name: str = "llama3:latest"
 
+    category_content_weight: float = 0.85
+    category_name_weight: float = 0.15
+
+    related_doc_chunks_limit: int = 2
+    fallback_min_vector_score: float = 0.58
+    fallback_max_answer_length: int = 240
+    fallback_max_unsupported_tokens: int = 35
+
     category_probe_top_k: int = 2
     retrieval_top_k_per_category: int = 6
     final_top_k: int = 4
 
     rrf_retrieval_top_k: int = 20
+    rrf_k_constant: int = 60
     min_rrf_score: float = 0.010
     min_rrf_final_score: float = 0.005
     min_reranker_score: float = 0.0

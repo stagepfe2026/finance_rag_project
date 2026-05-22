@@ -45,36 +45,27 @@ class RetrievalService:
         category_label = category.replace("_", " ")
         return self._compute_lexical_overlap_score(question, category_label)
 
-    def _hybrid_rerank(
+    def _score_chunks_by_vector(
         self,
-        question: str,
-        retrieved_chunks: list[dict],
+        chunks: list[dict],
         *,
         question_profile: str,
         query_mode: Literal["current", "future_preview", "comparison"],
     ) -> list[dict]:
         ranked = []
-
-        for chunk in retrieved_chunks:
-            vector_score = float(chunk["score"])
-            lexical_score = self._compute_lexical_overlap_score(question, chunk["text"])
+        for chunk in chunks:
+            vector_score = float(chunk.get("score", 0.0))
             legal_modifier = self.legal_ranking_service.score_legal_relevance(
-                chunk,
-                question_profile,
-                query_mode,
+                chunk, question_profile, query_mode
             )
-            final_score = (0.68 * vector_score) + (0.22 * lexical_score) + legal_modifier
-
-            enriched_chunk = {
+            ranked.append({
                 **chunk,
                 "vector_score": vector_score,
-                "lexical_score": lexical_score,
+                "rrf_score": 0.0,
                 "legal_modifier": legal_modifier,
-                "final_score": final_score,
-            }
-            ranked.append(enriched_chunk)
-
-        ranked.sort(key=lambda item: item["final_score"], reverse=True)
+                "final_score": vector_score + legal_modifier,
+            })
+        ranked.sort(key=lambda c: c["final_score"], reverse=True)
         return ranked
 
     def _rrf_rerank(
@@ -86,7 +77,7 @@ class RetrievalService:
         question_profile: str,
         query_mode: Literal["current", "future_preview", "comparison"],
     ) -> list[dict]:
-        K = 60
+        K = settings.rrf_k_constant
         n_dense = len(dense_ranks)
         n_bm25 = len(bm25_ranks)
         ranked = []
@@ -132,15 +123,18 @@ class RetrievalService:
                 continue
 
             enriched_probe_chunks = enrich_fn(probe_chunks)
-            ranked_probe_chunks = self._hybrid_rerank(
-                question,
+            scored_probe_chunks = self._score_chunks_by_vector(
                 enriched_probe_chunks,
                 question_profile=question_profile,
                 query_mode=query_mode,
             )
-            best_probe_chunk = ranked_probe_chunks[0]
+            best_probe_chunk = scored_probe_chunks[0]
             category_name_score = self._compute_category_name_score(question, category)
-            category_score = (0.85 * best_probe_chunk["final_score"]) + (0.15 * category_name_score)
+            category_score = (
+                settings.category_content_weight * best_probe_chunk["final_score"]
+            ) + (
+                settings.category_name_weight * category_name_score
+            )
 
             category_candidates.append(
                 {
@@ -244,20 +238,19 @@ class RetrievalService:
                     category=category,
                     document_id=related_document_id,
                     query_vector=query_vector,
-                    limit=2,
+                    limit=settings.related_doc_chunks_limit,
                     query_mode=query_mode,
                 )
                 if not related_chunks:
                     continue
 
                 enriched_related_chunks = enrich_fn(related_chunks)
-                ranked_related_chunks = self._hybrid_rerank(
-                    question,
+                scored_related_chunks = self._score_chunks_by_vector(
                     enriched_related_chunks,
                     question_profile=question_profile,
                     query_mode=query_mode,
                 )
-                related_ranked_chunks.extend(ranked_related_chunks)
+                related_ranked_chunks.extend(scored_related_chunks)
 
         related_ranked_chunks.sort(key=lambda item: item["final_score"], reverse=True)
         return dedupe_fn(related_ranked_chunks)
