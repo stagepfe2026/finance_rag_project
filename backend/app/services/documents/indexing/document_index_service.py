@@ -77,6 +77,7 @@ class DocumentIndexService:
         version: str | None = None,
         relation_type: str | None = None,
         related_document_id: str | None = None,
+        admin_id: str | None = None,
     ) -> dict:
         extension = os.path.splitext(file.filename or "")[1].lower()
         content = await file.read()
@@ -152,6 +153,7 @@ class DocumentIndexService:
                 document.id,
                 chunk_count=len(chunks),
                 extracted_text=cleaned_text,
+                indexed_by_admin_id=admin_id,
             )
             if stored_document is not None:
                 self.document_relation_service.apply_legal_succession(stored_document)
@@ -339,14 +341,14 @@ class DocumentIndexService:
             current_user_id=current_user_id,
         )
 
-    def delete_document_from_index(self, document_id: str) -> DocumentActionResponse:
+    def delete_document_from_index(self, document_id: str, admin_id: str | None = None) -> DocumentActionResponse:
         document = self._require_document(document_id)
         effective_legal_status = self.legal_status_service.resolve_status(document)
         if effective_legal_status not in {LegalStatus.actif.value, LegalStatus.remplace.value}:
             raise HTTPException(status_code=400, detail="Ce document ne peut pas etre supprime.")
 
         self.qdrant_repository.delete_by_document(document.category, document_id)
-        updated_document = self.document_repository.remove(document_id)
+        updated_document = self.document_repository.remove(document_id, deleted_by_admin_id=admin_id)
         return DocumentActionResponse(
             message="Document supprime avec succes.",
             data=self._with_effective_legal_status(updated_document).to_out_schema()
@@ -354,7 +356,7 @@ class DocumentIndexService:
             else None,
         )
 
-    def reindex_document(self, document_id: str) -> DocumentActionResponse:
+    def reindex_document(self, document_id: str, admin_id: str | None = None) -> DocumentActionResponse:
         document = self._require_document(document_id)
         file_path = self.file_service.resolve_existing_file_path(document.file_path)
         if file_path is None:
@@ -373,6 +375,7 @@ class DocumentIndexService:
                 document_id,
                 chunk_count=len(chunks),
                 extracted_text=cleaned_text,
+                indexed_by_admin_id=admin_id,
             )
             if updated_document is not None:
                 related_document_title = self._resolve_related_document_title(updated_document.target_document_id)

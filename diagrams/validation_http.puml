@@ -1,0 +1,62 @@
+@startuml validation_http
+
+title Validation des champs de la requête HTTP
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceGroupBorderThickness 1.5
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackgroundColor transparent
+
+boundary "DocumentRouter" as Router #Lavender
+control "DocumentValidator" as Validator #LightYellow
+
+note over Router, Validator
+    Aucune base de données n'est sollicitée ici.
+    Si une validation échoue, les suivantes ne sont pas exécutées.
+end note
+
+Router -> Validator : validate_document_filename(file)
+note right : accepte uniquement .pdf et .docx
+alt fichier absent ou extension non supportée
+    Validator --> Router : 400 Bad Request
+end
+
+Router -> Validator : validate_document_category(category)
+note right : doit appartenir aux catégories\n définies dans le système
+alt catégorie inconnue
+    Validator --> Router : 400 Bad Request
+end
+
+Router -> Validator : validate_document_dates(\nrealized_at, date_publication, date_entree_vigueur)
+note right : la date d'entrée en vigueur est obligatoire\n et ne peut pas précéder la date de publication
+alt date absente, future ou incohérente
+    Validator --> Router : 400 Bad Request
+end
+
+Router -> Validator : validate_document_type(document_type)
+note right : le type doit être précisé explicitement\n"autre" n'est pas accepté
+alt type absent ou non reconnu
+    Validator --> Router : 400 Bad Request
+end
+
+Router -> Validator : validate_relation_type(relation_type)
+note right : seules les valeurs "aucune" et "remplace"\nsont autorisées lors d'un import
+alt valeur de relation inconnue
+    Validator --> Router : 400 Bad Request
+end
+
+Router -> Validator : validate_document_size(file)
+note right : vérification rapide basée sur\nla taille déclarée dans la requête
+alt taille déclarée dépasse 20 MB
+    Validator --> Router : 400 Bad Request
+end
+
+Router -> Validator : normalize_required_title(title)
+note right : supprime les espaces superflus\net rejette un titre vide
+alt titre vide ou absent
+    Validator --> Router : 400 Bad Request
+end
+
+Validator --> Router : champs validés et normalisés
+
+@enduml

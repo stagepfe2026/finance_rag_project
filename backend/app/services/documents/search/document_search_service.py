@@ -2,6 +2,7 @@ import re
 from datetime import date
 
 from app.models.document_model import DocumentModel
+from app.repositories.document_favorite_repository import DocumentFavoriteRepository
 from app.repositories.document_repository import DocumentRepository
 from app.schemas import DocumentActionResponse, DocumentListResponse, DocumentSearchResponse
 from app.services.documents.legal.legal_status_service import LegalStatusService
@@ -13,9 +14,11 @@ class DocumentSearchService:
         self,
         document_repository: DocumentRepository,
         legal_status_service: LegalStatusService,
+        favorite_repository: DocumentFavoriteRepository | None = None,
     ) -> None:
         self.document_repository = document_repository
         self.legal_status_service = legal_status_service
+        self.favorite_repository = favorite_repository or DocumentFavoriteRepository()
 
     def search_documents(
         self,
@@ -31,14 +34,14 @@ class DocumentSearchService:
         skip: int = 0,
         limit: int = 100,
     ) -> DocumentSearchResponse:
+        favorite_document_ids = self._resolve_favorite_ids(favorites_only, current_user_id)
         documents = self.document_repository.search(
             query=query,
             title=title,
             categories=categories,
             date_from=date_from,
             date_to=date_to,
-            favorites_only=favorites_only,
-            current_user_id=current_user_id,
+            favorite_document_ids=favorite_document_ids,
             sort_by=sort_by,
             skip=skip,
             limit=limit,
@@ -49,16 +52,12 @@ class DocumentSearchService:
             categories=categories,
             date_from=date_from,
             date_to=date_to,
-            favorites_only=favorites_only,
-            current_user_id=current_user_id,
+            favorite_document_ids=favorite_document_ids,
         )
+        favorited_ids = self._get_favorited_ids_set(current_user_id)
         return DocumentSearchResponse(
             items=[
-                self._to_search_item(
-                    document,
-                    query=query,
-                    current_user_id=current_user_id,
-                )
+                self._to_search_item(document, query=query, favorited_ids=favorited_ids)
                 for document in documents
             ],
             total=total,
@@ -86,10 +85,11 @@ class DocumentSearchService:
             category=category,
             status=status,
         )
+        favorited_ids = self._get_favorited_ids_set(current_user_id)
         return DocumentListResponse(
             items=[
                 self._with_effective_legal_status(document).to_out_schema(
-                    is_favored=bool(current_user_id and current_user_id in document.favorite_user_ids)
+                    is_favored=bool(document.id and document.id in favorited_ids)
                 )
                 for document in documents
             ],
@@ -106,32 +106,50 @@ class DocumentSearchService:
         if not current_user_id.strip():
             raise HTTPException(status_code=401, detail="Authentification requise.")
 
-        document = self.document_repository.update_favorite_status(document_id, current_user_id, is_favorite)
+        document = self.document_repository.get_by_id(document_id)
         if document is None or document.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Document introuvable.")
 
+        if is_favorite:
+            self.favorite_repository.add(document_id, current_user_id)
+        else:
+            self.favorite_repository.remove(document_id, current_user_id)
+
+        now_favored = self.favorite_repository.exists(document_id, current_user_id)
         return DocumentActionResponse(
             message="Favori mis a jour avec succes.",
-            data=self._with_effective_legal_status(document).to_out_schema(
-                is_favored=current_user_id in document.favorite_user_ids,
-            ),
+            data=self._with_effective_legal_status(document).to_out_schema(is_favored=now_favored),
         )
 
     def _with_effective_legal_status(self, document: DocumentModel) -> DocumentModel:
         document.legal_status = self.legal_status_service.resolve_status(document)
         return document
 
+    def _resolve_favorite_ids(
+        self, favorites_only: bool, current_user_id: str | None
+    ) -> list[str] | None:
+        if not favorites_only:
+            return None
+        if not current_user_id:
+            return []
+        return self.favorite_repository.get_document_ids_for_user(current_user_id)
+
+    def _get_favorited_ids_set(self, current_user_id: str | None) -> set[str]:
+        if not current_user_id:
+            return set()
+        return set(self.favorite_repository.get_document_ids_for_user(current_user_id))
+
     def _to_search_item(
         self,
         document: DocumentModel,
         *,
         query: str | None,
-        current_user_id: str | None,
+        favorited_ids: set[str],
     ):
         effective_document = self._with_effective_legal_status(document)
         return effective_document.to_search_item_schema(
             snippets=self._build_snippets(effective_document, query=query),
-            is_favored=bool(current_user_id and current_user_id in document.favorite_user_ids),
+            is_favored=bool(document.id and document.id in favorited_ids),
         )
 
     def _build_snippets(self, document: DocumentModel, *, query: str | None) -> list[str]:

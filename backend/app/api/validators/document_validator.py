@@ -50,9 +50,12 @@ def validate_document_type(document_type: str | None) -> None:
         raise HTTPException(status_code=400, detail="Le type de document est obligatoire.")
 
 
+ALLOWED_IMPORT_RELATION_TYPES = {LegalRelationType.none.value, LegalRelationType.remplace.value}
+
+
 def validate_relation_type(relation_type: str | None) -> None:
-    if relation_type and relation_type not in {item.value for item in LegalRelationType}:
-        raise HTTPException(status_code=400, detail="relation_type doit etre une valeur valide.")
+    if relation_type and relation_type not in ALLOWED_IMPORT_RELATION_TYPES:
+        raise HTTPException(status_code=400, detail="relation_type doit etre 'none' ou 'remplace'.")
 
 
 def validate_document_dates(

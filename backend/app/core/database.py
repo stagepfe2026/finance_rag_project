@@ -47,6 +47,10 @@ def get_notifications_collection() -> Collection:
     return get_database()[settings.mongodb_notifications_collection]
 
 
+def get_document_favorites_collection() -> Collection:
+    return get_database()[settings.mongodb_document_favorites_collection]
+
+
 def get_audit_events_collection() -> Collection:
     return get_database()["audit_events"]
 

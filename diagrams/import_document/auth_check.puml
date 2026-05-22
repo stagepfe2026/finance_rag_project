@@ -1,0 +1,36 @@
+@startuml auth_check
+
+title Vérification session et rôle Admin
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceGroupBorderThickness 1.5
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackgroundColor transparent
+
+boundary "DocumentRouter" as Router #Lavender
+control "require_admin_user" as Auth #LightYellow
+
+note over Router, Auth
+    Exécuté automatiquement avant chaque appel au DocumentRouter.
+    Si la session est absente, la page redirige l'utilisateur
+    vers la connexion sans attendre la réponse du serveur.
+end note
+
+Router -> Auth : vérifie la requête entrante
+
+Auth -> Auth : récupère l'utilisateur depuis la session
+note right : l'utilisateur a déjà été identifié\npar le middleware avant d'arriver ici
+
+alt aucune session active
+    Auth --> Router : 401 Unauthorized
+end
+
+Auth -> Auth : vérifie que le rôle est ADMIN
+
+alt utilisateur non administrateur
+    Auth --> Router : 403 Forbidden
+end
+
+Auth --> Router : utilisateur courant confirmé
+
+@enduml

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from app.repositories.document_repository import DocumentRepository
-from app.schemas import LegalDocumentType, LegalRelationType, LegalStatus
+from app.schemas import LegalDocumentType, LegalRelationType
 from app.services.documents.legal.legal_status_service import LegalStatusService
 from fastapi import HTTPException
 
@@ -85,15 +85,6 @@ class LegalMetadataService:
                     "Le document juridique lie est introuvable "
                     f"(targetDocumentId={normalized_document_id})."
                 ),
-            )
-
-    @staticmethod
-    def _validate_legal_status(legal_status: str) -> None:
-        allowed = {item.value for item in LegalStatus}
-        if legal_status not in allowed:
-            raise HTTPException(
-                status_code=400,
-                detail="legalStatus doit etre une valeur juridique valide.",
             )
 
     @staticmethod

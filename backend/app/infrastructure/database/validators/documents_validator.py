@@ -29,8 +29,6 @@ DOCUMENTS_VALIDATOR = {
             "filePath": {"bsonType": "string", "minLength": 1},
             "fileSize": {"bsonType": ["int", "long"], "minimum": 0},
             "fileType": {"bsonType": "string"},
-            "isFavorite": {"bsonType": "bool"},
-            "favoriteUserIds": {"bsonType": "array", "items": {"bsonType": "string"}},
             "createdAt": {"bsonType": "date"},
             "deletedAt": {"bsonType": ["date", "null"]},
             "indexedAt": {"bsonType": ["date", "null"]},

@@ -1,0 +1,150 @@
+@startuml import_document
+
+title Importer un document — Diagramme de séquence conception
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceGroupBorderThickness 1.5
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackgroundColor transparent
+
+actor Admin
+
+boundary "ImportDocumentPage" as Page #LightBlue
+boundary "DocumentRouter" as Router #Lavender
+control "DocumentIndexService" as IndexService #LightYellow
+control "DocumentFileService" as FileService #LightYellow
+control "DocumentRelationService" as RelationService #LightYellow
+control "NotificationService" as NotifService #LightYellow
+control "AuditService" as Audit #LightYellow
+entity "DocumentModel" as DocModel #DarkSeaGreen
+entity "DocumentRepository" as DocRepo #DarkSeaGreen
+
+Admin -> Page : remplit le formulaire\net clique sur Indexer
+
+Page -> Router : POST /api/documents/index\n(file, category, title, dates,\ndocument_type, relation_type)
+
+ref over Admin, Router
+    Vérification session et rôle Admin
+end ref
+
+alt session absente ou expirée
+    Router --> Page : 401 Unauthorized
+    Page --> Admin : redirige vers la page de connexion
+else utilisateur non administrateur
+    Router --> Page : 403 Forbidden
+    Page --> Admin : redirige vers la page d'accueil
+end
+
+ref over Router
+    Validation des champs de la requête HTTP
+end ref
+
+alt un champ est invalide ou absent
+    Router --> Page : 400 Bad Request
+    Page --> Admin : message d'erreur
+end
+
+Router -> IndexService : import_and_index(\nfile, category, title, dates,\ndocument_type, relation_type, admin_id)
+
+IndexService -> IndexService : lecture du contenu réel du fichier
+note right : la taille déclarée par le navigateur\npeut différer de la taille réelle
+
+alt fichier dépasse 20 MB
+    IndexService --> Router : 400 Bad Request
+    Router --> Page : 400 Bad Request
+    Page --> Admin : message d'erreur
+end
+
+ref over IndexService, DocRepo
+    Construction des métadonnées légales
+end ref
+
+alt une métadonnée légale est invalide
+    IndexService --> Router : 400 Bad Request
+    Router --> Page : 400 Bad Request
+    Page --> Admin : message d'erreur
+end
+
+IndexService -> DocRepo : already_exists(\ntitle, category, legal_type, version)
+note right : un document est considéré en doublon\nsi le titre, la catégorie, le type\net la version sont identiques
+alt document identique déjà présent
+    IndexService --> Router : 409 Conflict
+    Router --> Page : 409 Conflict
+    Page --> Admin : message d'erreur
+end
+
+IndexService -> FileService : store_uploaded_file(filename, extension, content)
+note right : enregistre le fichier sur le disque\net retourne son chemin pour le stocker en base
+FileService --> IndexService : stored_file_path
+
+IndexService -> DocModel : new_processing(\ntitle, category, legal_status, legal_type,\ndates, version, relation, file_path, file_size, file_type)
+note right : document créé en mémoire uniquement\npas encore enregistré en base
+DocModel --> IndexService : document
+
+IndexService -> DocRepo : save(document)
+note right : première persistance en base\nle document reçoit son identifiant définitif
+DocRepo --> IndexService : document (avec id MongoDB)
+
+note over IndexService #FFE4B5 : ⚠️ Le document est enregistré en base\nToute erreur qui suit doit\nmarquer le document comme échoué
+
+group Indexation du document
+
+    ref over IndexService, DocRepo
+        Parsing NLP, vectorisation\net insertion dans Qdrant
+    end ref
+
+    alt le document est vide ou illisible
+        IndexService --> Router : 500 Internal Server Error
+        Router --> Page : 500 Internal Server Error
+        Page --> Admin : message d'erreur
+    end
+
+    IndexService -> DocRepo : set_as_indexed(\ndocument_id, chunk_count, extracted_text, admin_id)
+    note right : statut du document :\nprocessing → indexed\ndisponible pour la recherche
+    DocRepo --> IndexService : stored_document
+
+    IndexService -> RelationService : apply_legal_succession(stored_document)
+    note right : met à jour les statuts juridiques\nsi le document remplace un document existant
+
+    alt aucune relation juridique définie
+        RelationService --> IndexService : return
+    else le document cible est introuvable
+        RelationService --> IndexService : 400 Bad Request
+    else le nouveau document entre en vigueur dans le futur
+        RelationService -> DocRepo : update_metadata(source_id, legal_status="futur")
+        RelationService -> DocRepo : update_metadata(target_id, resolve_status)
+        note right : la cible conserve son statut actuel\njusqu'à la date d'entrée en vigueur
+    else le nouveau document est actif et plus récent que la cible
+        RelationService -> DocRepo : update_metadata(source_id, legal_status="actif")
+        RelationService -> DocRepo : register_as_target(\ntarget_id, relation_type, source_id)
+        note right : la cible devient "remplacé"
+    end
+
+    opt le service de notification est actif
+        ref over IndexService, NotifService
+            Envoi des notifications aux utilisateurs
+        end ref
+    end
+
+end
+
+opt une erreur survient pendant l'indexation
+    IndexService -> DocRepo : set_as_failed(document_id, error)
+    opt le service de notification est actif
+        IndexService -> NotifService : notify_indexation_failed(title, error)
+        note right : alerte envoyée uniquement\naux administrateurs
+    end
+    IndexService --> Router : 500 Internal Server Error
+    Router --> Page : 500 Internal Server Error
+    Page --> Admin : message d'erreur
+end
+
+IndexService --> Router : {document, chunks_count, indexed_points}
+
+Router -> Audit : log_document_action(\n"DOCUMENT_IMPORTED", title, category, chunk_count)
+Audit --> Router : ok
+
+Router --> Page : 200 OK
+Page --> Admin : document indexé avec succès
+
+@enduml

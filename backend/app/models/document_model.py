@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
@@ -45,12 +45,12 @@ class DocumentModel:
     file_type: str
     created_at: datetime
     description: str = ""
-    is_favorite: bool = False
-    favorite_user_ids: list[str] = field(default_factory=list)
     deleted_at: datetime | None = None
     indexed_at: datetime | None = None
     chunk_count: int | None = None
     last_index_error: str | None = None
+    indexed_by_admin_id: str | None = None
+    deleted_by_admin_id: str | None = None
     id: str | None = None
     extracted_text: str | None = None
 
@@ -91,7 +91,6 @@ class DocumentModel:
             file_type=file_type,
             created_at=datetime.now(UTC),
             description=description,
-            is_favorite=False,
             extracted_text=extracted_text,
         )
 
@@ -119,16 +118,12 @@ class DocumentModel:
             file_type=str(raw.get("fileType", "application/octet-stream")),
             created_at=raw.get("createdAt") or datetime.now(UTC),
             description=str(raw.get("description", "")),
-            is_favorite=bool(raw.get("isFavorite", False)),
-            favorite_user_ids=[
-                str(item)
-                for item in raw.get("favoriteUserIds", [])
-                if isinstance(item, str) and item.strip()
-            ],
             deleted_at=raw.get("deletedAt"),
             indexed_at=raw.get("indexedAt"),
             chunk_count=raw.get("chunkCount"),
             last_index_error=raw.get("lastIndexError"),
+            indexed_by_admin_id=raw.get("indexedByAdminId"),
+            deleted_by_admin_id=raw.get("deletedByAdminId"),
             extracted_text=raw.get("extractedText"),
         )
 
@@ -149,13 +144,13 @@ class DocumentModel:
             "fileSize": self.file_size,
             "fileType": self.file_type,
             "description": self.description,
-            "isFavorite": self.is_favorite,
-            "favoriteUserIds": self.favorite_user_ids,
             "createdAt": self.created_at,
             "deletedAt": self.deleted_at,
             "indexedAt": self.indexed_at,
             "chunkCount": self.chunk_count,
             "lastIndexError": self.last_index_error,
+            "indexedByAdminId": self.indexed_by_admin_id,
+            "deletedByAdminId": self.deleted_by_admin_id,
             "extractedText": self.extracted_text,
         }
 
@@ -189,12 +184,14 @@ class DocumentModel:
             filePath=self.file_path,
             fileSize=self.file_size,
             fileType=self.file_type,
-            isFavorite=self.is_favorite if is_favored is None else is_favored,
+            isFavorite=bool(is_favored),
             createdAt=self.created_at,
             deletedAt=self.deleted_at,
             indexedAt=self.indexed_at,
             chunkCount=self.chunk_count,
             lastIndexError=self.last_index_error,
+            indexedByAdminId=self.indexed_by_admin_id,
+            deletedByAdminId=self.deleted_by_admin_id,
         )
 
     def to_preview_schema(self) -> DocumentPreviewOut:
@@ -233,6 +230,6 @@ class DocumentModel:
             relationToTarget=LegalRelationType(self.relation_to_target),
             targetDocumentId=self.target_document_id,
             createdAt=self.created_at,
-            isFavorite=self.is_favorite if is_favored is None else is_favored,
+            isFavorite=bool(is_favored),
             snippets=snippets,
         )

@@ -62,6 +62,8 @@ class DocumentOut(BaseModel):
     indexedAt: datetime | None = None
     chunkCount: int | None = None
     lastIndexError: str | None = None
+    indexedByAdminId: str | None = None
+    deletedByAdminId: str | None = None
 
 
 class DocumentListResponse(BaseModel):

@@ -127,7 +127,7 @@ async def delete_document_from_index(request: Request, document_id: str):
         else ""
     )
 
-    result = service.delete_document_from_index(document_id)
+    result = service.delete_document_from_index(document_id, admin_id=current_user.get("id"))
 
     if audit_service:
         doc = result.data
@@ -168,7 +168,7 @@ async def reindex_document(request: Request, document_id: str):
     current_user = get_current_user(request)
 
     try:
-        result = service.reindex_document(document_id)
+        result = service.reindex_document(document_id, admin_id=current_user.get("id"))
     except HTTPException as exc:
         if audit_service and exc.status_code == 500:
             try_log_audit(
@@ -264,6 +264,7 @@ async def index_document(
             version=version,
             relation_type=relation_type,
             related_document_id=related_document_id,
+            admin_id=current_user.get("id"),
         )
         if audit_service:
             doc = (result.get("document") or {}) if isinstance(result, dict) else {}

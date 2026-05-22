@@ -41,6 +41,7 @@ class DocumentRepository:
         document_id: str,
         chunk_count: int,
         extracted_text: str | None = None,
+        indexed_by_admin_id: str | None = None,
     ) -> DocumentModel | None:
         self.collection.update_one(
             self._id_filter(document_id),
@@ -51,6 +52,7 @@ class DocumentRepository:
                     "chunkCount": chunk_count,
                     "lastIndexError": None,
                     "extractedText": extracted_text,
+                    "indexedByAdminId": indexed_by_admin_id,
                 }
             },
         )
@@ -68,7 +70,7 @@ class DocumentRepository:
         )
         return self.get_by_id(document_id)
 
-    def remove(self, document_id: str) -> DocumentModel | None:
+    def remove(self, document_id: str, deleted_by_admin_id: str | None = None) -> DocumentModel | None:
         now = datetime.now(UTC)
         self.collection.update_one(
             {**self._id_filter(document_id), "deletedAt": None},
@@ -77,6 +79,7 @@ class DocumentRepository:
                     "legalStatus": LegalStatus.abroge.value,
                     "deletedAt": now,
                     "lastIndexError": None,
+                    "deletedByAdminId": deleted_by_admin_id,
                 }
             },
         )
@@ -176,8 +179,7 @@ class DocumentRepository:
         categories: list[str] | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
-        favorites_only: bool = False,
-        current_user_id: str | None = None,
+        favorite_document_ids: list[str] | None = None,
         sort_by: str = "recent",
         skip: int = 0,
         limit: int = 100,
@@ -188,8 +190,7 @@ class DocumentRepository:
             categories=categories,
             date_from=date_from,
             date_to=date_to,
-            favorites_only=favorites_only,
-            current_user_id=current_user_id,
+            favorite_document_ids=favorite_document_ids,
         )
         sort_config = [("datePublication", -1), ("createdAt", -1)] if sort_by == "recent" else [("title", 1)]
         cursor = self.collection.find(mongo_query).sort(sort_config).skip(skip).limit(limit)
@@ -203,8 +204,7 @@ class DocumentRepository:
         categories: list[str] | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
-        favorites_only: bool = False,
-        current_user_id: str | None = None,
+        favorite_document_ids: list[str] | None = None,
     ) -> int:
         mongo_query = self._build_search_query(
             query=query,
@@ -212,21 +212,9 @@ class DocumentRepository:
             categories=categories,
             date_from=date_from,
             date_to=date_to,
-            favorites_only=favorites_only,
-            current_user_id=current_user_id,
+            favorite_document_ids=favorite_document_ids,
         )
         return self.collection.count_documents(mongo_query)
-
-    def update_favorite_status(self, document_id: str, user_id: str, is_favorite: bool) -> DocumentModel | None:
-        if not document_id.strip():
-            return None
-
-        update_operator = {"$addToSet": {"favoriteUserIds": user_id}} if is_favorite else {"$pull": {"favoriteUserIds": user_id}}
-        self.collection.update_one(
-            {**self._id_filter(document_id), "deletedAt": None},
-            update_operator,
-        )
-        return self.get_by_id(document_id)
 
     def update_metadata(
         self,
@@ -340,8 +328,7 @@ class DocumentRepository:
         categories: list[str] | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
-        favorites_only: bool = False,
-        current_user_id: str | None = None,
+        favorite_document_ids: list[str] | None = None,
     ) -> dict:
         mongo_query: dict = {
             "deletedAt": None,
@@ -377,9 +364,14 @@ class DocumentRepository:
                 date_range["$lte"] = datetime.combine(date_to, time.max, tzinfo=UTC)
             filters.append({"datePublication": date_range})
 
-        if favorites_only:
-            if current_user_id:
-                filters.append({"favoriteUserIds": current_user_id})
+        if favorite_document_ids is not None:
+            if favorite_document_ids:
+                id_values = []
+                for doc_id in favorite_document_ids:
+                    id_values.append(doc_id)
+                    if ObjectId.is_valid(doc_id):
+                        id_values.append(ObjectId(doc_id))
+                filters.append({"_id": {"$in": id_values}})
             else:
                 filters.append({"_id": {"$exists": False}})
 

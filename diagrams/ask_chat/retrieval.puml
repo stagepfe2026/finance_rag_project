@@ -1,0 +1,95 @@
+@startuml retrieval
+
+title Recherche et classement des segments
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceGroupBorderThickness 1.5
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackgroundColor transparent
+
+control "RagService" as RagService #LightYellow
+control "RetrievalService" as Retrieval #LightYellow
+control "DocumentContextService" as DocContext #LightYellow
+control "RetrievalFilterService" as Filter #LightYellow
+control "BM25Service" as BM25 #LightYellow
+entity "QdrantRepository" as Qdrant #DarkSeaGreen
+
+RagService -> Retrieval : retrieve(\nnormalized_question, query_vector,\nquestion_profile, query_mode)
+
+Retrieval -> Qdrant : get_all_collections()
+note right : liste toutes les catégories de documents\ndisponibles dans Qdrant
+Qdrant --> Retrieval : categories[]
+
+alt aucune collection disponible
+    Retrieval --> RagService : no_collections
+end
+
+loop pour chaque catégorie — sélection de la plus pertinente
+    Retrieval -> Qdrant : search(\ncategory, query_vector,\nprobe_k, query_mode)
+    note right : sonde chaque catégorie avec un petit nombre\nde résultats pour évaluer sa pertinence
+    Qdrant --> Retrieval : probe_chunks[]
+
+    Retrieval -> DocContext : _enrich_chunks_with_document_metadata(\nprobe_chunks)
+    note right : complète chaque segment avec les données MongoDB :\nstatut juridique effectif, type, dates, relation
+    DocContext --> Retrieval : enriched_chunks[]
+
+    Retrieval -> Retrieval : _hybrid_rerank(\nquestion, enriched_chunks,\nquestion_profile, query_mode)
+    note right : score final = 0.68 × vectoriel + 0.22 × lexical\n+ modificateur juridique (statut × mode) + bonus récence\nexemple mode courant : actif +0.12, futur −0.30, remplacé −0.06
+end
+
+Retrieval -> Retrieval : sélectionne la catégorie\navec le meilleur score global
+
+alt aucune catégorie ne dépasse le seuil de pertinence minimal
+    Retrieval --> RagService : no_category
+end
+
+Retrieval -> Qdrant : search(\nbest_category, query_vector,\nrrf_top_k, query_mode)
+note right : récupère les segments les plus proches sémantiquement\ndans la catégorie retenue
+Qdrant --> Retrieval : dense_chunks[]
+
+alt aucun résultat dense retourné
+    Retrieval --> RagService : no_dense_chunks
+end
+
+Retrieval -> Qdrant : get_all_chunks(best_category, query_mode)
+note right : charge tous les segments de la catégorie\npour la recherche lexicale BM25
+Qdrant --> Retrieval : all_chunks[]
+
+Retrieval -> BM25 : search(normalized_question, top_k)
+note right : recherche par correspondance de mots-clés\nindépendamment de la similarité vectorielle
+BM25 --> Retrieval : bm25_results[]
+
+Retrieval -> Retrieval : fusionne dense_chunks et bm25_results\nsans doublons vers un registre commun
+
+Retrieval -> DocContext : _enrich_chunks_with_document_metadata(\nchunk_registry)
+DocContext --> Retrieval : enriched_all[]
+
+Retrieval -> Retrieval : _rrf_rerank(\nenriched_map, dense_ranks,\nbm25_ranks, question_profile, query_mode)
+note right : rrf_score = 1/(60 + rang_dense) + 1/(60 + rang_bm25)\nscore final = rrf_score + modificateur juridique (statut × mode)
+
+Retrieval -> Filter : _filter_relevant_chunks_rrf(\nranked_main_chunks)
+note right : ne conserve que les segments dépassant\nles seuils de pertinence RRF et de score final
+Filter --> Retrieval : relevant_main_chunks[]
+
+opt mode comparaison ou profil historique ou comparatif
+    note over Retrieval : cherche également les segments\ndu document juridique précédent ou remplacé
+
+    loop pour chacun des 3 meilleurs segments principaux
+        Retrieval -> Qdrant : search_within_document(\ncategory, related_document_id,\nquery_vector, limit=2, query_mode)
+        note right : cible spécifiquement le document\nque ce segment remplace ou auquel il est lié
+        Qdrant --> Retrieval : related_chunks[]
+
+        Retrieval -> DocContext : _enrich_chunks_with_document_metadata(\nrelated_chunks)
+        DocContext --> Retrieval : enriched_related[]
+
+        Retrieval -> Retrieval : _hybrid_rerank(\nquestion, enriched_related,\nquestion_profile, query_mode)
+    end
+
+    Retrieval -> Filter : _filter_relevant_chunks(\nrelated_ranked_chunks)
+    note right : filtre les segments liés selon les seuils\nvectoriel, lexical et score final
+    Filter --> Retrieval : related_relevant_chunks[]
+end
+
+Retrieval --> RagService : {best_category, dense_chunks,\nranked_main_chunks, relevant_main_chunks,\nrelated_ranked_chunks, related_relevant_chunks}
+
+@enduml

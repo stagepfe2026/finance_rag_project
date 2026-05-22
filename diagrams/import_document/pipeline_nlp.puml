@@ -1,0 +1,94 @@
+@startuml pipeline_nlp
+
+title Parsing NLP, vectorisation et insertion dans Qdrant
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceGroupBorderThickness 1.5
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackgroundColor transparent
+
+control "DocumentIndexService" as IndexService #LightYellow
+control "DocumentPipelineService" as Pipeline #LightYellow
+control "NLPService" as NLP #LightYellow
+control "EmbeddingService" as Embedding #LightYellow
+control "LegalStatusService" as StatusService #LightYellow
+entity "DocumentRepository" as DocRepo #DarkSeaGreen
+entity "QdrantRepository" as Qdrant #DarkSeaGreen
+
+IndexService -> Pipeline : parse_and_chunk(file_path, extension)
+note right : point d'entrée du pipeline :\nextrait le texte brut selon le format du fichier
+
+alt fichier PDF
+    Pipeline -> Pipeline : PdfParser.extract_text(file_path)
+else fichier Word
+    Pipeline -> Pipeline : WordParser.extract_text(file_path)
+end
+
+Pipeline -> NLP : preprocess_document(raw_text)
+note right : nettoie et normalise le texte\nen français avant le découpage
+NLP --> Pipeline : cleaned_text
+
+alt texte vide après nettoyage
+    Pipeline --> IndexService : document vide ou illisible
+end
+
+Pipeline -> NLP : prepare_chunks(cleaned_text)
+note right : découpe le texte en segments\npour permettre une recherche précise
+NLP --> Pipeline : chunks[]
+
+alt aucun segment généré
+    Pipeline --> IndexService : le document n'a pas pu être découpé
+end
+
+Pipeline --> IndexService : (cleaned_text, chunks[])
+
+IndexService -> DocRepo : get_by_id(target_document_id)
+note right : récupère le titre du document lié\npour l'inclure dans les métadonnées Qdrant
+DocRepo --> IndexService : related_title | None
+
+IndexService -> StatusService : resolve_status(document)
+note right : détermine le statut juridique effectif\nà stocker avec chaque segment dans Qdrant
+
+alt document supprimé et marqué abrogé
+    StatusService --> IndexService : "abroge"
+else date d'entrée en vigueur dans le futur
+    StatusService --> IndexService : "futur"
+else
+    StatusService -> DocRepo : find_documents_pointing_to(document.id)
+    note right : cherche si un document plus récent\npointe déjà vers celui-ci
+    DocRepo --> StatusService : sources[]
+
+    loop pour chaque document source
+        StatusService -> StatusService : source_may_supersede_target(source, document)
+        note right : vérifie que la source est plus récente\net que sa relation est effective
+    end
+
+    alt aucun document ne le supplante
+        StatusService --> IndexService : "actif"
+    else un document plus récent le remplace
+        StatusService --> IndexService : "remplace"
+    else un document plus récent l'abroge
+        StatusService --> IndexService : "abroge"
+    end
+end
+
+IndexService -> Pipeline : embed_and_upsert(\ncategory, document_id, chunks[],\nmétadonnées légales)
+note right : envoie les segments avec leurs métadonnées\npour être vectorisés et indexés dans Qdrant
+
+Pipeline -> Embedding : generate_embeddings(chunks[])
+note right : convertit chaque segment en vecteur\nnumérique pour la recherche sémantique
+loop pour chaque chunk
+    Embedding -> Embedding : encode chunk → vecteur float[]
+end
+Embedding --> Pipeline : embeddings[]
+
+Pipeline -> Qdrant : save_chunks(\ncategory, document_id,\nchunks[], embeddings[], métadonnées)
+note right : chaque segment est stocké avec son vecteur\net ses métadonnées légales dans la collection\ncorrespondant à la catégorie du document
+loop pour chaque (chunk, embedding)
+    Qdrant -> Qdrant : crée PointStruct{id, vector, payload}
+end
+Qdrant --> Pipeline : inserted_count
+
+Pipeline --> IndexService : inserted_count
+
+@enduml

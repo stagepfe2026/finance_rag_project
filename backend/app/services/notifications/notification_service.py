@@ -9,6 +9,7 @@ from app.models.document_model import DocumentModel
 from app.models.notification_model import NotificationModel
 from app.models.reclamation_model import ReclamationModel
 from app.repositories.audit_event_repository import AuditEventRepository
+from app.repositories.document_favorite_repository import DocumentFavoriteRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.sessions_repository import SessionsRepository
 from app.repositories.users_repository import UsersRepository
@@ -46,9 +47,11 @@ class NotificationService:
         self.audit_event_repository = AuditEventRepository()
         self.users_repository = UsersRepository()
         self.sessions_repository = SessionsRepository()
+        self.document_favorite_repository = DocumentFavoriteRepository()
 
     def ensure_indexes(self) -> None:
         self.repository.ensure_indexes()
+        self.document_favorite_repository.ensure_indexes()
 
     def list_notifications(self, current_user: dict, *, limit: int = 20) -> dict:
         user_id = str(current_user.get("id", "")).strip()
@@ -205,7 +208,9 @@ class NotificationService:
         self, deprecated_document: "DocumentModel", new_document_title: str
     ) -> None:
         """Notify users who favorited a document that has been replaced/abrogated."""
-        favorite_user_ids = list(deprecated_document.favorite_user_ids or [])
+        favorite_user_ids = self.document_favorite_repository.get_user_ids_for_document(
+            deprecated_document.id or ""
+        )
         if not favorite_user_ids:
             return
         now = datetime.now(timezone.utc)

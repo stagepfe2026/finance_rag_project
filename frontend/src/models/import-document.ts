@@ -2,7 +2,7 @@ import { documentCategoryLabels, type DocumentCategoryValue } from "./document";
 
 export type CategoryValue = DocumentCategoryValue;
 export type LegalDocumentTypeValue = "" | "loi" | "decret" | "arrete" | "note" | "circulaire";
-export type LegalRelationTypeValue = "none" | "remplace" | "abroge";
+export type LegalRelationTypeValue = "none" | "remplace";
 
 export type CategoryOption = {
   value: CategoryValue;
