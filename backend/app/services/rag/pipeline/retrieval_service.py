@@ -298,9 +298,10 @@ class RetrievalService:
             return {"no_dense_chunks": True, "best_category": best_category}
 
         all_category_chunks = self.qdrant_repository.get_all_chunks(best_category, query_mode)
-        bm25_results = self.bm25_service_class(all_category_chunks).search(
-            normalized_question, top_k=settings.rrf_retrieval_top_k
-        )
+        bm25_results = self.bm25_service_class(
+            all_category_chunks,
+            nlp_provider=self.nlp_service.provider,
+        ).search(normalized_question, top_k=settings.rrf_retrieval_top_k)
 
         chunk_registry: dict[tuple[str, int], dict] = {}
         for chunk in dense_chunks:

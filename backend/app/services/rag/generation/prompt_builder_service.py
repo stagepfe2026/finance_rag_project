@@ -3,12 +3,16 @@ from typing import Literal
 
 class PromptBuilderService:
     def format_context(self, chunks: list[dict]) -> str:
-        context_parts: list[str] = []
+        # Group chunks from the same document+article adjacently while preserving
+        # the overall relevance ordering (first-occurrence rank per group).
+        ordered_chunks = self._group_by_document_article(chunks)
 
-        for idx, chunk in enumerate(chunks, start=1):
+        context_parts: list[str] = []
+        for idx, chunk in enumerate(ordered_chunks, start=1):
             context_parts.append(
                 "\n".join(
                     [
+                        f"[Source {idx}]",
                         f"Titre: {chunk.get('document_title') or chunk.get('document_name') or 'Document'}",
                         f"Categorie: {chunk.get('category', '')}",
                         f"Type juridique: {chunk.get('document_type_label') or chunk.get('document_type', '')}",
@@ -26,6 +30,32 @@ class PromptBuilderService:
             )
 
         return "\n\n---\n\n".join(context_parts)
+
+    @staticmethod
+    def _group_by_document_article(chunks: list[dict]) -> list[dict]:
+        """Return chunks reordered so same-document/same-article chunks are adjacent.
+
+        Group key is (document_id, article_number).  Groups are ordered by the
+        first occurrence of that key in the original list, so the overall
+        relevance ranking is preserved across groups.
+        """
+        seen_order: dict[tuple, int] = {}
+        groups: dict[tuple, list[dict]] = {}
+
+        for chunk in chunks:
+            key = (
+                str(chunk.get("document_id", "")).strip(),
+                str(chunk.get("article_number") or ""),
+            )
+            if key not in seen_order:
+                seen_order[key] = len(seen_order)
+                groups[key] = []
+            groups[key].append(chunk)
+
+        result: list[dict] = []
+        for key in sorted(seen_order, key=lambda k: seen_order[k]):
+            result.extend(groups[key])
+        return result
 
     def compose_prompt(
         self,
@@ -94,6 +124,34 @@ class PromptBuilderService:
             "Pour une question sur la regle actuelle, formule d abord la reponse autour du texte actuellement applicable, puis mentionne l ancien texte seulement si c est utile."
         )
 
+        # Prevents blending of numbers from different articles (e.g. a rate meant
+        # for revenue allocation being cited as an export tax rate).
+        numerical_grounding_instruction = (
+            "Regle de grounding numerique stricte : "
+            "Pour tout taux, pourcentage, montant, numero d article, date ou valeur numerique que tu mentionnes, "
+            "tu dois citer entre guillemets l extrait exact du contexte d ou il provient. "
+            "Si un chiffre n apparait pas verbatim dans le contexte fourni, ne le mentionne pas. "
+            "Ne deduis, ne calcule et n inferes jamais un taux ou un montant : cite uniquement. "
+            "Si plusieurs chiffres sont presentes dans le contexte, associe chaque chiffre explicitement a son sujet tel qu il apparait dans l extrait."
+        )
+
+        citation_instruction = (
+            "Regle de citation des sources : pour chaque affirmation factuelle dans ta reponse, "
+            "cite la source entre crochets avec son numero exact, par exemple [Source 1] ou [Source 2]. "
+            "Ne cite une source que si elle supporte directement l affirmation. "
+            "Ne fabrique pas de numeros de source absents du contexte."
+        )
+
+        # Prevents listing products/articles from adjacent chunks that belong to
+        # different articles but were retrieved in the same context window.
+        article_scope_instruction = (
+            "Regle de perimetre d article : "
+            "Si un extrait juridique contient plusieurs articles ou sujets distincts, "
+            "reponds uniquement sur l article ou le sujet directement demande par la question. "
+            "Ne liste pas les autres articles ou sujets presents dans le meme extrait s ils ne sont pas demandes. "
+            "Si un extrait commence par [Article X ...], les informations de cet extrait appartiennent a cet article uniquement."
+        )
+
         return f"""
 Tu es un assistant juridique specialise en recherche documentaire.
 Tu dois repondre uniquement a partir du contexte fourni.
@@ -103,11 +161,13 @@ N'ajoute aucune information absente du contexte.
 {query_mode_instruction}
 {comparison_and_stats_instruction}
 {legal_priority_instruction}
+{numerical_grounding_instruction}
+{citation_instruction}
+{article_scope_instruction}
 Si une source est future, remplacee ou abrogee, signale-le explicitement.
 S il existe un conflit entre plusieurs textes, privilegie la source la plus pertinente juridiquement et explique ta prudence.
 Si l'information n'apparait pas clairement dans le contexte, reponds exactement :
 Après analyse des documents disponibles dans le système, aucune information pertinente n'a pu être identifiée pour répondre à cette question.
-Il est possible que la formulation nécessite d'être précisée..
 
 Contexte:
 {context}

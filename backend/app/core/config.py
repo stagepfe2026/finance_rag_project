@@ -20,15 +20,24 @@ class Settings(BaseSettings):
     fallback_max_answer_length: int = 240
     fallback_max_unsupported_tokens: int = 35
 
-    category_probe_top_k: int = 2
+    # 5 chunks per category give a statistically stronger signal than 2
+    category_probe_top_k: int = 5
     retrieval_top_k_per_category: int = 6
     final_top_k: int = 4
+    # Reranker is applied on final_top_k × multiplier candidates before trimming to final_top_k.
+    # This prevents the reranker from only reordering a pre-trimmed 4-chunk list: with 12
+    # candidates it can rescue precise short chunks that were ranked lower by RRF.
+    reranker_pool_multiplier: int = 3
+    # Confidence level thresholds derived from cross-encoder mmarco-mMiniLMv2 score range.
+    confidence_high_threshold: float = 0.70
+    confidence_medium_threshold: float = 0.30
 
     rrf_retrieval_top_k: int = 20
     rrf_k_constant: int = 60
     min_rrf_score: float = 0.010
     min_rrf_final_score: float = 0.005
-    min_reranker_score: float = 0.0
+    # mmarco-mMiniLMv2 sigmoid output is in [0,1]; 0.30 rejects clearly off-topic chunks
+    min_reranker_score: float = 0.30
 
     min_vector_score: float = 0.50
     min_lexical_score: float = 0.12
@@ -36,10 +45,12 @@ class Settings(BaseSettings):
 
     temperature: float = 0.05
     top_p: float = 0.3
-    max_new_tokens: int = 300
+    # 512 tokens allows complete multi-article answers without truncation
+    max_new_tokens: int = 512
     top_k: int = 20
     repetition_penalty: float = 1.1
-    context_window: int = 2048
+    # llama3 supports 8192; 4096 prevents silent prompt truncation with no regression risk
+    context_window: int = 4096
 
     mongodb_uri: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "finance_rag"

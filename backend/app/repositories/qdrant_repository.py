@@ -1,4 +1,6 @@
+import hashlib
 import logging
+import re
 from datetime import UTC, date, datetime
 from typing import Literal
 
@@ -10,8 +12,18 @@ from qdrant_client.models import (
     FieldCondition,
     Filter,
     MatchValue,
+    PayloadSchemaType,
     PointStruct,
     VectorParams,
+)
+
+# Inline article pattern — mirrors _ARTICLE_RE in nlp_provider to avoid a
+# circular import between the infrastructure and repository layers.
+_ARTICLE_RE = re.compile(
+    r"(?:Article|Art\.?)\s+"
+    r"(?:Premier|1er|\d+(?:bis|ter|quater|quinquies)?)"
+    r"(?:\s*[-:–—\.])?",
+    re.IGNORECASE,
 )
 
 
@@ -34,6 +46,36 @@ class QdrantRepository:
             collection_name=collection_name,
             vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
         )
+        self._create_payload_indexes(collection_name)
+
+    def _create_payload_indexes(self, collection_name: str) -> None:
+        """Create payload indexes for fields used in filters or score boosting.
+
+        Without indexes, every filter triggers a full collection scan.
+        Index creation is best-effort: errors are logged but not re-raised
+        because the indexes are an optimisation, not a correctness requirement.
+        """
+        field_schemas: list[tuple[str, object]] = [
+            ("document_id", PayloadSchemaType.KEYWORD),
+            ("legal_status", PayloadSchemaType.KEYWORD),
+            ("category", PayloadSchemaType.KEYWORD),
+            ("article_number", PayloadSchemaType.KEYWORD),
+            ("chunk_index", PayloadSchemaType.INTEGER),
+            ("date_entree_vigueur", PayloadSchemaType.DATETIME),
+        ]
+        for field_name, schema_type in field_schemas:
+            try:
+                self.client.create_payload_index(
+                    collection_name=collection_name,
+                    field_name=field_name,
+                    field_schema=schema_type,
+                )
+            except Exception:
+                self.logger.debug(
+                    "Payload index for %s.%s skipped (may already exist).",
+                    collection_name,
+                    field_name,
+                )
 
     def collection_exists(self, collection_name: str) -> bool:
         collections = self.client.get_collections().collections
@@ -63,9 +105,10 @@ class QdrantRepository:
 
         points = []
         for idx, (chunk, vector) in enumerate(zip(chunks, embeddings, strict=False)):
+            article_number, article_title = self._extract_article_fields(chunk)
             points.append(
                 PointStruct(
-                    id=abs(hash(f"{document_id}-{idx}")),
+                    id=self._stable_point_id(document_id, idx),
                     vector=vector,
                     payload={
                         "document_id": document_id,
@@ -82,6 +125,8 @@ class QdrantRepository:
                         "realized_at": issued_at,
                         "category": category,
                         "chunk_index": idx,
+                        "article_number": article_number,
+                        "article_title": article_title,
                         "text": chunk,
                     },
                 )
@@ -89,6 +134,47 @@ class QdrantRepository:
 
         self.client.upsert(collection_name=collection_name, points=points)
         return len(points)
+
+    @staticmethod
+    def _stable_point_id(document_id: str, chunk_index: int) -> int:
+        """Return a collision-resistant 63-bit integer ID.
+
+        Python's built-in hash() is randomised per process (PYTHONHASHSEED),
+        so the same document+index pair can produce a different ID after a
+        restart, potentially creating orphan or duplicate Qdrant points.
+        SHA-256 is deterministic across restarts and environments.
+        """
+        raw = f"{document_id}:{chunk_index}".encode()
+        return int(hashlib.sha256(raw).hexdigest()[:15], 16)  # 60-bit, always positive
+
+    @staticmethod
+    def _extract_article_fields(chunk_text: str) -> tuple[str | None, str | None]:
+        """Extract (article_number, article_title) from the first line of a chunk.
+
+        Handles both plain article headers ('Article 5 - Titre') and the
+        bracket-prefixed continuation format ('[Article 5 - Titre] ...').
+        Returns (None, None) when the chunk does not start with an article marker.
+        """
+        first_part = (
+            chunk_text.lstrip("[").split("]", 1)[0]
+            if chunk_text.startswith("[")
+            else chunk_text.split("\n", 1)[0]
+        )
+        first_part = first_part.strip()
+
+        match = _ARTICLE_RE.search(first_part)
+        if not match:
+            return None, None
+
+        num_match = re.search(
+            r"Premier|1er|\d+(?:bis|ter|quater|quinquies)?",
+            match.group(0),
+            re.IGNORECASE,
+        )
+        article_number = num_match.group(0).strip() if num_match else None
+        after = first_part[match.end():].lstrip(" -:–—.").strip()
+        article_title = after[:120] if after else None
+        return article_number, article_title
 
     def delete_by_document(self, category: str, document_id: str) -> None:
         collection_name = self._to_collection_name(category)
@@ -235,9 +321,15 @@ class QdrantRepository:
     @staticmethod
     def _point_to_chunk(point: object, category: str) -> dict:
         payload = getattr(point, "payload", None) or {}
+        chunk_text: str = payload.get("text", "")
+        # article_number / article_title: prefer dedicated payload field (set on new
+        # documents); fall back to runtime extraction for legacy documents that were
+        # indexed before these fields were added.
+        article_number = payload.get("article_number") or QdrantRepository._extract_article_fields(chunk_text)[0]
+        article_title = payload.get("article_title") or QdrantRepository._extract_article_fields(chunk_text)[1]
         return {
             "score": getattr(point, "score", 0.0),
-            "text": payload.get("text", ""),
+            "text": chunk_text,
             "document_id": payload.get("document_id", ""),
             "document_title": payload.get("document_title", ""),
             "document_name": payload.get("document_name", ""),
@@ -252,6 +344,8 @@ class QdrantRepository:
             "realized_at": payload.get("realized_at"),
             "category": payload.get("category", category),
             "chunk_index": payload.get("chunk_index", -1),
+            "article_number": article_number,
+            "article_title": article_title,
         }
 
     @classmethod

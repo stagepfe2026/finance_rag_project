@@ -145,9 +145,46 @@ class RagService:
             question_profile=question_profile,
             query_mode=query_mode,
         )
-        final_chunks = self.reranker_service.rerank(
-            normalized_question, final_chunks, top_k=settings.final_top_k
+
+        # Expand the reranker candidate pool so the cross-encoder can rescue
+        # relevant chunks that were ranked lower by RRF/scoring.
+        # Pool = final_top_k × reranker_pool_multiplier (default: 4 × 3 = 12).
+        pool_size = settings.final_top_k * settings.reranker_pool_multiplier
+        if len(final_chunks) < pool_size:
+            all_candidates = self.retrieval_filter_service._dedupe_chunks(
+                relevant_main_chunks + related_relevant_chunks
+            )
+            existing_keys = {
+                (str(c.get("document_id", "")).strip(), int(c.get("chunk_index", -1)))
+                for c in final_chunks
+            }
+            for chunk in all_candidates:
+                key = (str(chunk.get("document_id", "")).strip(), int(chunk.get("chunk_index", -1)))
+                if key in existing_keys:
+                    continue
+                final_chunks.append(chunk)
+                existing_keys.add(key)
+                if len(final_chunks) >= pool_size:
+                    break
+
+        reranked_pool = self.reranker_service.rerank(
+            normalized_question, final_chunks, top_k=len(final_chunks)
         )
+
+        # Keep only chunks with acceptable confidence; fall back to top-k if none pass.
+        confident_chunks = [
+            c for c in reranked_pool
+            if c.get("reranker_score", 0.0) >= settings.min_reranker_score
+        ]
+        final_chunks = (confident_chunks or reranked_pool)[: settings.final_top_k]
+
+        best_reranker_score = max((c.get("reranker_score", 0.0) for c in final_chunks), default=0.0)
+        if best_reranker_score >= settings.confidence_high_threshold:
+            confidence_level = "high"
+        elif best_reranker_score >= settings.confidence_medium_threshold:
+            confidence_level = "medium"
+        else:
+            confidence_level = "low"
         self.logger.info(
             "RAG final_chunks question=%r total=%d documents=%s",
             normalized_question,
@@ -206,6 +243,7 @@ class RagService:
             "query_mode": query_mode,
             "detected_categories": [best_category],
             "question_profile": question_profile,
+            "confidence_level": confidence_level,
             "answer": answer,
             "sources": self.document_context_service._build_document_sources(final_chunks),
         }
