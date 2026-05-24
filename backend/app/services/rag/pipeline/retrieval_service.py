@@ -90,12 +90,16 @@ class RetrievalService:
             legal_modifier = self.legal_ranking_service.score_legal_relevance(
                 chunk, question_profile, query_mode
             )
+            # Scale the modifier so it is proportional to the RRF score range
+            # (~0.016–0.033).  Without scaling, legal_modifier (±0.30) would
+            # be 4–18× larger than the RRF signal, making content rank irrelevant.
+            scaled_modifier = legal_modifier * settings.rrf_legal_modifier_scale
             ranked.append({
                 **chunk,
                 "vector_score": float(chunk.get("score", 0.0)),
                 "rrf_score": rrf_score,
                 "legal_modifier": legal_modifier,
-                "final_score": rrf_score + legal_modifier,
+                "final_score": rrf_score + scaled_modifier,
             })
 
         ranked.sort(key=lambda x: x["final_score"], reverse=True)
@@ -266,6 +270,7 @@ class RetrievalService:
         dedupe_fn,
         filter_relevant_chunks_fn,
         filter_relevant_chunks_rrf_fn,
+        filter_relevant_chunks_vector_fn,
     ) -> dict:
         """
         Orchestrates category detection, dense+BM25 retrieval, RRF fusion,
@@ -351,7 +356,10 @@ class RetrievalService:
                 enrich_fn=enrich_fn,
                 dedupe_fn=dedupe_fn,
             )
-            related_relevant_chunks = filter_relevant_chunks_fn(related_ranked_chunks)
+            # Related chunks are scored by vector-only (_score_chunks_by_vector),
+            # so lexical_score is never set.  Use the vector-specific filter
+            # instead of the hybrid one to avoid always returning an empty list.
+            related_relevant_chunks = filter_relevant_chunks_vector_fn(related_ranked_chunks)
 
         return {
             "best_category": best_category,

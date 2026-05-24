@@ -15,7 +15,6 @@ export type DocumentItem = {
   issuedAt: string | null;
   datePublication: string | null;
   dateEntreeVigueur: string | null;
-  version: string;
   relationToTarget: LegalRelationTypeValue;
   targetDocumentId: string | null;
   filePath: string;
@@ -42,7 +41,6 @@ export type DocumentPreview = {
   legalType: LegalDocumentTypeValue;
   datePublication: string | null;
   dateEntreeVigueur: string | null;
-  version: string;
   relationToTarget: LegalRelationTypeValue;
   targetDocumentId: string | null;
   fileType: string;
@@ -59,7 +57,6 @@ export type DocumentSearchItem = {
   legalType: LegalDocumentTypeValue;
   datePublication: string | null;
   dateEntreeVigueur: string | null;
-  version: string;
   relationToTarget: LegalRelationTypeValue;
   targetDocumentId: string | null;
   createdAt: string;

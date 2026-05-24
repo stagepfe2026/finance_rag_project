@@ -37,7 +37,6 @@ class DocumentModel:
     issued_at: datetime | None
     date_publication: datetime | None
     date_entree_vigueur: datetime | None
-    version: str
     relation_to_target: str
     target_document_id: str | None
     file_path: str
@@ -65,7 +64,6 @@ class DocumentModel:
         issued_at: datetime | None = None,
         date_publication: datetime | None = None,
         date_entree_vigueur: datetime | None = None,
-        version: str = "",
         relation_to_target: str = LegalRelationType.none.value,
         target_document_id: str | None = None,
         file_path: str,
@@ -83,7 +81,6 @@ class DocumentModel:
             issued_at=issued_at,
             date_publication=date_publication,
             date_entree_vigueur=date_entree_vigueur,
-            version=version.strip(),
             relation_to_target=relation_to_target,
             target_document_id=target_document_id,
             file_path=file_path,
@@ -106,7 +103,6 @@ class DocumentModel:
             issued_at=raw.get("issuedAt"),
             date_publication=raw.get("datePublication"),
             date_entree_vigueur=raw.get("dateEntreeVigueur"),
-            version=str(raw.get("version", "")),
             relation_to_target=str(raw.get("relationToTarget", LegalRelationType.none.value)),
             target_document_id=(
                 str(raw.get("targetDocumentId"))
@@ -137,7 +133,6 @@ class DocumentModel:
             "issuedAt": self.issued_at,
             "datePublication": self.date_publication,
             "dateEntreeVigueur": self.date_entree_vigueur,
-            "version": self.version,
             "relationToTarget": self.relation_to_target,
             "targetDocumentId": self.target_document_id,
             "filePath": self.file_path,
@@ -178,7 +173,6 @@ class DocumentModel:
             issuedAt=self.issued_at,
             datePublication=self.date_publication,
             dateEntreeVigueur=self.date_entree_vigueur,
-            version=self.version,
             relationToTarget=LegalRelationType(self.relation_to_target),
             targetDocumentId=self.target_document_id,
             filePath=self.file_path,
@@ -203,7 +197,6 @@ class DocumentModel:
             legalType=LegalDocumentType(self.legal_type),
             datePublication=self.date_publication,
             dateEntreeVigueur=self.date_entree_vigueur,
-            version=self.version,
             relationToTarget=LegalRelationType(self.relation_to_target),
             targetDocumentId=self.target_document_id,
             fileType=self.file_type,
@@ -226,7 +219,6 @@ class DocumentModel:
             legalType=LegalDocumentType(self.legal_type),
             datePublication=self.date_publication,
             dateEntreeVigueur=self.date_entree_vigueur,
-            version=self.version,
             relationToTarget=LegalRelationType(self.relation_to_target),
             targetDocumentId=self.target_document_id,
             createdAt=self.created_at,

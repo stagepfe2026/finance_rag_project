@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     related_doc_chunks_limit: int = 2
     fallback_min_vector_score: float = 0.58
     fallback_max_answer_length: int = 240
-    fallback_max_unsupported_tokens: int = 35
+    fallback_max_unsupported_tokens: int = 60
 
     # 5 chunks per category give a statistically stronger signal than 2
     category_probe_top_k: int = 5
@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     rrf_k_constant: int = 60
     min_rrf_score: float = 0.010
     min_rrf_final_score: float = 0.005
+    # Legal modifier was calibrated for vector scores (0.5–1.0 range).
+    # RRF scores are in [0.016, 0.033], so the raw modifier would dominate the
+    # content signal by 4–18×.  This scale brings it back into proportion so
+    # that RRF rank remains the primary ordering signal.
+    rrf_legal_modifier_scale: float = 0.12
     # mmarco-mMiniLMv2 sigmoid output is in [0,1]; 0.30 rejects clearly off-topic chunks
     min_reranker_score: float = 0.30
 

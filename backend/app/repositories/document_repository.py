@@ -114,7 +114,6 @@ class DocumentRepository:
         title: str,
         category: str,
         legal_type: str,
-        version: str,
     ) -> bool:
         normalized_title = " ".join(title.split()).strip()
         query = {
@@ -122,7 +121,6 @@ class DocumentRepository:
             "title": {"$regex": f"^{re.escape(normalized_title)}$", "$options": "i"},
             "category": category,
             "legalType": legal_type,
-            "version": version.strip(),
         }
         return self.collection.count_documents(query, limit=1) > 0
 
@@ -224,7 +222,6 @@ class DocumentRepository:
         legal_type: str | None = None,
         date_publication: datetime | None = None,
         date_entree_vigueur: datetime | None = None,
-        version: str | None = None,
         relation_to_target: str | None = None,
         target_document_id: str | None = None,
     ) -> DocumentModel | None:
@@ -240,8 +237,6 @@ class DocumentRepository:
             updates["datePublication"] = date_publication
         if date_entree_vigueur is not None:
             updates["dateEntreeVigueur"] = date_entree_vigueur
-        if version is not None:
-            updates["version"] = version
         if relation_to_target is not None:
             updates["relationToTarget"] = relation_to_target
         if target_document_id is not None:

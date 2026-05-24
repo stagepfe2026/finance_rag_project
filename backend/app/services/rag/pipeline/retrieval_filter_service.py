@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
 import re
 from typing import Literal
 
 from app.core.config import settings
+from app.core.rag_messages import MSG_OUT_OF_DOMAIN, MSG_UNRELIABLE
 from app.services.rag.processing.nlp_service import NLPService
+
+logger = logging.getLogger(__name__)
 
 # Numerical patterns that are high-risk for cross-article confusion in legal/financial text.
 # Only these specific formats are checked — bare integers (e.g. "3") are too common to validate.
@@ -44,6 +48,22 @@ class RetrievalFilterService:
             chunk for chunk in ranked_chunks
             if chunk.get("rrf_score", 0.0) >= settings.min_rrf_score
             and chunk.get("final_score", 0.0) >= settings.min_rrf_final_score
+        ]
+        return self._apply_relative_threshold(candidates)
+
+    def _filter_relevant_chunks_vector(self, ranked_chunks: list[dict]) -> list[dict]:
+        """Filter for chunks scored by vector-only path (no BM25/RRF available).
+
+        Related-document chunks are retrieved via pure vector search:
+        lexical_score and rrf_score are never computed for them, so using
+        _filter_relevant_chunks (which requires lexical_score >= 0.12) would
+        silently empty the list every time.  This filter uses only the signals
+        that are actually present: vector_score and final_score.
+        """
+        candidates = [
+            chunk for chunk in ranked_chunks
+            if chunk.get("vector_score", 0.0) >= settings.min_vector_score
+            and chunk.get("final_score", 0.0) >= settings.min_final_score
         ]
         return self._apply_relative_threshold(candidates)
 
@@ -155,6 +175,10 @@ class RetrievalFilterService:
         Only specific high-risk formats are checked (percentages, monetary amounts,
         article numbers). Bare integers are deliberately excluded to avoid
         over-triggering on dates, list indices, etc.
+
+        Article numbers accept both singular and plural forms in context
+        ("article 81" matches "articles 81") to avoid false positives when
+        the LLM uses singular form for an article referenced in plural in the chunks.
         """
         context_raw = " ".join(chunk["text"] for chunk in final_chunks)
         normalized_context = _normalize_numbers(context_raw)
@@ -163,8 +187,28 @@ class RetrievalFilterService:
         for pattern in _NUMERIC_PATTERNS:
             for match in pattern.finditer(normalized_answer):
                 value = match.group(0).strip()
-                if not re.search(re.escape(value), normalized_context, re.IGNORECASE):
-                    return True
+                num_match = re.search(r"\d+", value)
+                # For article/Art. patterns use a plural-tolerant context search.
+                if num_match and re.match(r"art(?:icle)?\b", value, re.IGNORECASE):
+                    num = re.escape(num_match.group(0))
+                    flexible = re.compile(
+                        r"\barticles?\s+" + num + r"(?:bis|ter|quater)?\b"
+                        r"|\bArt\.\s*" + num + r"\b",
+                        re.IGNORECASE,
+                    )
+                    if not flexible.search(normalized_context):
+                        logger.debug(
+                            "_has_unsupported_numbers: article number %r not found in context",
+                            value,
+                        )
+                        return True
+                else:
+                    if not re.search(re.escape(value), normalized_context, re.IGNORECASE):
+                        logger.debug(
+                            "_has_unsupported_numbers: value %r not found in context",
+                            value,
+                        )
+                        return True
         return False
 
     def _needs_fallback(self, answer: str, final_chunks: list[dict]) -> bool:
@@ -173,35 +217,41 @@ class RetrievalFilterService:
             return True
 
         lowered_answer = cleaned_answer.lower()
-        if lowered_answer == "information non trouvee dans les sources fournies.":
+        if lowered_answer in {MSG_OUT_OF_DOMAIN.lower(), MSG_UNRELIABLE.lower()}:
             return False
 
         best_reranker_score = max(chunk.get("reranker_score", 0.0) for chunk in final_chunks)
         best_vector_score = max(chunk.get("vector_score", 0.0) for chunk in final_chunks)
 
-        # Gate 1: BOTH confidence signals must be weak before triggering fallback.
-        # Previously this was OR, which meant min_reranker_score=0.0 always
-        # short-circuited to False and the guard never activated.
-        if (
+        both_strong = (
             best_reranker_score >= settings.min_reranker_score
             and best_vector_score >= settings.fallback_min_vector_score
-        ):
-            # High confidence from both signals — still check numerical grounding.
-            return self._has_unsupported_numbers(cleaned_answer, final_chunks)
+        )
 
-        if (
-            best_reranker_score < settings.min_reranker_score
-            and best_vector_score < settings.fallback_min_vector_score
-        ):
-            # Both signals are weak — unconditional fallback.
-            return True
+        if both_strong:
+            # High confidence from both signals — only check numerical grounding.
+            if self._has_unsupported_numbers(cleaned_answer, final_chunks):
+                logger.warning(
+                    "_needs_fallback: unsupported numbers (both_strong) reranker=%.4f vector=%.4f",
+                    best_reranker_score,
+                    best_vector_score,
+                )
+                return True
+            return False
 
-        # Mixed signals: one score is acceptable, the other is not.
-        # Apply the token-overlap check + numerical grounding together.
+        # One or both confidence signals are weak.
+        # Apply content-based checks rather than an unconditional fallback.
+        # mmarco-mMiniLMv2 can score French/Arabic legal text below thresholds
+        # even when the retrieved chunks are correct — never short-circuit here.
         if self._has_unsupported_numbers(cleaned_answer, final_chunks):
+            logger.warning(
+                "_needs_fallback: unsupported numbers (weak signals) reranker=%.4f vector=%.4f",
+                best_reranker_score,
+                best_vector_score,
+            )
             return True
 
-        # Short answers from a weak-but-mixed context are acceptable.
+        # Short answers from a weak context are acceptable.
         if len(cleaned_answer) <= settings.fallback_max_answer_length:
             return False
 
@@ -212,4 +262,24 @@ class RetrievalFilterService:
             if len(token) > 5
         ]
         unsupported_tokens = [token for token in answer_tokens if token not in context_text]
-        return len(unsupported_tokens) > settings.fallback_max_unsupported_tokens
+        result = len(unsupported_tokens) > settings.fallback_max_unsupported_tokens
+        if result:
+            logger.warning(
+                "_needs_fallback: token overlap (weak signals) reranker=%.4f vector=%.4f "
+                "unsupported=%d/%d threshold=%d",
+                best_reranker_score,
+                best_vector_score,
+                len(unsupported_tokens),
+                len(answer_tokens),
+                settings.fallback_max_unsupported_tokens,
+            )
+        else:
+            logger.info(
+                "_needs_fallback: passed all gates reranker=%.4f vector=%.4f "
+                "unsupported=%d/%d",
+                best_reranker_score,
+                best_vector_score,
+                len(unsupported_tokens),
+                len(answer_tokens),
+            )
+        return result

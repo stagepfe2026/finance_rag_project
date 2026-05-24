@@ -5,6 +5,7 @@ Run:  cd backend && python -m pytest tests/test_retrieval_filter.py -v
 import pytest
 from unittest.mock import MagicMock
 
+from app.core.rag_messages import MSG_OUT_OF_DOMAIN, MSG_UNRELIABLE
 from app.services.rag.pipeline.retrieval_filter_service import RetrievalFilterService
 
 # Alias for brevity in the numerical-grounding test class
@@ -95,6 +96,16 @@ class TestHasUnsupportedNumbers:
         chunks = [_make_chunk(text="contenu quelconque")]
         assert _has_unsupported_numbers("Réponse sans chiffres.", chunks) is False
 
+    def test_article_plural_in_context_matches_singular_in_answer(self):
+        # Context uses "articles 81, 82 et 85" (plural); answer uses "l'article 81" (singular).
+        # The check must NOT trigger because the number 81 is supported.
+        chunks = [_make_chunk(text="Conformément aux articles 81, 82 et 85 du CDPF.")]
+        assert _has_unsupported_numbers("Selon l'article 81 du CDPF.", chunks) is False
+
+    def test_article_singular_in_context_matches_singular_in_answer(self):
+        chunks = [_make_chunk(text="Article 81 fixe les majorations de retard.")]
+        assert _has_unsupported_numbers("Voir Article 81 du CDPF.", chunks) is False
+
 
 # ---------------------------------------------------------------------------
 # _needs_fallback — main logic
@@ -109,11 +120,15 @@ class TestNeedsFallback:
         svc = _make_service()
         assert svc._needs_fallback("   ", [_make_chunk()]) is True
 
-    def test_canonical_not_found_message_skips_fallback(self):
+    def test_canonical_unreliable_message_skips_fallback(self):
         svc = _make_service()
         chunks = [_make_chunk(reranker_score=0.0, vector_score=0.0)]
-        answer = "Information non trouvee dans les sources fournies."
-        assert svc._needs_fallback(answer, chunks) is False
+        assert svc._needs_fallback(MSG_UNRELIABLE, chunks) is False
+
+    def test_canonical_out_of_domain_message_skips_fallback(self):
+        svc = _make_service()
+        chunks = [_make_chunk(reranker_score=0.0, vector_score=0.0)]
+        assert svc._needs_fallback(MSG_OUT_OF_DOMAIN, chunks) is False
 
     def test_high_confidence_both_signals_no_fallback(self):
         # reranker >= 0.30 AND vector >= 0.58 → no fallback (unless number hallucination)
@@ -137,11 +152,20 @@ class TestNeedsFallback:
         answer = "Le taux est de 50%."
         assert svc._needs_fallback(answer, chunks) is True
 
-    def test_both_signals_weak_triggers_fallback(self):
-        # reranker < 0.30 AND vector < 0.58 → unconditional fallback
+    def test_both_signals_weak_short_grounded_answer_no_fallback(self):
+        # Gate 2 (unconditional fallback when both signals weak) was removed.
+        # A short grounded answer with no unsupported numbers must pass through
+        # even when both reranker and vector scores are below their thresholds.
         svc = _make_service()
         chunks = [_make_chunk(reranker_score=0.10, vector_score=0.45)]
         answer = "Une réponse quelconque sans chiffres spéciaux."
+        assert svc._needs_fallback(answer, chunks) is False
+
+    def test_both_signals_weak_hallucinated_number_triggers_fallback(self):
+        # Both signals weak, but the answer cites 75% which is absent from context.
+        svc = _make_service()
+        chunks = [_make_chunk(text="Le taux applicable est de 2%.", reranker_score=0.10, vector_score=0.45)]
+        answer = "Le taux est de 75%."
         assert svc._needs_fallback(answer, chunks) is True
 
     def test_mixed_signals_short_answer_no_fallback(self):
@@ -161,15 +185,14 @@ class TestNeedsFallback:
         answer = "Voir Article 2 et Article 6 pour les crédits."
         assert svc._needs_fallback(answer, chunks) is True
 
-    def test_previous_bug_reranker_zero_now_triggers(self):
-        # Before the fix, min_reranker_score=0.0 meant this NEVER triggered.
-        # With min_reranker_score=0.30, reranker=0.05 (< 0.30) + vector=0.45 (< 0.58)
-        # → both weak → fallback.
+    def test_both_signals_weak_long_answer_many_unsupported_tokens_triggers_fallback(self):
+        # Both scores weak; answer is longer than fallback_max_answer_length (240 chars);
+        # tokenize_words returns 70 unsupported tokens > threshold (60) → fallback.
         svc = _make_service()
         chunks = [_make_chunk(reranker_score=0.05, vector_score=0.45)]
-        answer = "Une longue réponse inventée " + "mot " * 50
-        # tokenize_words returns tokens of length > 5 not in context
-        svc.nlp_service.provider.tokenize_words.return_value = ["inventée"] * 50
+        answer = "Une longue réponse inventée. " + "quelquechose " * 25  # ~354 chars > 240
+        # tokenize_words returns tokens of length > 5 that are not in context text
+        svc.nlp_service.provider.tokenize_words.return_value = ["inventée"] * 70
         assert svc._needs_fallback(answer, chunks) is True
 
 
@@ -264,3 +287,97 @@ class TestApplyRelativeThreshold:
         ]
         result = RetrievalFilterService._apply_relative_threshold(chunks)
         assert len(result) == 2
+
+
+# ---------------------------------------------------------------------------
+# _filter_relevant_chunks_vector — vector-only path (related documents)
+# ---------------------------------------------------------------------------
+
+class TestFilterRelevantChunksVector:
+    """Related-document chunks are scored by _score_chunks_by_vector which
+    never sets lexical_score or rrf_score.  The vector filter must pass
+    qualifying chunks without requiring those absent fields.
+    """
+
+    def test_passes_chunk_with_good_vector_and_final_score(self):
+        svc = _make_service()
+        chunks = [_make_chunk(vector_score=0.75, final_score=0.87)]
+        result = svc._filter_relevant_chunks_vector(chunks)
+        assert len(result) == 1
+
+    def test_rejects_chunk_below_min_vector_score(self):
+        svc = _make_service()
+        chunks = [_make_chunk(vector_score=0.40, final_score=0.52)]
+        result = svc._filter_relevant_chunks_vector(chunks)
+        assert result == []
+
+    def test_rejects_chunk_below_min_final_score(self):
+        svc = _make_service()
+        chunks = [_make_chunk(vector_score=0.80, final_score=0.30)]
+        result = svc._filter_relevant_chunks_vector(chunks)
+        assert result == []
+
+    def test_does_not_require_lexical_score_field(self):
+        # Chunk has no lexical_score key at all — must not raise and must pass.
+        svc = _make_service()
+        chunk = {
+            "text": "extrait",
+            "vector_score": 0.75,
+            "final_score": 0.87,
+            "document_id": "doc1",
+            "chunk_index": 0,
+        }
+        result = svc._filter_relevant_chunks_vector([chunk])
+        assert len(result) == 1
+
+    def test_does_not_require_rrf_score_field(self):
+        svc = _make_service()
+        chunk = {
+            "text": "extrait",
+            "vector_score": 0.75,
+            "final_score": 0.87,
+            "document_id": "doc1",
+            "chunk_index": 0,
+        }
+        result = svc._filter_relevant_chunks_vector([chunk])
+        assert len(result) == 1
+
+    def test_applies_relative_threshold(self):
+        svc = _make_service()
+        chunks = [
+            _make_chunk(vector_score=0.90, final_score=1.0, document_id="a", chunk_index=0),
+            _make_chunk(vector_score=0.55, final_score=0.67, document_id="b", chunk_index=0),
+            _make_chunk(vector_score=0.52, final_score=0.30, document_id="c", chunk_index=0),
+        ]
+        result = svc._filter_relevant_chunks_vector(chunks)
+        # chunk c: final_score=0.30 < 40% of 1.0 → dropped
+        assert all(c["final_score"] >= 0.40 for c in result)
+
+    def test_empty_input_returns_empty(self):
+        svc = _make_service()
+        assert svc._filter_relevant_chunks_vector([]) == []
+
+    def test_related_chunks_not_always_empty(self):
+        """Regression: before the fix, related chunks always came back empty
+        because _filter_relevant_chunks required lexical_score >= 0.12 which
+        was never set on vector-only scored chunks (default 0.0 < 0.12).
+        """
+        svc = _make_service()
+        related_chunks = [
+            {
+                "text": "extrait juridique lié",
+                "vector_score": 0.72,
+                "rrf_score": 0.0,       # not set in vector path
+                "legal_modifier": 0.12,
+                "final_score": 0.84,
+                "legal_status": "actif",
+                "document_id": "related_doc",
+                "chunk_index": 0,
+                # lexical_score intentionally absent — never set by _score_chunks_by_vector
+            }
+        ]
+        result = svc._filter_relevant_chunks_vector(related_chunks)
+        assert len(result) == 1, (
+            "related_relevant_chunks must not be empty when vector_score and "
+            "final_score are above thresholds"
+        )

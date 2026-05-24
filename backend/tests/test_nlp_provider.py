@@ -139,56 +139,8 @@ class TestExtractArticleHeader:
         assert "12" in header
 
 
-class TestExtractArticleNumber:
-    def test_plain_article(self, provider):
-        assert provider.extract_article_number("Article 5 - Crédits\nContenu.") == "5"
-
-    def test_bis_variant(self, provider):
-        assert provider.extract_article_number("Article 5bis - Disposition\nContenu.") == "5bis"
-
-    def test_premier_variant(self, provider):
-        assert provider.extract_article_number("Article Premier - Objet\nContenu.") == "Premier"
-
-    def test_abbreviated_format(self, provider):
-        assert provider.extract_article_number("Art. 12 - Répartition\nContenu.") == "12"
-
-    def test_bracket_prefix_stripped(self, provider):
-        # Sub-chunk header injection format: "[Article 5 - Titre] suite du texte"
-        assert provider.extract_article_number("[Article 5 - Titre] suite du texte") == "5"
-
-    def test_no_article_returns_none(self, provider):
-        assert provider.extract_article_number("Ce texte ne commence pas par un article.") is None
-
-    def test_1er_variant(self, provider):
-        assert provider.extract_article_number("Article 1er - Premier article\nContenu.") == "1er"
-
-
-class TestExtractArticleTitle:
-    def test_extracts_title_after_dash(self, provider):
-        title = provider.extract_article_title("Article 5 - Crédits de paiement\nContenu.")
-        assert title == "Crédits de paiement"
-
-    def test_extracts_title_after_colon(self, provider):
-        title = provider.extract_article_title("Article 5 : Champ d application\nContenu.")
-        assert title == "Champ d application"
-
-    def test_truncates_to_120_chars(self, provider):
-        long_title = "Article 5 - " + "a" * 200
-        title = provider.extract_article_title(long_title)
-        assert title is not None
-        assert len(title) <= 120
-
-    def test_no_title_returns_none(self, provider):
-        # Article header with no text after the identifier
-        result = provider.extract_article_title("Article 5\nContenu.")
-        assert result is None or result == ""
-
-    def test_no_article_returns_none(self, provider):
-        assert provider.extract_article_title("Ce texte libre.") is None
-
-    def test_bracket_prefix_stripped(self, provider):
-        title = provider.extract_article_title("[Article 5 - Gestion budgétaire] suite du texte.")
-        assert title == "Gestion budgétaire"
+# Article number/title extraction is the responsibility of QdrantRepository._extract_article_fields().
+# Coverage lives in test_qdrant_repository.py::TestExtractArticleFields.
 
 
 class TestDetectDocumentStructure:

@@ -167,7 +167,6 @@ export default function MessageActions({
                         </p>
                         <p className="text-[11px] text-slate-500">
                           {source.document_type || source.category}
-                          {source.version ? ` · v${source.version}` : ""}
                         </p>
                         <p className="text-[11px] text-slate-500">
                           {getLegalStatusLabel(source.legal_status)}

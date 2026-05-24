@@ -26,7 +26,6 @@ const emptyPreview: DocumentPreview = {
   legalType: "autre",
   datePublication: null,
   dateEntreeVigueur: null,
-  version: "",
   relationToTarget: "none",
   targetDocumentId: null,
   fileType: "",

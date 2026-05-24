@@ -18,7 +18,6 @@ class LegalMetadataService:
         document_type: str | None,
         date_publication: datetime | None,
         date_entree_vigueur: datetime | None,
-        version: str | None,
         relation_type: str | None,
         related_document_id: str | None,
     ) -> dict[str, object | None]:
@@ -60,14 +59,11 @@ class LegalMetadataService:
             date_entree_vigueur
         )
 
-        normalized_version = (version or "").strip()
-
         return {
             "legal_status": normalized_legal_status,
             "document_type": normalized_document_type,
             "date_publication": date_publication,
             "date_entree_vigueur": date_entree_vigueur,
-            "version": normalized_version,
             "relation_type": normalized_relation_type,
             "related_document_id": normalized_related_document_id,
         }

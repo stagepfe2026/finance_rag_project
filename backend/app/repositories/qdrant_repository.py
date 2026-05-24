@@ -92,7 +92,6 @@ class QdrantRepository:
         legal_status: str,
         date_publication: str | None,
         date_entree_vigueur: str | None,
-        version: str,
         relation_to_target: str,
         target_document_id: str | None,
         related_document_title: str | None,
@@ -118,7 +117,6 @@ class QdrantRepository:
                         "legal_status": legal_status,
                         "date_publication": date_publication,
                         "date_entree_vigueur": date_entree_vigueur,
-                        "version": version,
                         "relation_type": relation_to_target,
                         "related_document_id": target_document_id,
                         "related_document_title": related_document_title,
@@ -224,9 +222,12 @@ class QdrantRepository:
         except Exception:
             if query_mode != "current":
                 raise
-            self.logger.exception(
-                "Qdrant current-mode datetime filter failed for collection=%s. Retrying without date filter.",
+            self.logger.warning(
+                "Qdrant datetime filter FAILED for collection=%s (query_mode=current). "
+                "Retrying without date filter — results may include future documents. "
+                "Re-index the collection to fix the date_entree_vigueur payload index.",
                 collection_name,
+                exc_info=True,
             )
             response = self.client.query_points(
                 collection_name=collection_name,
@@ -272,9 +273,12 @@ class QdrantRepository:
             except Exception:
                 if query_mode != "current":
                     raise
-                self.logger.exception(
-                    "Qdrant scroll current-mode filter failed for collection=%s. Retrying without date filter.",
+                self.logger.warning(
+                    "Qdrant scroll datetime filter FAILED for collection=%s (query_mode=current). "
+                    "Retrying without date filter — BM25 corpus may include future documents. "
+                    "Re-index the collection to fix the date_entree_vigueur payload index.",
                     collection_name,
+                    exc_info=True,
                 )
                 points, next_offset = self.client.scroll(
                     collection_name=collection_name,
@@ -337,7 +341,6 @@ class QdrantRepository:
             "legal_status": payload.get("legal_status", "actif"),
             "date_publication": payload.get("date_publication"),
             "date_entree_vigueur": payload.get("date_entree_vigueur"),
-            "version": payload.get("version", ""),
             "relation_type": payload.get("relation_type", "none"),
             "related_document_id": payload.get("related_document_id"),
             "related_document_title": payload.get("related_document_title", ""),
@@ -394,73 +397,3 @@ class QdrantRepository:
             query_mode=query_mode,
         )
 
-    def search_by_categories(
-        self,
-        categories: list[str],
-        query_vector: list[float],
-        limit_per_category: int,
-        query_mode: Literal["current", "future_preview", "comparison"] = "current",
-    ) -> list[dict]:
-        all_results = []
-        for category in categories:
-            category_results = self.search(
-                category=category,
-                query_vector=query_vector,
-                limit=limit_per_category,
-                query_mode=query_mode,
-            )
-            all_results.extend(category_results)
-
-        return all_results
-
-    def get_chunks_for_document(
-        self,
-        *,
-        category: str,
-        document_id: str,
-        limit: int = 2,
-    ) -> list[dict]:
-        collection_name = self._to_collection_name(category)
-        if not self.collection_exists(collection_name):
-            return []
-
-        records, _ = self.client.scroll(
-            collection_name=collection_name,
-            scroll_filter=Filter(
-                must=[
-                    FieldCondition(
-                        key="document_id",
-                        match=MatchValue(value=document_id),
-                    )
-                ]
-            ),
-            limit=limit,
-            with_payload=True,
-            with_vectors=False,
-        )
-
-        chunks: list[dict] = []
-        for record in records:
-            payload = record.payload or {}
-            chunks.append(
-                {
-                    "score": 0.0,
-                    "text": payload.get("text", ""),
-                    "document_id": payload.get("document_id", ""),
-                    "document_title": payload.get("document_title", ""),
-                    "document_name": payload.get("document_name", ""),
-                    "document_type": payload.get("document_type", ""),
-                    "legal_status": payload.get("legal_status", "actif"),
-                    "date_publication": payload.get("date_publication"),
-                    "date_entree_vigueur": payload.get("date_entree_vigueur"),
-                    "version": payload.get("version", ""),
-                    "relation_type": payload.get("relation_type", "none"),
-                    "related_document_id": payload.get("related_document_id"),
-                    "related_document_title": payload.get("related_document_title", ""),
-                    "realized_at": payload.get("realized_at"),
-                    "category": payload.get("category", category),
-                    "chunk_index": payload.get("chunk_index", -1),
-                }
-            )
-
-        return chunks

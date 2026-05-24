@@ -229,7 +229,6 @@ async def index_document(
     document_type: Annotated[str | None, Form()] = None,
     date_publication: Annotated[str | None, Form()] = None,
     date_entree_vigueur: Annotated[str | None, Form()] = None,
-    version: Annotated[str | None, Form()] = None,
     relation_type: Annotated[str | None, Form()] = None,
     related_document_id: Annotated[str | None, Form()] = None,
 ):
@@ -261,7 +260,6 @@ async def index_document(
             document_type=document_type,
             date_publication=parsed_date_publication,
             date_entree_vigueur=parsed_date_entree_vigueur,
-            version=version,
             relation_type=relation_type,
             related_document_id=related_document_id,
             admin_id=current_user.get("id"),

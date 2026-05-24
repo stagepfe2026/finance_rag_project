@@ -75,7 +75,6 @@ export function useImportDocumentViewModel() {
   const [documentType, setDocumentType]           = useState<LegalDocumentTypeValue>("");
   const [datePublication, setDatePublication]     = useState("");
   const [dateEntreeVigueur, setDateEntreeVigueur] = useState("");
-  const [version, setVersion]                     = useState("");
   const [relationType, setRelationType]           = useState<LegalRelationTypeValue>("none");
   const [relatedDocumentId, setRelatedDocumentId] = useState("");
   const [relationSearch, setRelationSearch]       = useState("");
@@ -278,7 +277,6 @@ export function useImportDocumentViewModel() {
         documentType,
         datePublication: datePublication || undefined,
         dateEntreeVigueur: dateEntreeVigueur || undefined,
-        version,
         relationType,
         relatedDocumentId: relationType === "none" ? undefined : relatedDocumentId,
       });
@@ -292,7 +290,7 @@ export function useImportDocumentViewModel() {
       setIsSubmitting(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile, relationType, relatedDocumentId, category, title, documentType, datePublication, dateEntreeVigueur, version, showSnackbar]);
+  }, [selectedFile, relationType, relatedDocumentId, category, title, documentType, datePublication, dateEntreeVigueur, showSnackbar]);
 
   const handleReset = useCallback(() => {
     setSelectedFile(null);
@@ -301,7 +299,6 @@ export function useImportDocumentViewModel() {
     setDocumentType("");
     setDatePublication("");
     setDateEntreeVigueur("");
-    setVersion("");
     setRelationType("none");
     setRelatedDocumentId("");
     setRelationSearch("");
@@ -414,7 +411,6 @@ export function useImportDocumentViewModel() {
     documentType,
     datePublication,
     dateEntreeVigueur,
-    version,
     relationType,
     relatedDocumentId,
     relationSearch,
@@ -449,7 +445,6 @@ export function useImportDocumentViewModel() {
     handleRelationTypeChange,
     handleRelatedDocumentIdChange,
     onCategoryChange:       setCategory,
-    onVersionChange:        setVersion,
     onRelationSearchChange: setRelationSearch,
     closeSnackbar,
   };

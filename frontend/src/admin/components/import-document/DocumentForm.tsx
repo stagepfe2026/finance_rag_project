@@ -22,7 +22,6 @@ type DocumentFormProps = {
   documentTypeOptions: SelectOption[];
   datePublication: string;
   dateEntreeVigueur: string;
-  version: string;
   relationType: LegalRelationTypeValue;
   relationTypeOptions: SelectOption[];
   relatedDocumentId: string;
@@ -35,7 +34,6 @@ type DocumentFormProps = {
   onDocumentTypeChange: (value: LegalDocumentTypeValue) => void;
   onDatePublicationChange: (value: string) => void;
   onDateEntreeVigueurChange: (value: string) => void;
-  onVersionChange: (value: string) => void;
   onRelationTypeChange: (value: LegalRelationTypeValue) => void;
   onRelatedDocumentIdChange: (value: string) => void;
   onRelationSearchChange: (value: string) => void;
@@ -69,7 +67,6 @@ export default function DocumentForm({
   documentTypeOptions,
   datePublication,
   dateEntreeVigueur,
-  version,
   relationType,
   relationTypeOptions,
   relatedDocumentId,
@@ -81,7 +78,6 @@ export default function DocumentForm({
   onDocumentTypeChange,
   onDatePublicationChange,
   onDateEntreeVigueurChange,
-  onVersionChange,
   onRelationTypeChange,
   onRelatedDocumentIdChange,
   onRelationSearchChange,
@@ -162,16 +158,6 @@ export default function DocumentForm({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Version">
-            <input
-              type="text"
-              value={version}
-              onChange={(event) => onVersionChange(event.target.value)}
-              placeholder="Ex: 2024-01"
-              className="h-9 w-full rounded border border-[#e5eaf2] bg-white px-3 text-[12px] text-[#071f3d] outline-none transition focus:border-[#071f3d]"
-            />
-          </FormField>
-
           <FormField label="Relation juridique">
             <select
               value={relationType}

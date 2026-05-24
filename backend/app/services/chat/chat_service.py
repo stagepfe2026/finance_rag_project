@@ -217,7 +217,6 @@ class ChatService:
                     "legal_status": str(item.get("legal_status", "actif")).strip(),
                     "date_publication": item.get("date_publication"),
                     "date_entree_vigueur": item.get("date_entree_vigueur"),
-                    "version": str(item.get("version", "")).strip(),
                     "relation_type": str(item.get("relation_type", "none")).strip(),
                     "related_document_id": str(item.get("related_document_id", "")).strip() or None,
                     "related_document_title": str(item.get("related_document_title", "")).strip(),

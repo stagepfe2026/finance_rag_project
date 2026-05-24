@@ -17,7 +17,6 @@ type IndexDocumentInput = {
   documentType?: ImportLegalDocumentTypeValue;
   datePublication?: string;
   dateEntreeVigueur?: string;
-  version?: string;
   relationType?: LegalRelationTypeValue;
   relatedDocumentId?: string;
 };
@@ -95,7 +94,6 @@ export async function indexDocument({
   documentType,
   datePublication,
   dateEntreeVigueur,
-  version,
   relationType,
   relatedDocumentId,
 }: IndexDocumentInput) {
@@ -111,9 +109,6 @@ export async function indexDocument({
   }
   if (dateEntreeVigueur) {
     payload.append("date_entree_vigueur", dateEntreeVigueur);
-  }
-  if (version?.trim()) {
-    payload.append("version", version.trim());
   }
   if (relationType) {
     payload.append("relation_type", relationType);

@@ -32,7 +32,6 @@ def _make_chunk(
         "legal_status": legal_status,
         "date_publication": None,
         "date_entree_vigueur": None,
-        "version": "",
         "relation_type": "none",
         "related_document_id": None,
         "related_document_title": "",
@@ -131,7 +130,9 @@ class TestFormatContext:
 # ---------------------------------------------------------------------------
 
 class TestComposePrompt:
-    def test_citation_instruction_in_prompt(self, builder):
+    def test_no_inline_citation_instruction_in_prompt(self, builder):
+        # The model is not asked to emit [Source N] tags — attribution is handled
+        # by the 'sources' field in the API response, not inline citations.
         prompt = builder.compose_prompt(
             question="Quel est le taux applicable ?",
             context="[Source 1]\nTitre: Loi 2024\n...",
@@ -139,8 +140,7 @@ class TestComposePrompt:
             question_profile="current",
             query_mode="current",
         )
-        assert "Source" in prompt
-        assert "citation" in prompt.lower() or "cite" in prompt.lower() or "Regle de citation" in prompt
+        assert "Regle de citation" not in prompt
 
     def test_numerical_grounding_instruction_in_prompt(self, builder):
         prompt = builder.compose_prompt(

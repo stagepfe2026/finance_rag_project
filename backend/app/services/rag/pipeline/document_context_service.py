@@ -55,7 +55,6 @@ class DocumentContextService:
                     "legal_status": effective_legal_status,
                     "date_publication": document.date_publication,
                     "date_entree_vigueur": document.date_entree_vigueur,
-                    "version": document.version,
                     "relation_type": document.relation_to_target,
                     "related_document_id": document.target_document_id,
                     "related_document_title": (
@@ -86,7 +85,6 @@ class DocumentContextService:
                 "legal_status": str(chunk.get("legal_status", "actif")).strip(),
                 "date_publication": chunk.get("date_publication"),
                 "date_entree_vigueur": chunk.get("date_entree_vigueur"),
-                "version": str(chunk.get("version", "")).strip(),
                 "relation_type": str(chunk.get("relation_type", "none")).strip(),
                 "related_document_id": str(chunk.get("related_document_id", "")).strip() or None,
                 "related_document_title": str(chunk.get("related_document_title", "")).strip(),

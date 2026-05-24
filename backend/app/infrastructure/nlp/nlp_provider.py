@@ -26,17 +26,9 @@ class FrenchNlpProvider:
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()
 
-    def split_into_sentences(self, text: str) -> list[str]:
-        doc = self.nlp(text)
-        return [sent.text.strip() for sent in doc.sents if sent.text.strip()]
-
     def tokenize_words(self, text: str) -> list[str]:
         doc = self.nlp(text.lower())
         return [token.text for token in doc if not token.is_space]
-
-    def remove_stopwords(self, tokens: list[str]) -> list[str]:
-        stopwords = self.nlp.Defaults.stop_words
-        return [t for t in tokens if t.lower() not in stopwords]
 
     def tokenize_for_lexical_search(self, text: str) -> set[str]:
         doc = self.nlp(text.lower())
@@ -69,40 +61,6 @@ class FrenchNlpProvider:
         if _ARTICLE_RE.match(first_line):
             return first_line[:100]
         return ""
-
-    def extract_article_number(self, chunk_text: str) -> str | None:
-        """Extract the article number token (e.g. '5', '5bis', 'Premier') from a chunk.
-
-        Inspects the first line, stripping any leading bracket from a header
-        injection prefix (e.g. '[Article 5 - Titre]').  Returns None when the
-        chunk does not start with a recognised article marker.
-
-        This value is stored as a dedicated Qdrant payload field so that
-        retrieval can group and filter by article without parsing free text.
-        """
-        first_part = chunk_text.lstrip("[").split("]", 1)[0].split("\n", 1)[0].strip()
-        match = _ARTICLE_RE.search(first_part)
-        if not match:
-            return None
-        num_match = re.search(
-            r"Premier|1er|\d+(?:bis|ter|quater|quinquies)?",
-            match.group(0),
-            re.IGNORECASE,
-        )
-        return num_match.group(0).strip() if num_match else None
-
-    def extract_article_title(self, chunk_text: str) -> str | None:
-        """Extract the descriptive title that follows the article identifier.
-
-        Example: 'Article 5 - Crédits de paiement' → 'Crédits de paiement'
-        Returns None when no recognisable title follows the article marker.
-        """
-        first_part = chunk_text.lstrip("[").split("]", 1)[0].split("\n", 1)[0].strip()
-        match = _ARTICLE_RE.search(first_part)
-        if not match:
-            return None
-        after = first_part[match.end():].lstrip(" -:–—.").strip()
-        return after[:120] if after else None
 
     def chunk_by_article(self, text: str) -> list[str]:
         articles = self.detect_articles(text)

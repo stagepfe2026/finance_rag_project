@@ -385,7 +385,11 @@ export function useChatViewModel(
         );
         const assistantMsg =
           result.assistantMessage.status === "generating"
-            ? { ...result.assistantMessage, pending: true }
+            ? {
+                ...result.assistantMessage,
+                pending: true,
+                content: result.assistantMessage.content || tempAssistantMessage.content,
+              }
             : result.assistantMessage;
         return [...withoutTemps, result.userMessage, assistantMsg];
       });

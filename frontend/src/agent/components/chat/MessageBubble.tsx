@@ -63,8 +63,18 @@ export default function MessageBubble({ message, searchQuery = "", onFeedback }:
             isPendingAssistant ? "italic text-slate-500" : "",
           ].join(" ")}
         >
-          {isUser || isPendingAssistant ? (
+          {isUser ? (
             <p className="whitespace-pre-line">{highlightText(message.content, searchQuery)}</p>
+          ) : isPendingAssistant ? (
+            message.content ? (
+              <p className="whitespace-pre-line">{highlightText(message.content, searchQuery)}</p>
+            ) : (
+              <span className="flex items-center gap-1 py-0.5">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
+              </span>
+            )
           ) : (
             <StructuredAssistantResponse
               content={message.content}

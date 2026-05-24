@@ -14,17 +14,6 @@ class NLPService:
     def preprocess_document(self, text: str) -> str:
         return self.provider.clean_text(text)
 
-    def extract_document_structure(self, text: str) -> dict:
-        cleaned_text = self.preprocess_document(text)
-        articles = self.provider.detect_articles(cleaned_text)
-        structure_type = self.provider.detect_document_structure(cleaned_text)
-
-        return {
-            "structure_type": structure_type,
-            "articles": articles,
-            "articles_count": len(articles),
-        }
-
     def prepare_chunks(self, text: str) -> list[str]:
         cleaned_text = self.preprocess_document(text)
         article_chunks = self.provider.chunk_by_article(cleaned_text)

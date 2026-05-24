@@ -74,7 +74,6 @@ class DocumentIndexService:
         document_type: str | None = None,
         date_publication: datetime | None = None,
         date_entree_vigueur: datetime | None = None,
-        version: str | None = None,
         relation_type: str | None = None,
         related_document_id: str | None = None,
         admin_id: str | None = None,
@@ -90,7 +89,6 @@ class DocumentIndexService:
             document_type=document_type,
             date_publication=effective_date_publication,
             date_entree_vigueur=date_entree_vigueur,
-            version=version,
             relation_type=relation_type,
             related_document_id=related_document_id,
         )
@@ -98,11 +96,10 @@ class DocumentIndexService:
             title=title,
             category=category,
             legal_type=str(prepared_legal_metadata["document_type"]),
-            version=str(prepared_legal_metadata["version"]),
         ):
             raise HTTPException(
                 status_code=409,
-                detail="Un document avec le meme titre, categorie, type et version existe deja.",
+                detail="Un document avec le meme titre, categorie et type existe deja.",
             )
 
         stored_file_path = self.file_service.store_uploaded_file(
@@ -117,7 +114,6 @@ class DocumentIndexService:
             issued_at=realized_at,
             date_publication=prepared_legal_metadata["date_publication"],
             date_entree_vigueur=prepared_legal_metadata["date_entree_vigueur"],
-            version=str(prepared_legal_metadata["version"]),
             relation_to_target=str(prepared_legal_metadata["relation_type"]),
             target_document_id=prepared_legal_metadata["related_document_id"],
             file_path=str(stored_file_path),
@@ -141,7 +137,6 @@ class DocumentIndexService:
                 date_entree_vigueur=(
                     document.date_entree_vigueur.isoformat() if document.date_entree_vigueur else None
                 ),
-                version=document.version,
                 relation_to_target=document.relation_to_target,
                 target_document_id=document.target_document_id,
                 related_document_title=related_document_title,
@@ -397,7 +392,6 @@ class DocumentIndexService:
                         if updated_document.date_entree_vigueur
                         else None
                     ),
-                    version=updated_document.version,
                     relation_to_target=updated_document.relation_to_target,
                     target_document_id=updated_document.target_document_id,
                     related_document_title=related_document_title,

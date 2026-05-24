@@ -127,14 +127,9 @@ export default function DocumentPreviewAside({
             )}
           </div>
 
-          {/* Version / Relation */}
-          {(document.version || document.relationToTarget !== "none") && (
+          {/* Relation */}
+          {document.relationToTarget !== "none" && (
             <div className="rounded border border-[#e5eaf2] bg-[#f7f9fc] px-3 py-2.5 text-[12px] space-y-1">
-              {document.version && (
-                <p className="text-[#071f3d]">
-                  <span className="text-[#8a96ad]">Version :</span> {document.version}
-                </p>
-              )}
               {document.relationToTarget !== "none" && (
                 <p className="text-[#071f3d]">
                   <span className="text-[#8a96ad]">Relation :</span>{" "}

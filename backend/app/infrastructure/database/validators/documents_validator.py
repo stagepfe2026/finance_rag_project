@@ -23,7 +23,6 @@ DOCUMENTS_VALIDATOR = {
             "issuedAt": {"bsonType": ["date", "null"]},
             "datePublication": {"bsonType": ["date", "null"]},
             "dateEntreeVigueur": {"bsonType": ["date", "null"]},
-            "version": {"bsonType": "string"},
             "relationToTarget": {"enum": ["none", "remplace", "abroge"]},
             "targetDocumentId": {"bsonType": ["string", "null"]},
             "filePath": {"bsonType": "string", "minLength": 1},

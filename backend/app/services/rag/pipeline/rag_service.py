@@ -1,5 +1,8 @@
 import logging
+import re
 from typing import Literal
+
+_SOURCE_TAG_RE = re.compile(r"[\s,]*\[Source\s*\d+\][\s,]*")
 
 from app.core.config import settings
 from app.infrastructure.nlp.nlp_provider import FrenchNlpProvider
@@ -16,6 +19,7 @@ from app.services.rag.ranking.bm25_service import BM25Service
 from app.services.rag.ranking.legal_ranking_service import LegalRankingService
 from app.services.rag.ranking.reranker_service import RerankerService
 from app.services.documents.legal.legal_status_service import LegalStatusService
+from app.core.rag_messages import MSG_NO_SYSTEM, MSG_OUT_OF_DOMAIN, MSG_UNRELIABLE
 
 
 class RagService:
@@ -78,6 +82,7 @@ class RagService:
             dedupe_fn=self.retrieval_filter_service._dedupe_chunks,
             filter_relevant_chunks_fn=self.retrieval_filter_service._filter_relevant_chunks,
             filter_relevant_chunks_rrf_fn=self.retrieval_filter_service._filter_relevant_chunks_rrf,
+            filter_relevant_chunks_vector_fn=self.retrieval_filter_service._filter_relevant_chunks_vector,
         )
 
         if retrieval_result.get("no_collections"):
@@ -85,7 +90,7 @@ class RagService:
                 "question": normalized_question,
                 "query_mode": query_mode,
                 "detected_categories": [],
-                "answer": "Aucune base de connaissance n'est disponible dans Qdrant.",
+                "answer": MSG_NO_SYSTEM,
                 "sources": [],
             }
 
@@ -94,7 +99,7 @@ class RagService:
                 "question": normalized_question,
                 "query_mode": query_mode,
                 "detected_categories": [],
-                "answer": "Information non trouvee dans les sources fournies.",
+                "answer": MSG_OUT_OF_DOMAIN,
                 "sources": [],
             }
 
@@ -105,7 +110,7 @@ class RagService:
                 "question": normalized_question,
                 "query_mode": query_mode,
                 "detected_categories": [best_category],
-                "answer": "Information non trouvee dans les sources fournies.",
+                "answer": MSG_OUT_OF_DOMAIN,
                 "sources": [],
             }
 
@@ -133,7 +138,7 @@ class RagService:
                 "question": normalized_question,
                 "query_mode": query_mode,
                 "detected_categories": [best_category],
-                "answer": "Information non trouvee dans les sources fournies.",
+                "answer": MSG_UNRELIABLE,
                 "sources": [],
             }
 
@@ -228,13 +233,15 @@ class RagService:
             max(chunk.get("final_score", 0.0) for chunk in final_chunks),
         )
 
+        answer = self._strip_source_tags(answer)
+
         if self.retrieval_filter_service._needs_fallback(answer, final_chunks):
             self.logger.warning(
                 "RAG fallback triggered for question=%r raw_answer=%r",
                 normalized_question,
                 answer,
             )
-            answer = "Information non trouvee dans les sources fournies."
+            answer = MSG_UNRELIABLE
         else:
             answer = self.document_context_service._ensure_future_warnings(answer, final_chunks)
 
@@ -247,3 +254,8 @@ class RagService:
             "answer": answer,
             "sources": self.document_context_service._build_document_sources(final_chunks),
         }
+
+    @staticmethod
+    def _strip_source_tags(answer: str) -> str:
+        cleaned = _SOURCE_TAG_RE.sub(" ", answer)
+        return re.sub(r" {2,}", " ", cleaned).strip()

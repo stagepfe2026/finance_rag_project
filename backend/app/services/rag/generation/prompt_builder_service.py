@@ -1,5 +1,7 @@
 from typing import Literal
 
+from app.core.rag_messages import MSG_UNRELIABLE
+
 
 class PromptBuilderService:
     def format_context(self, chunks: list[dict]) -> str:
@@ -19,7 +21,6 @@ class PromptBuilderService:
                         f"Statut juridique: {chunk.get('legal_status', 'actif')}",
                         f"Date publication: {self._format_value(chunk.get('date_publication'))}",
                         f"Date entree en vigueur: {self._format_value(chunk.get('date_entree_vigueur'))}",
-                        f"Version: {self._format_value(chunk.get('version'))}",
                         f"Relation: {self._build_relation_label(chunk)}",
                         f"Priorite d'application: {self._build_applicability_label(chunk)}",
                         self._build_future_warning(chunk),
@@ -135,13 +136,6 @@ class PromptBuilderService:
             "Si plusieurs chiffres sont presentes dans le contexte, associe chaque chiffre explicitement a son sujet tel qu il apparait dans l extrait."
         )
 
-        citation_instruction = (
-            "Regle de citation des sources : pour chaque affirmation factuelle dans ta reponse, "
-            "cite la source entre crochets avec son numero exact, par exemple [Source 1] ou [Source 2]. "
-            "Ne cite une source que si elle supporte directement l affirmation. "
-            "Ne fabrique pas de numeros de source absents du contexte."
-        )
-
         # Prevents listing products/articles from adjacent chunks that belong to
         # different articles but were retrieved in the same context window.
         article_scope_instruction = (
@@ -162,12 +156,11 @@ N'ajoute aucune information absente du contexte.
 {comparison_and_stats_instruction}
 {legal_priority_instruction}
 {numerical_grounding_instruction}
-{citation_instruction}
 {article_scope_instruction}
 Si une source est future, remplacee ou abrogee, signale-le explicitement.
 S il existe un conflit entre plusieurs textes, privilegie la source la plus pertinente juridiquement et explique ta prudence.
 Si l'information n'apparait pas clairement dans le contexte, reponds exactement :
-Après analyse des documents disponibles dans le système, aucune information pertinente n'a pu être identifiée pour répondre à cette question.
+{MSG_UNRELIABLE}
 
 Contexte:
 {context}

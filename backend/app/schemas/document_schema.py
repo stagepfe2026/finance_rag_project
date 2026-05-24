@@ -50,7 +50,6 @@ class DocumentOut(BaseModel):
     issuedAt: datetime | None = None
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
-    version: str = ""
     relationToTarget: LegalRelationType = LegalRelationType.none
     targetDocumentId: str | None = None
     filePath: str
@@ -79,7 +78,6 @@ class DocumentPreviewOut(BaseModel):
     legalType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
-    version: str = ""
     relationToTarget: LegalRelationType = LegalRelationType.none
     targetDocumentId: str | None = None
     fileType: str
@@ -96,7 +94,6 @@ class DocumentSearchItemOut(BaseModel):
     legalType: LegalDocumentType = LegalDocumentType.autre
     datePublication: datetime | None = None
     dateEntreeVigueur: datetime | None = None
-    version: str = ""
     relationToTarget: LegalRelationType = LegalRelationType.none
     targetDocumentId: str | None = None
     createdAt: datetime

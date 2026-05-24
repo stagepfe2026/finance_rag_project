@@ -43,7 +43,6 @@ export default function ImportDocumentPage() {
                 documentTypeOptions={vm.legalDocumentTypeOptions}
                 datePublication={vm.datePublication}
                 dateEntreeVigueur={vm.dateEntreeVigueur}
-                version={vm.version}
                 relationType={vm.relationType}
                 relationTypeOptions={vm.legalRelationTypeOptions}
                 relatedDocumentId={vm.relatedDocumentId}
@@ -56,7 +55,6 @@ export default function ImportDocumentPage() {
                 onDocumentTypeChange={vm.handleDocumentTypeChange}
                 onDatePublicationChange={vm.handleDatePublicationChange}
                 onDateEntreeVigueurChange={vm.handleDateEntreeVigueurChange}
-                onVersionChange={vm.onVersionChange}
                 onRelationTypeChange={vm.handleRelationTypeChange}
                 onRelatedDocumentIdChange={vm.handleRelatedDocumentIdChange}
                 onRelationSearchChange={vm.onRelationSearchChange}
