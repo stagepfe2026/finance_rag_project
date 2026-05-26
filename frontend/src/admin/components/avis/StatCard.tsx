@@ -20,7 +20,6 @@ export default function StatCard({ label, value, helper }: StatCardProps) {
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700">{label}</p>
           <p className={valueClassName}>{value}</p>
-          <p className="mt-1 truncate text-xs text-[#5f6680]">{helper}</p>
         </div>
       </div>
     </article>

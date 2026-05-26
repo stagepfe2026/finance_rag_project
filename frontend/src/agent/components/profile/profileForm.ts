@@ -13,7 +13,7 @@ export function buildProfileForm(user: AuthUser | null): ProfileFormState {
     prenom: user?.prenom ?? "",
     email: user?.email ?? "",
     telephone: user?.telephone ?? "",
-    profileImageUrl: user?.profileImageUrl ?? "",
+    avatarUrl: user?.avatarUrl ?? "",
     adresse: user?.adresse ?? "",
     dateNaissance: user?.dateNaissance ?? "",
     direction: user?.direction ?? "",

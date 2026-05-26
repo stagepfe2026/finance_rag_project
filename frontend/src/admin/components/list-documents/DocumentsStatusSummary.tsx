@@ -10,9 +10,9 @@ export default function DocumentsStatusSummary({
   failed = 0,
 }: DocumentsStatusSummaryProps) {
   const items = [
-    { label: "Indexes", value: indexed, sub: "Documents prets" },
-    { label: "En cours", value: processing, sub: "Indexation active" },
-    { label: "Echoues", value: failed, sub: "A reprendre" },
+    { label: "Indexés", value: indexed, sub: "" },
+    { label: "En cours d'indexation", value: processing, sub: "" },
+    { label: "Échecs", value: failed, sub: "" },
   ];
 
   return (
@@ -25,7 +25,6 @@ export default function DocumentsStatusSummary({
           <p className="mt-1 text-lg font-bold leading-none tracking-tight text-[#071f3d]">
             {item.value}
           </p>
-          <p className="mt-1 truncate text-xs text-[#5f6680]">{item.sub}</p>
         </div>
       ))}
     </div>

@@ -7,7 +7,7 @@ export type AuthUser = {
   email: string;
   role: "ADMIN" | "FINANCE_USER";
   telephone: string;
-  profileImageUrl: string;
+  avatarUrl: string;
   adresse: string;
   dateNaissance: string;
   direction: string;
@@ -30,7 +30,7 @@ export type ProfileUpdatePayload = {
   prenom: string;
   email: string;
   telephone: string;
-  profileImageUrl: string;
+  avatarUrl: string;
   adresse: string;
   dateNaissance: string;
   direction: string;

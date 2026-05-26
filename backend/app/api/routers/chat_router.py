@@ -1,6 +1,7 @@
 from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
 from app.api.dependencies.service_dependencies import get_chat_service, get_document_index_service
 from app.api.errors.chat_error_mapper import raise_chat_http_error
+from app.api.utils.audit_helper import try_log_audit
 from app.api.utils.response_builder import ok_response
 from app.api.validators.chat_validator import (
     normalize_optional_id,
@@ -209,4 +210,11 @@ async def ask_chat(
         query_mode=payload.query_mode.value,
     )
 
+    try_log_audit(
+        request,
+        "log_chat_message",
+        current_user=current_user,
+        content=normalized_content,
+        conversation_id=data.get("conversation", {}).get("_id", "") or "",
+    )
     return ok_response(message="Message recu, generation en cours.", data=data)

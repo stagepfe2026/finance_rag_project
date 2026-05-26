@@ -145,6 +145,18 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    def indexed_after(self, since: datetime, *, limit: int = 20) -> list[DocumentModel]:
+        cursor = (
+            self.collection.find({
+                "deletedAt": None,
+                "status": DocumentStatus.indexed.value,
+                "indexedAt": {"$gt": since},
+            })
+            .sort("indexedAt", -1)
+            .limit(limit)
+        )
+        return [DocumentModel.from_mongo(raw) for raw in cursor]
+
     def latest_created(self, *, limit: int = 8) -> list[DocumentModel]:
         cursor = self.collection.find({"deletedAt": None}).sort("createdAt", -1).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]

@@ -10,22 +10,21 @@ type ReclamationStatsProps = {
 
 export default function ReclamationStats({ stats }: ReclamationStatsProps) {
   const cards = [
-    ["Total", stats.total, "Journal complet"],
-    ["En attente", stats.pending, "A traiter"],
-    ["En cours", stats.inProgress, "Reponse ouverte"],
-    ["Traitees", stats.resolved, "Cloturees"],
-    ["Urgentes", stats.urgent, "Prioritaires"],
+    ["Total", stats.total],
+    ["En attente", stats.pending],
+    ["En traitement", stats.inProgress],
+    ["Clôturées", stats.resolved],
+    ["Urgentes", stats.urgent],
   ] as const;
 
   return (
     <div className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-5">
-      {cards.map(([label, value, sub]) => (
+      {cards.map(([label, value]) => (
         <div key={label} className="admin-reclamation-stat-card rounded-lg border border-[#e5eaf2] bg-white p-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-red-700">
             {label}
           </p>
           <p className="mt-1 text-lg font-bold leading-none text-[#071f3d]">{value}</p>
-          <p className="mt-1 truncate text-xs text-[#5f6680]">{sub}</p>
         </div>
       ))}
     </div>

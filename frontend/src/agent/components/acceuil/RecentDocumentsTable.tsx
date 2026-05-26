@@ -37,7 +37,7 @@ const getCategoryStyle = (category: string) => {
 
 export default function RecentDocumentsTable({ documents }: RecentDocumentsTableProps) {
   return (
-    <SectionCard title="Documents recemment ajoutes">
+    <SectionCard title="Nouveaux depuis votre dernière connexion">
       <table className="w-full text-xs">
         <thead>
           <tr className="text-left text-slate-500">
@@ -52,7 +52,7 @@ export default function RecentDocumentsTable({ documents }: RecentDocumentsTable
           {documents.length === 0 ? (
             <tr className="border-t">
               <td colSpan={4} className="py-4 text-sm text-slate-500">
-                Aucun document indexe pour le moment.
+                Aucun nouveau document depuis votre dernière connexion.
               </td>
             </tr>
           ) : null}

@@ -26,10 +26,8 @@ export type AuditTrendPoint = {
 };
 
 export type AuditUserFilter = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
+  value: string;
+  label: string;
 };
 
 export type AuditActionFilter = {

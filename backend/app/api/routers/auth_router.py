@@ -7,7 +7,7 @@ from app.schemas import (
     SessionInfoOut,
 )
 from app.api.dependencies.service_dependencies import get_auth_service
-from app.api.utils.audit_helper import try_log_audit
+from app.api.utils.audit_helper import get_current_user, try_log_audit
 from app.api.utils.error_mapper import AuthErrorCode
 from app.api.validators.auth_validator import (
     require_active_session,
@@ -88,6 +88,7 @@ async def login(payload: LoginRequest, request: Request):
         session_token=result["session_token"],
         csrf_token=result["csrf_token"],
     )
+    try_log_audit(request, "log_login_success", current_user=auth_service._to_auth_user(result["user"]))
     return response
 
 
@@ -258,4 +259,5 @@ async def logout(
     }
     json_response = JSONResponse(content=payload)
     _clear_session_cookies(json_response)
+    try_log_audit(request, "log_logout", current_user=get_current_user(request))
     return json_response

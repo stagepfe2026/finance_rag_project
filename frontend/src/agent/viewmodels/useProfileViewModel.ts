@@ -119,7 +119,7 @@ export function useProfileViewModel() {
   async function handleImageChange(file: File) {
     try {
       const imageUrl = await resizeProfileImage(file);
-      setForm((current) => ({ ...current, profileImageUrl: imageUrl }));
+      setForm((current) => ({ ...current, avatarUrl: imageUrl }));
       setSnackbar({
         open: true,
         message: "Photo ajoutee. Cliquez sur Enregistrer pour confirmer.",

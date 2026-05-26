@@ -54,11 +54,17 @@ class DashboardService:
         nom = str(current_user.get("nom", "")).strip()
         user_name = " ".join(part for part in [prenom, nom] if part).strip() or "Utilisateur"
 
+        user_id = str(current_user.get("id", ""))
+        last_session = self.sessions_repository.get_last_closed_session_for_user(user_id)
+
+        if last_session is not None:
+            documents = self.documents_repository.indexed_after(last_session.created_at, limit=20)
+        else:
+            documents = self.documents_repository.latest_indexed(limit=6)
+
         return {
             "userName": user_name,
-            "recentDocuments": [
-                document.to_out_schema() for document in self.documents_repository.latest_indexed(limit=6)
-            ],
+            "recentDocuments": [document.to_out_schema() for document in documents],
             "notifications": self.notification_service.list_notifications(current_user, limit=8)["items"],
         }
 
@@ -149,7 +155,7 @@ class DashboardService:
                 "documentsTotal": total_documents,
                 "reclamationsTotal": len(all_reclamations),
                 "reclamationsUrgent": len(urgent_reclamations),
-                "activeUsers": len(access_by_user),
+                "activeUsers": len(all_users),
                 "pendingReclamations": len(pending_reclamations),
             },
             "reclamationBreakdown": {

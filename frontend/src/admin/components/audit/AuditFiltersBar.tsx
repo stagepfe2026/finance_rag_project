@@ -49,8 +49,8 @@ export default function AuditFiltersBar({
       >
         <option value="ALL">Tous les utilisateurs</option>
         {users.map((user) => (
-          <option key={user.id} value={user.id}>
-            {user.name}
+          <option key={user.value} value={user.value}>
+            {user.label}
           </option>
         ))}
       </select>

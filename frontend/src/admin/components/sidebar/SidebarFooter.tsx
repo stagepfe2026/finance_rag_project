@@ -20,11 +20,17 @@ export default function SidebarFooter({ isCollapsed, isDarkMode, onToggleDarkMod
       {/* User profile */}
       <div className={["flex items-center", isCollapsed ? "justify-center" : "gap-2"].join(" ")}>
         <div className="h-8 w-8 shrink-0">
-          <img
-            src={user?.profileImageUrl}
-            alt={user?.prenom}
-            className="h-8 w-8 rounded-full object-cover ring-2 ring-[#e5eaf2]"
-          />
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.prenom}
+              className="h-8 w-8 rounded-full object-cover ring-2 ring-[#e5eaf2]"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full ring-2 ring-[#e5eaf2] bg-[#9d0208] flex items-center justify-center text-white text-xs font-bold">
+              {user?.prenom?.[0]?.toUpperCase() ?? "?"}
+            </div>
+          )}
         </div>
         {!isCollapsed && (
           <div className="text-xs leading-tight min-w-0">

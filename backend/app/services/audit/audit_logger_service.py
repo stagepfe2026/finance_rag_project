@@ -59,6 +59,92 @@ class AuditLoggerService:
             metadata={"raison": reason},
         )
 
+    def _extract_user_fields(self, current_user: dict[str, Any]) -> tuple[str, str, str, str]:
+        prenom = str(current_user.get("prenom", "")).strip()
+        nom = str(current_user.get("nom", "")).strip()
+        full_name = " ".join(part for part in [prenom, nom] if part).strip()
+        user_id = str(current_user.get("id", ""))
+        email = str(current_user.get("email", ""))
+        role = str(current_user.get("role", ""))
+        return user_id, full_name or email or "Utilisateur", email, role
+
+    def log_login_success(self, *, current_user: dict[str, Any]) -> None:
+        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        self.audit_event_repository.log_event(
+            user_id=user_id,
+            user_name=user_name,
+            user_email=email,
+            user_role=role,
+            action_type="USER_LOGIN",
+            action_label="Connexion",
+            category="Authentification",
+            entity_type="AUTH",
+            entity_id=user_id,
+            entity_label="Session LOCAL",
+            summary=f"{user_name} s'est connecte a la plateforme.",
+            metadata={"methode": "local"},
+        )
+
+    def log_logout(self, *, current_user: dict[str, Any]) -> None:
+        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        self.audit_event_repository.log_event(
+            user_id=user_id,
+            user_name=user_name,
+            user_email=email,
+            user_role=role,
+            action_type="USER_LOGOUT",
+            action_label="Deconnexion",
+            category="Authentification",
+            entity_type="AUTH",
+            entity_id=user_id,
+            entity_label="Session LOCAL",
+            summary=f"{user_name} a termine sa session.",
+            metadata={},
+        )
+
+    def log_chat_message(self, *, current_user: dict[str, Any], content: str, conversation_id: str) -> None:
+        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        label = (content[:80] + "...") if len(content) > 80 else content
+        self.audit_event_repository.log_event(
+            user_id=user_id,
+            user_name=user_name,
+            user_email=email,
+            user_role=role,
+            action_type="CHAT_MESSAGE",
+            action_label="Message envoye",
+            category="Chat",
+            entity_type="CONVERSATION",
+            entity_id=conversation_id or "",
+            entity_label=label,
+            summary=f"{user_name} a envoye un message.",
+            metadata={"conversationId": conversation_id or ""},
+        )
+
+    def log_reclamation_action(
+        self,
+        *,
+        current_user: dict[str, Any],
+        action_type: str,
+        action_label: str,
+        reclamation_id: str,
+        subject: str,
+    ) -> None:
+        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        self.audit_event_repository.log_event(
+            user_id=user_id,
+            user_name=user_name,
+            user_email=email,
+            user_role=role,
+            action_type=action_type,
+            action_label=action_label,
+            category="Reclamations",
+            entity_type="RECLAMATION",
+            entity_id=reclamation_id,
+            entity_label=subject,
+            summary=f"{user_name} — {action_label} : {subject}.",
+            metadata={"reclamationId": reclamation_id},
+        )
+
     def log_system_event(
         self,
         *,

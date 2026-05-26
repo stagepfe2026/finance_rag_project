@@ -102,6 +102,15 @@ class SessionsRepository:
         cursor = get_sessions_collection().find({}).sort("createdAt", -1).limit(limit)
         return [SessionModel.from_mongo(raw) for raw in cursor]
 
+    def get_last_closed_session_for_user(self, user_id: str) -> SessionModel | None:
+        raw = get_sessions_collection().find_one(
+            {"userId": user_id, "closedAt": {"$ne": None}},
+            sort=[("createdAt", -1)],
+        )
+        if not raw:
+            return None
+        return SessionModel.from_mongo(raw)
+
     @staticmethod
     def _parse_id(session_id: str) -> ObjectId | None:
         try:

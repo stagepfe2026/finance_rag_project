@@ -20,7 +20,7 @@ export default function UserProfilePage() {
       <form onSubmit={vm.handleSubmit} className="mx-auto grid w-full gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
         <ProfileSummaryCard
           user={vm.user}
-          imageUrl={vm.form.profileImageUrl}
+          imageUrl={vm.form.avatarUrl}
           onImageChange={(file) => void vm.handleImageChange(file)}
         />
 

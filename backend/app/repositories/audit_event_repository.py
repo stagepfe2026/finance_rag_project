@@ -57,3 +57,37 @@ class AuditEventRepository:
     def list_recent(self, *, limit: int = 250) -> list[dict[str, Any]]:
         cursor = self.collection.find({}).sort("occurredAt", -1).limit(limit)
         return [dict(raw) for raw in cursor]
+
+    def list_filtered(self, *, query: dict[str, Any], limit: int = 250) -> list[dict[str, Any]]:
+        cursor = self.collection.find(query).sort("occurredAt", -1).limit(limit)
+        return [self._to_activity(raw) for raw in cursor]
+
+    def count_filtered(self, *, query: dict[str, Any]) -> int:
+        return self.collection.count_documents(query)
+
+    def list_for_filters(self, *, limit: int = 500) -> list[dict[str, Any]]:
+        cursor = self.collection.find({}, {"userId": 1, "userName": 1, "userEmail": 1, "actionType": 1, "actionLabel": 1}).sort("occurredAt", -1).limit(limit)
+        return [dict(raw) for raw in cursor]
+
+    def _to_activity(self, raw: dict[str, Any]) -> dict[str, Any]:
+        occurred_at = raw.get("occurredAt")
+        if isinstance(occurred_at, datetime):
+            occurred_at_str = occurred_at.isoformat()
+        else:
+            occurred_at_str = str(occurred_at or "")
+        return {
+            "id": str(raw.get("_id", "")),
+            "occurredAt": occurred_at_str,
+            "userId": str(raw.get("userId", "")),
+            "userName": str(raw.get("userName", "")),
+            "userEmail": str(raw.get("userEmail", "")),
+            "userRole": str(raw.get("userRole", "")),
+            "actionType": str(raw.get("actionType", "")),
+            "actionLabel": str(raw.get("actionLabel", "")),
+            "category": str(raw.get("category", "")),
+            "entityType": str(raw.get("entityType", "")),
+            "entityId": str(raw.get("entityId", "")),
+            "entityLabel": str(raw.get("entityLabel", "")),
+            "summary": str(raw.get("summary", "")),
+            "metadata": dict(raw.get("metadata") or {}),
+        }

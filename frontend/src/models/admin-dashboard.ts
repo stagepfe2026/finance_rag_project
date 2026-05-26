@@ -47,7 +47,7 @@ type AdminDashboardLatestAccess = {
   role: string;
   lastActivityAt: string;
   authMethod: string;
-  imageProfileUrl: string;
+  avat: string;
 };
 
 export type AdminDashboardUrgentCase = {
