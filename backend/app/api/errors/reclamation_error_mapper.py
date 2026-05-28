@@ -27,6 +27,10 @@ RECLAMATION_ACTION_ERRORS = {
         409,
         "Cette reclamation est deja prise en charge ou cloturee.",
     ),
+    "RECLAMATION_NOT_IN_PROGRESS": (
+        409,
+        "La reclamation doit etre prise en charge avant de pouvoir etre resolue.",
+    ),
     "INVALID_ADMIN_STATUS": (400, "Statut admin invalide."),
     "RECLAMATION_ALREADY_RESOLVED_BY_ADMIN": (
         400,

@@ -276,6 +276,8 @@ class ReclamationService:
         reclamation = self.repository.get_by_id(reclamation_id)
         if reclamation is None or reclamation.deleted_at is not None:
             raise ValueError("RECLAMATION_NOT_FOUND")
+        if reclamation.status != "IN_PROGRESS":
+            raise ValueError("RECLAMATION_NOT_IN_PROGRESS")
         if reclamation.admin_reply_at is not None or (reclamation.admin_reply or "").strip():
             raise ValueError("RECLAMATION_ALREADY_RESOLVED_BY_ADMIN")
 
