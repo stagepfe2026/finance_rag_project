@@ -44,12 +44,18 @@ alt un champ est invalide ou absent
     Page --> Admin : message d'erreur
 end
 
+Router -> Router : vérifie la taille déclarée du fichier\nvalidate_document_size(file)
+note right : basée sur file.size fourni par le navigateur
+alt taille déclarée dépasse 20 MB
+    Router --> Page : 400 Bad Request
+    Page --> Admin : message d'erreur
+end
+
 Router -> IndexService : import_and_index(\nfile, category, title, dates,\ndocument_type, relation_type, admin_id)
 
-IndexService -> IndexService : lecture du contenu réel du fichier
-note right : la taille déclarée par le navigateur\npeut différer de la taille réelle
-
-alt fichier dépasse 20 MB
+IndexService -> IndexService : lit le contenu réel du fichier\net vérifie la taille effective
+note right : vérifie len(content) après lecture —\nla taille déclarée peut différer de la taille réelle
+alt taille réelle dépasse 20 MB
     IndexService --> Router : 400 Bad Request
     Router --> Page : 400 Bad Request
     Page --> Admin : message d'erreur
@@ -65,8 +71,8 @@ alt une métadonnée légale est invalide
     Page --> Admin : message d'erreur
 end
 
-IndexService -> DocRepo : already_exists(\ntitle, category, legal_type, version)
-note right : un document est considéré en doublon\nsi le titre, la catégorie, le type\net la version sont identiques
+IndexService -> DocRepo : already_exists(\ntitle, category, legal_type)
+note right : un document est considéré en doublon\nsi le titre, la catégorie et le type sont identiques
 alt document identique déjà présent
     IndexService --> Router : 409 Conflict
     Router --> Page : 409 Conflict
@@ -77,7 +83,7 @@ IndexService -> FileService : store_uploaded_file(filename, extension, content)
 note right : enregistre le fichier sur le disque\net retourne son chemin pour le stocker en base
 FileService --> IndexService : stored_file_path
 
-IndexService -> DocModel : new_processing(\ntitle, category, legal_status, legal_type,\ndates, version, relation, file_path, file_size, file_type)
+IndexService -> DocModel : new_processing(\ntitle, category, legal_status, legal_type,\ndates, relation, file_path, file_size, file_type)
 note right : document créé en mémoire uniquement\npas encore enregistré en base
 DocModel --> IndexService : document
 

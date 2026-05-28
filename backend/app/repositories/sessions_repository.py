@@ -1,10 +1,12 @@
-from datetime import datetime, timezone
-
-from bson import ObjectId
+import logging
+from datetime import UTC, datetime
 
 from app.core.database import get_sessions_collection
 from app.models import SessionModel
 from app.repositories.index_helpers import create_partial_unique_string_index
+from bson import ObjectId
+
+_logger = logging.getLogger(__name__)
 
 
 class SessionsRepository:
@@ -27,7 +29,7 @@ class SessionsRepository:
             {"_id": object_id, "closedAt": None},
             {
                 "$set": {
-                    "lastActivityAt": datetime.now(timezone.utc),
+                    "lastActivityAt": datetime.now(UTC),
                     "expiresAt": access_expires_at,
                     "idleExpiresAt": idle_expires_at,
                 }
@@ -49,7 +51,7 @@ class SessionsRepository:
 
         update_fields: dict[str, object] = {
             "expiresAt": access_expires_at,
-            "lastActivityAt": datetime.now(timezone.utc),
+            "lastActivityAt": datetime.now(UTC),
         }
         if refresh_expires_at is not None:
             update_fields["refreshExpiresAt"] = refresh_expires_at
@@ -58,33 +60,37 @@ class SessionsRepository:
         if sso_refresh_token is not None:
             update_fields["ssoRefreshToken"] = sso_refresh_token
 
-        get_sessions_collection().update_one(
+        result = get_sessions_collection().update_one(
             {"_id": object_id, "closedAt": None},
             {"$set": update_fields},
         )
+        if result.modified_count == 0:
+            _logger.warning("renew_tokens: session %s not found or already closed", session_id)
 
     def close(self, session_id: str, *, reason: str, is_early_closure: bool) -> None:
         object_id = self._parse_id(session_id)
         if not object_id:
             return
 
-        get_sessions_collection().update_one(
+        result = get_sessions_collection().update_one(
             {"_id": object_id, "closedAt": None},
             {
                 "$set": {
-                    "closedAt": datetime.now(timezone.utc),
+                    "closedAt": datetime.now(UTC),
                     "closureReason": reason,
                     "isEarlyClosure": is_early_closure,
                 }
             },
         )
+        if result.modified_count == 0:
+            _logger.debug("close: session %s not found or already closed (reason=%s)", session_id, reason)
 
     def close_all_for_user(self, user_id: str, *, reason: str) -> None:
         get_sessions_collection().update_many(
             {"userId": user_id, "closedAt": None},
             {
                 "$set": {
-                    "closedAt": datetime.now(timezone.utc),
+                    "closedAt": datetime.now(UTC),
                     "closureReason": reason,
                     "isEarlyClosure": True,
                 }

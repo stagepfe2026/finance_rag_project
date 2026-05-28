@@ -60,7 +60,7 @@ export default function UserLayout() {
         <Snackbar
           open={vm.chatSnackbar.open}
           message={vm.chatSnackbar.message}
-          tone="success"
+          tone={vm.chatSnackbar.tone ?? "success"}
           onClick={vm.chatSnackbar.href ? vm.handleChatSnackbarClick : undefined}
         />
       </div>
@@ -194,7 +194,7 @@ export default function UserLayout() {
       <Snackbar
         open={vm.chatSnackbar.open}
         message={vm.chatSnackbar.message}
-        tone="success"
+        tone={vm.chatSnackbar.tone ?? "success"}
         onClick={vm.chatSnackbar.href ? vm.handleChatSnackbarClick : undefined}
       />
     </div>

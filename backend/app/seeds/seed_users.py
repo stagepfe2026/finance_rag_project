@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
-from pathlib import Path
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 
 # Permet d'executer le script depuis le dossier backend.
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -37,7 +37,7 @@ def seed_users() -> None:
             "email_notifications_on": True,
             "sms_notifications_on": True,
             "is_two_factor_enabled": True,
-            "password_changed_at": datetime(2026, 3, 12, 8, 30, tzinfo=timezone.utc),
+            "password_changed_at": datetime(2026, 3, 12, 8, 30, tzinfo=UTC),
         },
         {
             "nom": "Ben Ali",
@@ -61,7 +61,7 @@ def seed_users() -> None:
             "email_notifications_on": True,
             "sms_notifications_on": False,
             "is_two_factor_enabled": True,
-            "password_changed_at": datetime(2026, 3, 12, 7, 0, tzinfo=timezone.utc),
+            "password_changed_at": datetime(2026, 3, 12, 7, 0, tzinfo=UTC),
         },
     ]
 

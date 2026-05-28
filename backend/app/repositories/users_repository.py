@@ -1,11 +1,10 @@
-from datetime import datetime, timezone
-
-from bson import ObjectId
-from pymongo.errors import DuplicateKeyError
+from datetime import UTC, datetime
 
 from app.core.database import get_users_collection
 from app.models import UserModel
 from app.repositories.index_helpers import create_partial_unique_string_index
+from bson import ObjectId
+from pymongo.errors import DuplicateKeyError
 
 
 class UsersRepository:
@@ -117,7 +116,7 @@ class UsersRepository:
             {
                 "$set": {
                     "password": password_hash,
-                    "passwordChangedAt": datetime.now(timezone.utc),
+                    "passwordChangedAt": datetime.now(UTC),
                 }
             },
         )
@@ -182,10 +181,10 @@ class UsersRepository:
                     "emailNotificationsOn": email_notifications_on,
                     "smsNotificationsOn": sms_notifications_on,
                     "isTwoFactorEnabled": is_two_factor_enabled,
-                    "passwordChangedAt": password_changed_at or datetime.now(timezone.utc),
+                    "passwordChangedAt": password_changed_at or datetime.now(UTC),
                     "deletedAt": None,
                 },
-                "$setOnInsert": {"createdAt": datetime.now(timezone.utc)},
+                "$setOnInsert": {"createdAt": datetime.now(UTC)},
             },
             upsert=True,
         )

@@ -86,7 +86,7 @@ DocContext --> RagService : sources[]
 
 RagService --> ChatService : {question, answer, sources[]}
 
-ChatService -> ChatRepo : update_content(\nassistant_message_id, answer,\nsources[], statut="complété")
+ChatService -> ChatRepo : update_content(\nassistant_message_id, answer,\nsources[], status="completed")
 note right : met à jour le message assistant en base\navec la réponse générée et les sources associées
 ChatRepo --> ChatService : ok
 

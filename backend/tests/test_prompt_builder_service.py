@@ -3,7 +3,6 @@
 Run:  cd backend && python -m pytest tests/test_prompt_builder_service.py -v
 """
 import pytest
-
 from app.services.rag.generation.prompt_builder_service import PromptBuilderService
 
 

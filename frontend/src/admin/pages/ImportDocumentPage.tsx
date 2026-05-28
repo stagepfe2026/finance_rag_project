@@ -85,7 +85,7 @@ export default function ImportDocumentPage() {
                 onClick={vm.handleReset}
                 className="rounded border border-[#e5eaf2] bg-white px-3 py-2 text-[12px] font-semibold text-[#071f3d] transition hover:border-[#071f3d]"
               >
-                Reset
+                Annuler
               </button>
               <button
                 type="button"

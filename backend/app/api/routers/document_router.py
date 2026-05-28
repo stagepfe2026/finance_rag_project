@@ -2,9 +2,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse
-
 from app.api.dependencies.auth_dependencies import require_admin_user
 from app.api.dependencies.service_dependencies import get_document_index_service
 from app.api.utils.audit_helper import get_current_user, get_optional_audit_service, try_log_audit
@@ -27,6 +24,8 @@ from app.schemas import (
     DocumentPreviewOut,
     DocumentStatus,
 )
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse
 
 router = APIRouter(dependencies=[Depends(require_admin_user)])
 

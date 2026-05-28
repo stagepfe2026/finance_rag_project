@@ -1,10 +1,12 @@
+import os
+
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-from app.api.routers.auth_router import router as auth_router
 from app.api.routers.audit_router import router as audit_router
+from app.api.routers.auth_router import router as auth_router
 from app.api.routers.chat_router import router as chat_router
 from app.api.routers.dashboard_router import router as dashboard_router
 from app.api.routers.document_router import router as document_router
@@ -14,23 +16,24 @@ from app.api.routers.rag_router import router as rag_router
 from app.api.routers.reclamation_router import router as reclamation_router
 from app.core.config import settings
 from app.core.database import close_mongo_connection, connect_to_mongo, get_database
+from app.infrastructure.database.mongodb_validator_manager import ensure_mongodb_validators
 from app.infrastructure.embeddings.ollama_embedding_provider import (
     OllamaEmbeddingProvider,
 )
 from app.infrastructure.generation.ollama_generation_provider import OllamaGenerationProvider
-from app.infrastructure.database.mongodb_validator_manager import ensure_mongodb_validators
 from app.middlewares.auth_session_middleware import AuthSessionMiddleware
-from app.services.auth.auth_service import AuthService
 from app.services.audit.audit_service import AuditService
+from app.services.auth.auth_service import AuthService
 from app.services.chat.chat_service import ChatService
-from app.services.documents.indexing.document_index_service import DocumentIndexService
 from app.services.dashboard.dashboard_service import DashboardService
-from app.services.rag.processing.embedding_service import EmbeddingService
-from app.services.rag.generation.generation_service import GenerationService
+from app.services.documents.indexing.document_index_service import DocumentIndexService
 from app.services.notifications.notification_service import NotificationConnectionManager, NotificationService
+from app.services.rag.generation.generation_service import GenerationService
 from app.services.rag.pipeline.rag_service import RagService
+from app.services.rag.processing.embedding_service import EmbeddingService
 from app.services.reclamations.reclamation_service import ReclamationService
-
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 auth_service = AuthService()
 notification_manager = NotificationConnectionManager()

@@ -1,7 +1,6 @@
-from pydantic import BaseModel
-
 from app.schemas.document_schema import DocumentOut
 from app.schemas.notification_schema import NotificationOut
+from pydantic import BaseModel
 
 
 class UserDashboardOut(BaseModel):

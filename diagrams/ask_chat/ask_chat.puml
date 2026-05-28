@@ -13,14 +13,20 @@ boundary "ChatPage" as Page #LightBlue
 boundary "ChatRouter" as Router #Lavender
 control "ChatService" as ChatService #LightYellow
 entity "ChatRepository" as ChatRepo #DarkSeaGreen
+control "AuditService" as Audit #MistyRose
 
 Utilisateur -> Page : saisit une question\net clique sur Envoyer
 
 Page -> Router : POST /api/chat/ask\n(content, conversation_id,\nresponse_mode, query_mode)
-note right : response_mode : "court" ou "détaillé"\nquery_mode : "courant", "futur" ou "comparaison"
+note right
+    response_mode : "short" ou "detailed"
+    query_mode    : "current", "future_preview" ou "comparison"
+end note
 
-Router -> Router : vérifie session et rôle
-note right : accès autorisé aux rôles\nFINANCE_USER et ADMIN
+ref over Router
+    Vérification session et rôle
+    (accès autorisé : FINANCE_USER et ADMIN)
+end ref
 
 alt session absente ou expirée
     Router --> Page : 401 Unauthorized
@@ -30,15 +36,15 @@ else rôle non autorisé
     Page --> Utilisateur : redirige vers la page d'accueil
 end
 
-Router -> Router : normalise et valide la question
-note right : supprime les espaces superflus\net rejette une question vide
+Router -> Router : normalise le contenu de la question\nnormalize_required_chat_content(content)
 
-alt question vide ou absente
+Router -> ChatService : ask_pending(\nuser_id, content,\nconversation_id, response_mode, query_mode)
+
+alt question vide après normalisation
+    ChatService --> Router : ValueError("EMPTY_MESSAGE")
     Router --> Page : 400 Bad Request
     Page --> Utilisateur : message d'erreur
 end
-
-Router -> ChatService : ask_pending(\nuser_id, content,\nconversation_id, response_mode, query_mode)
 
 alt aucun identifiant de conversation fourni
     ChatService -> ChatRepo : create(ConversationModel)
@@ -46,18 +52,18 @@ alt aucun identifiant de conversation fourni
     ChatRepo --> ChatService : conversation
 else identifiant de conversation fourni
     ChatService -> ChatRepo : get_conversation_for_user(\nconversation_id, user_id)
-    note right : vérifie que la conversation existe\net appartient bien à cet utilisateur
+    note right : vérifie que la conversation\nexiste et appartient à cet utilisateur
     alt conversation introuvable ou inaccessible
-        ChatService --> Router : 400 Bad Request
+        ChatService --> Router : ValueError("CONVERSATION_NOT_FOUND")
         Router --> Page : 400 Bad Request
         Page --> Utilisateur : message d'erreur
     end
 end
 
-ChatService -> ChatRepo : save(message utilisateur, statut="complété")
+ChatService -> ChatRepo : save(message utilisateur, status="completed")
 ChatRepo --> ChatService : user_message
 
-ChatService -> ChatRepo : save(message assistant vide, statut="en génération")
+ChatService -> ChatRepo : save(message assistant vide, status="generating")
 note right : message vide inséré immédiatement\npour signaler que la réponse est en cours de calcul
 ChatRepo --> ChatService : assistant_message
 
@@ -65,25 +71,29 @@ ChatService -> ChatRepo : refresh_after_message(\nconversation_id, title)
 note right : met à jour le titre et la date\nde la dernière activité de la conversation
 ChatRepo --> ChatService : conversation mise à jour
 
-ChatService --> Router : {conversation, userMessage,\nassistantMessage(en génération), sources=[]}
+ChatService --> Router : {conversation, userMessage,\nassistantMessage (generating), sources=[]}
+
+Router -> Router : enregistre la tâche de fond\nbackground_tasks.add_task(\n  service.run_rag_background,\n  assistant_message_id, content,\n  response_mode, query_mode)
+
+Router -> Audit : enregistre la question posée\nlog_chat_message(user, content, conversation_id)
+Audit --> Router : ok
 
 Router --> Page : 200 OK — génération en cours
 Page --> Utilisateur : affiche la question\net un indicateur de génération
 
 group Génération de la réponse en arrière-plan
 
-    note over ChatService #FFE4B5 : ⚠️ La réponse est calculée après l'envoi du 200 OK\nLa page interroge le serveur jusqu'à ce que\nle statut passe à "complété" ou "échoué"
+    note over ChatService #FFE4B5 : ⚠️ La réponse est calculée après l'envoi du 200 OK\nLa page interroge le serveur jusqu'à ce que\nle statut passe à "completed" ou "failed"
 
     ref over ChatService, ChatRepo
         Pipeline RAG — recherche et génération
     end ref
 
-end
+    opt une erreur survient pendant la génération
+        ChatService -> ChatRepo : update_content(\nassistant_message_id,\nmessage d'erreur, status="failed")
+        ChatRepo --> ChatService : ok
+    end
 
-opt une erreur survient pendant la génération
-    ChatService -> ChatRepo : update_content(\nassistant_message_id,\nmessage d'erreur, statut="échoué")
-    ChatRepo --> ChatService : ok
-    Page --> Utilisateur : affiche un message d'erreur
 end
 
 Page --> Utilisateur : affiche la réponse complète\navec les sources documentaires

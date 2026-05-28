@@ -2,7 +2,6 @@
 
 Run:  cd backend && python -m pytest tests/test_retrieval_filter.py -v
 """
-import pytest
 from unittest.mock import MagicMock
 
 from app.core.rag_messages import MSG_OUT_OF_DOMAIN, MSG_UNRELIABLE

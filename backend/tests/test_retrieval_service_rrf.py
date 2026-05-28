@@ -3,13 +3,12 @@ scale keeps the RRF content signal dominant over legal-status bonuses.
 
 Run:  cd backend && python -m pytest tests/test_retrieval_service_rrf.py -v
 """
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from app.core.config import settings
 from app.services.rag.pipeline.retrieval_service import RetrievalService
 from app.services.rag.ranking.legal_ranking_service import LegalRankingService
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -165,7 +164,8 @@ class TestQdrantFallbackLogging:
 
     def test_search_fallback_emits_warning(self):
         import logging
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
+
         from app.repositories.qdrant_repository import QdrantRepository
 
         repo = QdrantRepository.__new__(QdrantRepository)
@@ -201,7 +201,8 @@ class TestQdrantFallbackLogging:
         """In future_preview or comparison mode the exception must propagate,
         not be swallowed by the fallback.
         """
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
+
         from app.repositories.qdrant_repository import QdrantRepository
 
         repo = QdrantRepository.__new__(QdrantRepository)

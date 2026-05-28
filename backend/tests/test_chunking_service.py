@@ -2,10 +2,8 @@
 
 Run:  cd backend && python -m pytest tests/test_chunking_service.py -v
 """
-import pytest
 
 from app.services.rag.processing.chunking_service import ChunkingService
-
 
 # ---------------------------------------------------------------------------
 # _find_sentence_boundary (internal, tested via class method)

@@ -3,8 +3,7 @@
 Run:  cd backend && python -m pytest tests/test_nlp_provider.py -v
 """
 import pytest
-from app.infrastructure.nlp.nlp_provider import FrenchNlpProvider, _ARTICLE_RE
-
+from app.infrastructure.nlp.nlp_provider import _ARTICLE_RE, FrenchNlpProvider
 
 # ---------------------------------------------------------------------------
 # Regex unit tests (no spaCy needed)

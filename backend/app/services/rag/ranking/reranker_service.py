@@ -18,7 +18,7 @@ class RerankerService:
         pairs = [(question, chunk["text"]) for chunk in chunks]
         scores = self.model.predict(pairs)
 
-        for chunk, score in zip(chunks, scores):
+        for chunk, score in zip(chunks, scores, strict=False):
             chunk["reranker_score"] = float(score)
 
         reranked = sorted(chunks, key=lambda c: c["reranker_score"], reverse=True)

@@ -1,14 +1,14 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
 def _as_utc_datetime(value: Any) -> datetime:
     if isinstance(value, datetime):
         if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc)
-    return datetime.now(timezone.utc)
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+    return datetime.now(UTC)
 
 
 @dataclass

@@ -1,13 +1,12 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from fastapi import UploadFile
-
 from app.models.reclamation_model import ReclamationModel
 from app.repositories.reclamation_repository import ReclamationRepository
 from app.services.notifications.notification_service import NotificationService
 from app.services.reclamations.reclamation_attachment_service import ReclamationAttachmentService
 from app.services.reclamations.reclamation_sla_service import ReclamationSlaService
+from fastapi import UploadFile
 
 
 class ReclamationService:

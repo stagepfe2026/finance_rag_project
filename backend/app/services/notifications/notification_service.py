@@ -1,7 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timezone
-
-from fastapi import WebSocket
+from datetime import UTC, datetime
 
 from app.core.config import settings
 from app.core.security import hash_session_token
@@ -13,6 +11,7 @@ from app.repositories.document_favorite_repository import DocumentFavoriteReposi
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.sessions_repository import SessionsRepository
 from app.repositories.users_repository import UsersRepository
+from fastapi import WebSocket
 
 
 class NotificationConnectionManager:
@@ -68,7 +67,7 @@ class NotificationService:
 
     async def alert_document_ready(self, document: DocumentModel) -> None:
         users = self.users_repository.list_by_roles(["FINANCE_USER"])
-        created_at = document.indexed_at or datetime.now(timezone.utc)
+        created_at = document.indexed_at or datetime.now(UTC)
         notifications = [
             NotificationModel(
                 user_id=user.id or "",
@@ -142,7 +141,7 @@ class NotificationService:
 
     async def alert_sla_breach(self, reclamation: "ReclamationModel") -> None:
         admins = self.users_repository.list_by_roles(["ADMIN"])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         notifications = [
             NotificationModel(
                 user_id=admin.id or "",
@@ -175,7 +174,7 @@ class NotificationService:
 
     async def notify_indexation_failed(self, document_title: str, error: str) -> None:
         admins = self.users_repository.list_by_roles(["ADMIN"])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         notifications = [
             NotificationModel(
                 user_id=admin.id or "",
@@ -213,7 +212,7 @@ class NotificationService:
         )
         if not favorite_user_ids:
             return
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         notifications = [
             NotificationModel(
                 user_id=uid,
@@ -255,7 +254,7 @@ class NotificationService:
         if session is None:
             return None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if session.absolute_expires_at <= now or session.refresh_expires_at <= now or session.idle_expires_at <= now:
             return None
 

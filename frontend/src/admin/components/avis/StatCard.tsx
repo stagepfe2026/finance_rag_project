@@ -7,7 +7,7 @@ type StatCardProps = {
   helper: string;
 };
 
-export default function StatCard({ label, value, helper }: StatCardProps) {
+export default function StatCard({ label, value }: StatCardProps) {
   const valueClassName =
     typeof value === "string" && value.length > 18
       ? "mt-1 truncate text-sm font-bold text-[#071f3d]"

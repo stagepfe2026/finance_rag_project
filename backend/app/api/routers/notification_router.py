@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect, status
-
 from app.api.dependencies.auth_dependencies import require_authenticated_user
 from app.api.dependencies.service_dependencies import get_notification_service, get_notification_service_from_websocket
 from app.api.validators.notification_validator import normalize_notification_id
 from app.schemas.notification_schema import NotificationListResponse, NotificationOut
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect, status
 
 router = APIRouter(prefix="/api/notifications", tags=["Notifications"])
 

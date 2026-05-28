@@ -30,7 +30,7 @@ export function useAgentLayoutViewModel() {
     return window.localStorage.getItem(USER_THEME_STORAGE_KEY) === "dark";
   });
   const [isHeaderScrolled, setIsHeaderScrolled]               = useState(false);
-  const [chatSnackbar, setChatSnackbar]                       = useState<{ open: boolean; message: string; href?: string }>({ open: false, message: "" });
+  const [chatSnackbar, setChatSnackbar]                       = useState<{ open: boolean; message: string; href?: string; tone?: "success" | "error" | "info" }>({ open: false, message: "" });
 
   const pendingMessagesRef    = useRef<Map<string, string>>(new Map());
   const notifiedMessageIdsRef = useRef<Set<string>>(new Set());
@@ -139,13 +139,18 @@ export function useAgentLayoutViewModel() {
 
   const toggleFavoriteDocument = useCallback(async (item: DocumentSearchItem) => {
     const nextValue = !item.isFavorite;
-    await setDocumentFavorite({ apiBaseUrl, documentId: item.id, isFavored: nextValue });
-    setFavoriteDocuments((current) =>
-      nextValue
-        ? [{ ...item, isFavored: true }, ...current.filter((e) => e.id !== item.id)]
-        : current.filter((e) => e.id !== item.id),
-    );
-    return nextValue;
+    try {
+      await setDocumentFavorite({ apiBaseUrl, documentId: item.id, isFavored: nextValue });
+      setFavoriteDocuments((current) =>
+        nextValue
+          ? [{ ...item, isFavorite: true }, ...current.filter((e) => e.id !== item.id)]
+          : current.filter((e) => e.id !== item.id),
+      );
+      return nextValue;
+    } catch {
+      setChatSnackbar({ open: true, message: "Impossible de mettre a jour le favori.", tone: "error" });
+      return item.isFavorite;
+    }
   }, []);
 
   const handleOpenNotifications = useCallback(() => {

@@ -1,9 +1,7 @@
 # app/infrastructure/parsers/word_parser.py
 
-from pypdf import PdfReader
-
-
 from app.infrastructure.parsers.base_document_parser import BaseDocumentParser
+from pypdf import PdfReader
 
 
 class PdfParser(BaseDocumentParser):

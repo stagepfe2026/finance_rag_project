@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-
 from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
 from app.api.dependencies.service_dependencies import get_dashboard_service
 from app.schemas.dashboard_schema import AdminDashboardOut, UserDashboardOut
+from fastapi import APIRouter, Depends, Request
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 

@@ -1,0 +1,76 @@
+@startuml DS1_authentification
+
+title DS1 — Authentification (Login)
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceGroupBorderThickness 1.5
+skinparam backgroundColor #ffffff
+skinparam sequenceGroupBodyBackgroundColor transparent
+
+actor "Utilisateur" as User
+boundary "Page Login\n(Frontend)" as PageLogin #LightCyan
+boundary "AuthRouter" as Router #Lavender
+control "AuthService" as AuthService #LightYellow
+database "UsersRepository" as UsersRepo #LightBlue
+database "SessionsRepository" as SessionsRepo #LightBlue
+control "AuditService" as AuditService #MistyRose
+
+User -> PageLogin : soumet le formulaire\n(email + mot de passe)
+
+opt l'un des champs est vide
+    PageLogin --> User : affiche "Email et mot de passe sont obligatoires."
+    note right : aucun appel réseau — vérification locale uniquement
+end
+
+PageLogin -> Router : POST /api/auth/login\n{ email, password }
+
+Router -> AuthService : demande de connexion\nsign_in(email, password)
+
+AuthService -> UsersRepo : recherche l'utilisateur par email\nget_by_email(email)
+UsersRepo --> AuthService : retourne l'utilisateur trouvé,\nou null si inexistant
+
+alt l'utilisateur n'existe pas ou le mot de passe est incorrect
+
+    AuthService -> AuditService : enregistre la tentative échouée\nlog_failed_login(email)
+    AuditService --> AuthService : ok
+    AuthService --> Router : lève une erreur INVALID_CREDENTIALS
+    Router --> PageLogin : HTTP 401 — Identifiants invalides
+    PageLogin --> User : affiche le message d'erreur à l'utilisateur
+
+else les identifiants sont corrects
+
+    AuthService -> SessionsRepo : ferme toutes les sessions ouvertes\nclose_all_for_user(user_id)
+    note right : sécurité — un seul login actif\nà la fois par utilisateur
+    SessionsRepo --> AuthService : ok
+
+    AuthService -> AuthService : calcule les dates d'expiration\nde la nouvelle session
+    note right
+        access_expires_at   — durée courte  (accès immédiat)
+        refresh_expires_at  — durée moyenne (renouvellement)
+        idle_expires_at     — expire si inactif trop longtemps
+        absolute_expires_at — limite maximale absolue
+    end note
+
+    AuthService -> AuthService : génère un token de session aléatoire\net un token CSRF
+    AuthService -> AuthService : hache le token avant stockage
+    note right : le token brut est envoyé au client,\nseul son empreinte est conservée en base
+
+    AuthService -> SessionsRepo : enregistre la session en base\nopen_session(SessionModel)
+    SessionsRepo --> AuthService : identifiant de la session créée
+
+    AuthService --> Router : retourne les données de connexion\n(utilisateur, tokens, redirection)
+
+    Router -> AuditService : enregistre la connexion réussie\nlog_login_success(user)
+    AuditService --> Router : ok
+
+    Router --> PageLogin : HTTP 200 — Connexion réussie
+    note right
+        Cookie session_token : sécurisé, non lisible par le JS
+        Cookie csrf_token    : lisible par le JS
+    end note
+
+    PageLogin --> User : redirige vers le tableau de bord\nselon le rôle de l'utilisateur
+
+end
+
+@enduml

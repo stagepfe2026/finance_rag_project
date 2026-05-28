@@ -2,12 +2,12 @@ import logging
 import re
 from typing import Literal
 
-_SOURCE_TAG_RE = re.compile(r"[\s,]*\[Source\s*\d+\][\s,]*")
-
 from app.core.config import settings
+from app.core.rag_messages import MSG_NO_SYSTEM, MSG_OUT_OF_DOMAIN, MSG_UNRELIABLE
 from app.infrastructure.nlp.nlp_provider import FrenchNlpProvider
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.qdrant_repository import QdrantRepository
+from app.services.documents.legal.legal_status_service import LegalStatusService
 from app.services.rag.generation.generation_service import GenerationService
 from app.services.rag.generation.prompt_builder_service import PromptBuilderService
 from app.services.rag.pipeline.document_context_service import DocumentContextService
@@ -18,8 +18,8 @@ from app.services.rag.processing.nlp_service import NLPService
 from app.services.rag.ranking.bm25_service import BM25Service
 from app.services.rag.ranking.legal_ranking_service import LegalRankingService
 from app.services.rag.ranking.reranker_service import RerankerService
-from app.services.documents.legal.legal_status_service import LegalStatusService
-from app.core.rag_messages import MSG_NO_SYSTEM, MSG_OUT_OF_DOMAIN, MSG_UNRELIABLE
+
+_SOURCE_TAG_RE = re.compile(r"[\s,]*\[Source\s*\d+\][\s,]*")
 
 
 class RagService:

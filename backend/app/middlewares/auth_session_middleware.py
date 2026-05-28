@@ -1,12 +1,11 @@
-from datetime import datetime, timedelta, timezone
-
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse
+from datetime import UTC, datetime, timedelta
 
 from app.core.config import settings
 from app.core.security import hash_session_token
 from app.repositories import SessionsRepository, UsersRepository
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 
 class AuthSessionMiddleware(BaseHTTPMiddleware):
@@ -26,7 +25,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
             token_hash = hash_session_token(raw_token)
             session = self.sessions_repo.find_by_token(token_hash)
             if session:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
 
                 if session.absolute_expires_at <= now or session.refresh_expires_at <= now:
                     self.sessions_repo.close(

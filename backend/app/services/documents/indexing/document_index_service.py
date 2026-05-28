@@ -22,9 +22,9 @@ from app.services.documents.legal.legal_metadata_service import LegalMetadataSer
 from app.services.documents.legal.legal_status_service import LegalStatusService
 from app.services.documents.search.document_search_service import DocumentSearchService
 from app.services.documents.storage.document_file_service import DocumentFileService
+from app.services.notifications.notification_service import NotificationService
 from app.services.rag.processing.embedding_service import EmbeddingService
 from app.services.rag.processing.nlp_service import NLPService
-from app.services.notifications.notification_service import NotificationService
 from fastapi import HTTPException, UploadFile
 
 

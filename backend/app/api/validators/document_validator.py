@@ -1,9 +1,8 @@
 from datetime import UTC, date, datetime
 
-from fastapi import HTTPException, UploadFile
-
 from app.api.validators.common_validator import parse_optional_iso_datetime
 from app.schemas import DocumentCategory, LegalDocumentType, LegalRelationType
+from fastapi import HTTPException, UploadFile
 
 MAX_DOCUMENT_UPLOAD_SIZE = 20 * 1024 * 1024
 ALLOWED_DOCUMENT_EXTENSIONS = (".pdf", ".docx")

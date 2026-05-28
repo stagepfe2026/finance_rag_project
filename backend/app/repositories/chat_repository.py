@@ -1,9 +1,8 @@
 from datetime import UTC, datetime
 
-from bson import ObjectId
-
 from app.core.database import get_chat_conversations_collection, get_chat_messages_collection
 from app.models.chat_model import ChatMessageModel, ConversationModel
+from bson import ObjectId
 
 
 class ChatRepository:

@@ -2,7 +2,6 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
-
 SESSION_ERROR_MESSAGES = {
     "SESSION_IDLE_TIMEOUT": "Votre session a expire. Veuillez vous reconnecter.",
     "SESSION_MAX_DURATION_EXPIRED": "Votre session a atteint sa duree maximale. Veuillez vous reconnecter.",

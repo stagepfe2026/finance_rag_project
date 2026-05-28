@@ -2,9 +2,8 @@ import re
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import UploadFile
-
 from app.core.config import settings
+from fastapi import UploadFile
 
 
 class ReclamationAttachmentService:

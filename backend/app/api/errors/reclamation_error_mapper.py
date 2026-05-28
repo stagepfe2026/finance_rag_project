@@ -1,6 +1,5 @@
 from fastapi import HTTPException
 
-
 RECLAMATION_FORM_ERRORS = {
     "SUBJECT_TOO_SHORT": "Le sujet doit contenir au moins 3 caracteres.",
     "SUBJECT_TOO_LONG": "Le sujet ne doit pas depasser 160 caracteres.",

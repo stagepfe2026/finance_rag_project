@@ -2,7 +2,6 @@ import json
 import logging
 
 import requests
-
 from app.infrastructure.generation.base_generation_provider import BaseGenerationProvider
 
 logger = logging.getLogger(__name__)

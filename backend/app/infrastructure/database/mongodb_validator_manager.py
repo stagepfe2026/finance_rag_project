@@ -1,8 +1,6 @@
 from collections.abc import Mapping
 from typing import Any
 
-from pymongo.database import Database
-
 from app.core.config import settings
 from app.infrastructure.database.validators.audit_events_validator import AUDIT_EVENTS_VALIDATOR
 from app.infrastructure.database.validators.auth_sessions_validator import AUTH_SESSIONS_VALIDATOR
@@ -14,6 +12,7 @@ from app.infrastructure.database.validators.documents_validator import DOCUMENTS
 from app.infrastructure.database.validators.notifications_validator import NOTIFICATIONS_VALIDATOR
 from app.infrastructure.database.validators.reclamations_validator import RECLAMATIONS_VALIDATOR
 from app.infrastructure.database.validators.users_validator import USERS_VALIDATOR
+from pymongo.database import Database
 
 
 def apply_mongodb_validator(

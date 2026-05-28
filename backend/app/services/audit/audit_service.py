@@ -57,8 +57,16 @@ class AuditService:
     # Logging — called by routers via try_log_audit()
     # ------------------------------------------------------------------
 
-    def log_document_action(self, *, current_user: dict[str, Any], action_type: str, action_label: str, entity_type: str, entity_id: str, entity_label: str, summary: str, category: str = "Recherche document", metadata: dict[str, Any] | None = None) -> None:
-        self._logger.log_document_action(current_user=current_user, action_type=action_type, action_label=action_label, entity_type=entity_type, entity_id=entity_id, entity_label=entity_label, summary=summary, category=category, metadata=metadata)
+    def log_document_action(
+        self, *, current_user: dict[str, Any], action_type: str, action_label: str,
+        entity_type: str, entity_id: str, entity_label: str, summary: str,
+        category: str = "Recherche document", metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._logger.log_document_action(
+            current_user=current_user, action_type=action_type, action_label=action_label,
+            entity_type=entity_type, entity_id=entity_id, entity_label=entity_label,
+            summary=summary, category=category, metadata=metadata,
+        )
 
     def log_failed_login(self, *, email: str, reason: str = "INVALID_CREDENTIALS") -> None:
         self._logger.log_failed_login(email=email, reason=reason)
@@ -75,8 +83,16 @@ class AuditService:
     def log_reclamation_action(self, *, current_user: dict[str, Any], action_type: str, action_label: str, reclamation_id: str, subject: str) -> None:
         self._logger.log_reclamation_action(current_user=current_user, action_type=action_type, action_label=action_label, reclamation_id=reclamation_id, subject=subject)
 
-    def log_system_event(self, *, action_type: str, action_label: str, category: str, entity_type: str, entity_id: str, entity_label: str, summary: str, metadata: dict[str, Any] | None = None) -> None:
-        self._logger.log_system_event(action_type=action_type, action_label=action_label, category=category, entity_type=entity_type, entity_id=entity_id, entity_label=entity_label, summary=summary, metadata=metadata)
+    def log_system_event(
+        self, *, action_type: str, action_label: str, category: str,
+        entity_type: str, entity_id: str, entity_label: str, summary: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        self._logger.log_system_event(
+            action_type=action_type, action_label=action_label, category=category,
+            entity_type=entity_type, entity_id=entity_id, entity_label=entity_label,
+            summary=summary, metadata=metadata,
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers

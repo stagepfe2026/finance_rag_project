@@ -87,7 +87,7 @@ typer==0.24.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
-uvicorn==0.44.0
+uvicorn[standard]==0.44.0
 pymongo==4.13.2
 pydantic-settings==2.11.0
 fr_core_news_md @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.8.0/fr_core_news_md-3.8.0-py3-none-any.whl#sha256=8a70d090a54ef77525c3ffa6a6195b9d365f2cf369ae1cd84ede93f3d709079e

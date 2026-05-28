@@ -1,14 +1,13 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import FileResponse
-
 from app.api.dependencies.auth_dependencies import require_finance_or_admin_user
 from app.api.dependencies.service_dependencies import get_document_index_service
 from app.api.utils.audit_helper import get_current_user, get_optional_audit_service, try_log_audit
 from app.api.validators.document_validator import validate_search_date_range
 from app.schemas import DocumentActionResponse, DocumentCategory, DocumentPreviewOut, DocumentSearchResponse
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import FileResponse
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 

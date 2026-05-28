@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     ADMIN = "ADMIN"
     FINANCE_USER = "FINANCE_USER"
 
@@ -33,7 +33,7 @@ class UserModel:
     email_notifications_on: bool = True
     sms_notifications_on: bool = False
     is_two_factor_enabled: bool = False
-    password_changed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    password_changed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     deleted_at: datetime | None = None
     id: str | None = None
 
@@ -48,7 +48,7 @@ class UserModel:
             email=str(raw.get("email", "")).lower().strip(),
             password_hash=str(raw.get("password", "")),
             role=role,
-            created_at=raw.get("createdAt") or datetime.now(timezone.utc),
+            created_at=raw.get("createdAt") or datetime.now(UTC),
             telephone=str(raw.get("telephone", "")),
             avatar_url=str(raw.get("avatarUrl", "")),
             adresse=str(raw.get("adresse", "")),
@@ -65,7 +65,7 @@ class UserModel:
             email_notifications_on=bool(raw.get("emailNotificationsOn", True)),
             sms_notifications_on=bool(raw.get("smsNotificationsOn", False)),
             is_two_factor_enabled=bool(raw.get("isTwoFactorEnabled", False)),
-            password_changed_at=raw.get("passwordChangedAt") or datetime.now(timezone.utc),
+            password_changed_at=raw.get("passwordChangedAt") or datetime.now(UTC),
             deleted_at=raw.get("deletedAt"),
         )
 

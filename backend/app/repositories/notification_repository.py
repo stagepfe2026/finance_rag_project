@@ -1,9 +1,8 @@
 from datetime import UTC, datetime
 
-from bson import ObjectId
-
 from app.core.database import get_notifications_collection
 from app.models.notification_model import NotificationModel
+from bson import ObjectId
 
 
 class NotificationRepository:

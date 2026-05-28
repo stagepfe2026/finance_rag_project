@@ -2,10 +2,8 @@
 
 Run:  cd backend && python -m pytest tests/test_qdrant_repository.py -v
 """
-import pytest
 
 from app.repositories.qdrant_repository import QdrantRepository
-
 
 # ---------------------------------------------------------------------------
 # _stable_point_id

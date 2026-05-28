@@ -4,7 +4,7 @@ from app.api.utils.exception_handler import internal_server_error
 from app.api.utils.response_builder import ok_response
 from app.api.validators.rag_validator import normalize_rag_question
 from app.schemas.rag_schema import AskRequest
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 

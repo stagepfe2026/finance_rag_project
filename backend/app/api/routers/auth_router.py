@@ -1,11 +1,3 @@
-from app.core.config import settings
-from app.schemas import (
-    AuthResponse,
-    LoginRequest,
-    OidcLoginStartOut,
-    ProfileUpdateRequest,
-    SessionInfoOut,
-)
 from app.api.dependencies.service_dependencies import get_auth_service
 from app.api.utils.audit_helper import get_current_user, try_log_audit
 from app.api.utils.error_mapper import AuthErrorCode
@@ -13,6 +5,14 @@ from app.api.validators.auth_validator import (
     require_active_session,
     session_error_message,
     validate_csrf_or_raise,
+)
+from app.core.config import settings
+from app.schemas import (
+    AuthResponse,
+    LoginRequest,
+    OidcLoginStartOut,
+    ProfileUpdateRequest,
+    SessionInfoOut,
 )
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -63,7 +63,7 @@ async def login(payload: LoginRequest, request: Request):
     try:
         result = auth_service.sign_in(email=payload.email, password=payload.password)
     except ValueError as exc:
-        if str(exc) == AuthErrorCode.INVALID_CREDENTIALS:
+        if exc.args[0] == AuthErrorCode.INVALID_CREDENTIALS:
             try_log_audit(request, "log_failed_login", email=payload.email)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -160,7 +160,7 @@ async def refresh_session(request: Request):
     try:
         session = auth_service.refresh_session(current_session)
     except ValueError as exc:
-        if str(exc) == AuthErrorCode.REFRESH_EXPIRED:
+        if exc.args[0] == AuthErrorCode.REFRESH_EXPIRED:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"code": "REFRESH_EXPIRED", "message": "La session doit etre renouvelee."},
@@ -201,12 +201,12 @@ async def update_profile(
             payload=payload.model_dump(),
         )
     except ValueError as exc:
-        if str(exc) == AuthErrorCode.EMAIL_ALREADY_USED:
+        if exc.args[0] == AuthErrorCode.EMAIL_ALREADY_USED:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail={"code": "EMAIL_ALREADY_USED", "message": "Cette adresse email est deja utilisee."},
             ) from exc
-        if str(exc) == AuthErrorCode.USER_NOT_FOUND:
+        if exc.args[0] == AuthErrorCode.USER_NOT_FOUND:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail={"code": "USER_NOT_FOUND", "message": "Utilisateur introuvable."},
@@ -234,12 +234,13 @@ async def logout(
     auth_service = get_auth_service(request)
     cookie_csrf = request.cookies.get(settings.auth_csrf_cookie_name)
     current_session = getattr(request.state, "current_session", None)
-    validate_csrf_or_raise(
-        auth_service,
-        cookie_token=cookie_csrf,
-        header_token=x_csrf_token,
-        current_session=current_session,
-    )
+    if current_session is not None:
+        validate_csrf_or_raise(
+            auth_service,
+            cookie_token=cookie_csrf,
+            header_token=x_csrf_token,
+            current_session=current_session,
+        )
 
     provider_logout_url = await auth_service.logout(current_session)
     payload = {

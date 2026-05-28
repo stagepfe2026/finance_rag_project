@@ -2,11 +2,9 @@
 
 Run:  cd backend && python -m pytest tests/test_bm25_service.py -v
 """
-import pytest
 from unittest.mock import MagicMock
 
 from app.services.rag.ranking.bm25_service import BM25Service
-
 
 # ---------------------------------------------------------------------------
 # Helpers

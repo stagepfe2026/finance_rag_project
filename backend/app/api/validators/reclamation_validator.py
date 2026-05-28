@@ -2,7 +2,6 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
-
 ALLOWED_RECLAMATION_PROBLEM_TYPES = {
     "BUG_TECHNIQUE",
     "PROBLEME_JURIDIQUE",

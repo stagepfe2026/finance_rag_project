@@ -1,23 +1,23 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class ReclamationProblemType(str, Enum):
+class ReclamationProblemType(StrEnum):
     bug_technique = "BUG_TECHNIQUE"
     probleme_juridique = "PROBLEME_JURIDIQUE"
     erreur_chatbot = "ERREUR_REPONSE_CHATBOT"
     autre = "AUTRE"
 
 
-class ReclamationPriority(str, Enum):
+class ReclamationPriority(StrEnum):
     low = "LOW"
     normal = "NORMAL"
     high = "HIGH"
     urgent = "URGENT"
 
 
-class ReclamationStatus(str, Enum):
+class ReclamationStatus(StrEnum):
     pending = "PENDING"
     in_progress = "IN_PROGRESS"
     resolved = "RESOLVED"

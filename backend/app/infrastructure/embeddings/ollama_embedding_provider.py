@@ -1,5 +1,4 @@
 import requests
-
 from app.infrastructure.embeddings.base_embedding_provider import BaseEmbeddingProvider
 
 

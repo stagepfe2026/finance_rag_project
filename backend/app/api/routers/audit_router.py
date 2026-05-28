@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-
 from app.api.dependencies.auth_dependencies import require_admin_user
 from app.api.dependencies.service_dependencies import get_audit_service
 from app.api.utils.exception_handler import internal_server_error
 from app.api.utils.response_builder import ok_response
 from app.api.validators.audit_validator import normalize_audit_filters
+from fastapi import APIRouter, Depends, Query, Request
 
 router = APIRouter(dependencies=[Depends(require_admin_user)])
 

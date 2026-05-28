@@ -1,8 +1,5 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
-from fastapi.responses import FileResponse
-
 from app.api.dependencies.auth_dependencies import require_admin_user, require_finance_or_admin_user
 from app.api.dependencies.service_dependencies import get_reclamation_service
 from app.api.errors.reclamation_error_mapper import raise_reclamation_http_error
@@ -14,6 +11,8 @@ from app.api.validators.reclamation_validator import (
     validate_reclamation_payload,
 )
 from app.schemas import ReclamationResolveRequest
+from fastapi import APIRouter, Depends, File, Form, Request, Response, UploadFile, status
+from fastapi.responses import FileResponse
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
 
@@ -132,7 +131,11 @@ async def update_reclamation(
             priority=validated_payload["priority"] or "",
             attachment=attachment,
         )
-        try_log_audit(request, "log_reclamation_action", current_user=current_user, action_type="RECLAMATION_UPDATED", action_label="Reclamation modifiee", reclamation_id=reclamation_id, subject=validated_payload["subject"] or "")
+        try_log_audit(
+            request, "log_reclamation_action", current_user=current_user,
+            action_type="RECLAMATION_UPDATED", action_label="Reclamation modifiee",
+            reclamation_id=reclamation_id, subject=validated_payload["subject"] or "",
+        )
         return ok_response(message="Reclamation modifiee avec succes.", data=data)
     except ValueError as exc:
         raise_reclamation_http_error(exc, include_form_errors=True)
@@ -171,7 +174,11 @@ async def submit_reclamation(
             priority=validated_payload["priority"] or "",
             attachment=attachment,
         )
-        try_log_audit(request, "log_reclamation_action", current_user=current_user, action_type="RECLAMATION_CREATED", action_label="Reclamation soumise", reclamation_id=str(data.get("id", "")), subject=validated_payload["subject"] or "")
+        try_log_audit(
+            request, "log_reclamation_action", current_user=current_user,
+            action_type="RECLAMATION_CREATED", action_label="Reclamation soumise",
+            reclamation_id=str(data.get("id", "")), subject=validated_payload["subject"] or "",
+        )
         return ok_response(message="Reclamation envoyee avec succes.", data=data)
     except ValueError as exc:
         raise_reclamation_http_error(exc, include_form_errors=True)
@@ -189,7 +196,11 @@ async def assign_to_me(
 
     try:
         data = await service.take_reclamation(current_user, reclamation_id)
-        try_log_audit(request, "log_reclamation_action", current_user=current_user, action_type="RECLAMATION_TAKEN", action_label="Prise en charge", reclamation_id=reclamation_id, subject=str(data.get("subject", "")))
+        try_log_audit(
+            request, "log_reclamation_action", current_user=current_user,
+            action_type="RECLAMATION_TAKEN", action_label="Prise en charge",
+            reclamation_id=reclamation_id, subject=str(data.get("subject", "")),
+        )
         return ok_response(message="Reclamation prise en charge avec succes.", data=data)
     except ValueError as exc:
         raise_reclamation_http_error(exc)
@@ -213,7 +224,11 @@ async def resolve_reclamation(
             admin_reply=payload.adminReply,
             status=payload.status.value if hasattr(payload.status, "value") else str(payload.status),
         )
-        try_log_audit(request, "log_reclamation_action", current_user=current_user, action_type="RECLAMATION_RESOLVED", action_label="Reclamation resolue", reclamation_id=reclamation_id, subject=str(data.get("subject", "")))
+        try_log_audit(
+            request, "log_reclamation_action", current_user=current_user,
+            action_type="RECLAMATION_RESOLVED", action_label="Reclamation resolue",
+            reclamation_id=reclamation_id, subject=str(data.get("subject", "")),
+        )
         return ok_response(message="Reclamation mise a jour avec succes.", data=data)
     except ValueError as exc:
         raise_reclamation_http_error(exc)

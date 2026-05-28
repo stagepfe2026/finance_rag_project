@@ -1,6 +1,5 @@
 from fastapi import HTTPException, status
 
-
 CHAT_ERROR_RESPONSES = {
     "CONVERSATION_NOT_FOUND": (
         status.HTTP_404_NOT_FOUND,

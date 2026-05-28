@@ -1,8 +1,6 @@
 # app/infrastructure/parsers/word_parser.py
-from docx import Document
-
-
 from app.infrastructure.parsers.base_document_parser import BaseDocumentParser
+from docx import Document
 
 
 class WordParser(BaseDocumentParser):

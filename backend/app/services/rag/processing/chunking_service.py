@@ -19,7 +19,6 @@ class ChunkingService:
 
         chunks: list[str] = []
         start = 0
-        step = max(1, self.chunk_size - self.chunk_overlap)
 
         while start < len(words):
             ideal_end = min(start + self.chunk_size, len(words))

@@ -81,7 +81,7 @@ export function useAuthViewModel(): AuthContextValue {
       window.clearInterval(idleTimer);
       window.clearInterval(refreshTimer);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [session?.authenticated]);
 
   async function doRefreshSession() {
@@ -133,7 +133,7 @@ export function useAuthViewModel(): AuthContextValue {
       beginProviderLogin,
       refreshSession: doRefreshSession,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [authMessage, loading, session],
   );
 }

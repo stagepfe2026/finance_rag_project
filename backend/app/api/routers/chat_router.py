@@ -10,7 +10,7 @@ from app.api.validators.chat_validator import (
     validate_chat_feedback,
 )
 from app.schemas.chat_schema import ChatAskRequest, ChatConversationRenameRequest, ChatMessageFeedbackRequest
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
 from fastapi.responses import FileResponse
 
 router = APIRouter(dependencies=[Depends(require_finance_or_admin_user)])
