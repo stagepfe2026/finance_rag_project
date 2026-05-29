@@ -62,15 +62,15 @@ export default function ProfileInformationGrid({ form, onFieldChange }: ProfileI
         <div className="space-y-4">
           <ProfileSelectField
             label="Langue"
-            name="languePreferee"
-            value={form.languePreferee}
+            name="preferredLanguage"
+            value={form.preferredLanguage}
             options={languageOptions}
             onChange={onFieldChange}
           />
           <ProfileSelectField
             label="Theme prefere"
-            name="themePrefere"
-            value={form.themePrefere}
+            name="preferredTheme"
+            value={form.preferredTheme}
             options={themeOptions}
             onChange={onFieldChange}
           />

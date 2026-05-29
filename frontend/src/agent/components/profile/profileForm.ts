@@ -4,7 +4,7 @@ export type ProfileFormState = ProfileUpdatePayload;
 
 export type ProfileTextFieldName = Exclude<
   keyof ProfileFormState,
-  "notificationsEmail" | "notificationsSms" | "twoFactorEnabled"
+  "emailNotificationsOn" | "smsNotificationsOn" | "isTwoFactorEnabled"
 >;
 
 export function buildProfileForm(user: AuthUser | null): ProfileFormState {
@@ -23,11 +23,11 @@ export function buildProfileForm(user: AuthUser | null): ProfileFormState {
     bureau: user?.bureau ?? "",
     responsable: user?.responsable ?? "",
     membreDepuis: user?.membreDepuis ?? "",
-    languePreferee: user?.languePreferee ?? "fr",
-    themePrefere: user?.themePrefere ?? "light",
-    notificationsEmail: user?.notificationsEmail ?? true,
-    notificationsSms: user?.notificationsSms ?? false,
-    twoFactorEnabled: user?.twoFactorEnabled ?? false,
+    preferredLanguage: user?.preferredLanguage ?? "fr",
+    preferredTheme: user?.preferredTheme ?? "light",
+    emailNotificationsOn: user?.emailNotificationsOn ?? true,
+    smsNotificationsOn: user?.smsNotificationsOn ?? false,
+    isTwoFactorEnabled: user?.isTwoFactorEnabled ?? false,
   };
 }
 

@@ -17,12 +17,12 @@ export type AuthUser = {
   bureau: string;
   responsable: string;
   membreDepuis: string;
-  languePreferee: string;
-  themePrefere: string;
-  notificationsEmail: boolean;
-  notificationsSms: boolean;
-  twoFactorEnabled: boolean;
-  passwordUpdatedAt: string;
+  preferredLanguage: string;
+  preferredTheme: string;
+  emailNotificationsOn: boolean;
+  smsNotificationsOn: boolean;
+  isTwoFactorEnabled: boolean;
+  passwordChangedAt: string;
 };
 
 export type ProfileUpdatePayload = {
@@ -40,11 +40,11 @@ export type ProfileUpdatePayload = {
   bureau: string;
   responsable: string;
   membreDepuis: string;
-  languePreferee: string;
-  themePrefere: string;
-  notificationsEmail: boolean;
-  notificationsSms: boolean;
-  twoFactorEnabled: boolean;
+  preferredLanguage: string;
+  preferredTheme: string;
+  emailNotificationsOn: boolean;
+  smsNotificationsOn: boolean;
+  isTwoFactorEnabled: boolean;
 };
 
 export type SessionInfo = {
