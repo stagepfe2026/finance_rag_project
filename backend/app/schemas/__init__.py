@@ -3,7 +3,6 @@ from app.schemas.auth_schema import (
     AuthUserOut,
     LoginRequest,
     OidcLoginStartOut,
-    ProfileUpdateRequest,
     SessionInfoOut,
 )
 from app.schemas.chat_schema import ChatAskRequest
@@ -55,7 +54,6 @@ __all__ = [
     "NotificationListResponse",
     "NotificationOut",
     "OidcLoginStartOut",
-    "ProfileUpdateRequest",
     "ReclamationActivityOut",
     "ReclamationAttachmentOut",
     "ReclamationListResponse",

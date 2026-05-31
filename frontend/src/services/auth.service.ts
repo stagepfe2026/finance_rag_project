@@ -9,43 +9,16 @@ export type AuthUser = {
   telephone: string;
   avatarUrl: string;
   adresse: string;
-  dateNaissance: string;
+  birthDate: string;
   direction: string;
   service: string;
   poste: string;
   matricule: string;
   bureau: string;
-  responsable: string;
-  membreDepuis: string;
-  preferredLanguage: string;
-  preferredTheme: string;
-  emailNotificationsOn: boolean;
-  smsNotificationsOn: boolean;
-  isTwoFactorEnabled: boolean;
-  passwordChangedAt: string;
+  manager: string;
+  memberSince: string;
 };
 
-export type ProfileUpdatePayload = {
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone: string;
-  avatarUrl: string;
-  adresse: string;
-  dateNaissance: string;
-  direction: string;
-  service: string;
-  poste: string;
-  matricule: string;
-  bureau: string;
-  responsable: string;
-  membreDepuis: string;
-  preferredLanguage: string;
-  preferredTheme: string;
-  emailNotificationsOn: boolean;
-  smsNotificationsOn: boolean;
-  isTwoFactorEnabled: boolean;
-};
 
 export type SessionInfo = {
   authenticated: boolean;
@@ -150,28 +123,6 @@ function readCookie(name: string) {
   const escaped = name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
   const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
-}
-
-export async function updateProfileRequest(payload: ProfileUpdatePayload): Promise<AuthResponse> {
-  const csrfCookieName = import.meta.env.VITE_AUTH_CSRF_COOKIE_NAME ?? "rag_finance_csrf";
-  const csrfToken = readCookie(csrfCookieName);
-
-  const response = await fetch(`${apiBaseUrl}/api/auth/profile`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw new Error(readErrorMessage(data, "Impossible de modifier les donnees personnelles."));
-  }
-
-  return data as AuthResponse;
 }
 
 export async function logoutRequest(): Promise<AuthResponse> {

@@ -44,7 +44,6 @@ async def lifespan(app: FastAPI):
     connect_to_mongo()
     ensure_mongodb_validators(get_database())
     auth_service.setup_indexes()
-    auth_service.create_default_accounts()
 
     provider = OllamaEmbeddingProvider(
         base_url=settings.ollama_base_url,

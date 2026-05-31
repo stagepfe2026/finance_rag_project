@@ -85,12 +85,6 @@ class Settings(BaseSettings):
     auth_oidc_client_secret: str = "change-me"
     auth_oidc_redirect_uri: str = "http://localhost:8000/api/auth/callback"
     auth_oidc_scope: str = "openid profile email"
-    auth_seed_default_users: bool = False
-    # auth_default_admin_email: str = "admin@finance.local"
-    # auth_default_admin_password: str = "Admin123!"
-    # auth_default_user_email: str = "user@finance.local"
-    # auth_default_user_password: str = "User123!"
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

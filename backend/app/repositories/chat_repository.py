@@ -96,6 +96,8 @@ class ChatRepository:
             {"_id": ObjectId(conversation_id), "deletedAt": None},
             {"$set": {"deletedAt": datetime.now(UTC), "updatedAt": datetime.now(UTC)}},
         )
+        if result.modified_count > 0:
+            self.messages.delete_many({"conversationId": conversation_id})
         return result.modified_count > 0
 
     def save(self, message: ChatMessageModel) -> ChatMessageModel:

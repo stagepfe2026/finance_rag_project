@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
@@ -28,12 +28,6 @@ class UserModel:
     bureau: str = ""
     manager: str = ""
     member_since: str = ""
-    preferred_language: str = "fr"
-    preferred_theme: str = "light"
-    email_notifications_on: bool = True
-    sms_notifications_on: bool = False
-    is_two_factor_enabled: bool = False
-    password_changed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     deleted_at: datetime | None = None
     id: str | None = None
 
@@ -60,12 +54,6 @@ class UserModel:
             bureau=str(raw.get("bureau", "")),
             manager=str(raw.get("manager", "")),
             member_since=str(raw.get("memberSince", "")),
-            preferred_language=str(raw.get("preferredLanguage", "fr")),
-            preferred_theme=str(raw.get("preferredTheme", "light")),
-            email_notifications_on=bool(raw.get("emailNotificationsOn", True)),
-            sms_notifications_on=bool(raw.get("smsNotificationsOn", False)),
-            is_two_factor_enabled=bool(raw.get("isTwoFactorEnabled", False)),
-            password_changed_at=raw.get("passwordChangedAt") or datetime.now(UTC),
             deleted_at=raw.get("deletedAt"),
         )
 
@@ -87,12 +75,6 @@ class UserModel:
             "bureau": self.bureau,
             "manager": self.manager,
             "memberSince": self.member_since,
-            "preferredLanguage": self.preferred_language,
-            "preferredTheme": self.preferred_theme,
-            "emailNotificationsOn": self.email_notifications_on,
-            "smsNotificationsOn": self.sms_notifications_on,
-            "isTwoFactorEnabled": self.is_two_factor_enabled,
-            "passwordChangedAt": self.password_changed_at,
             "createdAt": self.created_at,
             "deletedAt": self.deleted_at,
         }
@@ -115,10 +97,4 @@ class UserModel:
             "bureau": self.bureau,
             "manager": self.manager,
             "memberSince": self.member_since,
-            "preferredLanguage": self.preferred_language,
-            "preferredTheme": self.preferred_theme,
-            "emailNotificationsOn": self.email_notifications_on,
-            "smsNotificationsOn": self.sms_notifications_on,
-            "isTwoFactorEnabled": self.is_two_factor_enabled,
-            "passwordChangedAt": self.password_changed_at.isoformat(),
         }

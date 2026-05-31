@@ -103,9 +103,10 @@ class UserModel {
   + createdAt : DateTime
   + deletedAt : DateTime [0..1]
   --
-  + from_mongo(raw) : UserModel
-  + to_mongo_insert() : dict
-  + to_public_dict() : dict
+  + sign_in(email, password) : AuthResponse
+  + update_profile(user_id, payload) : AuthUserOut
+  + create_default_accounts() : void
+  + build_session_info(current_user, current_session) : SessionInfoOut
 }
 
 class SessionModel {
@@ -127,8 +128,8 @@ class SessionModel {
   + closureReason : String [0..1]
   + isEarlyClosure : Boolean [0..1]
   --
-  + from_mongo(raw) : SessionModel
-  + to_mongo_insert() : dict
+  + refresh_session(current_session) : SessionModel
+  + validate_csrf(cookie_token, header_token, current_session) : bool
 }
 
 class NotificationModel {
@@ -142,8 +143,8 @@ class NotificationModel {
   + createdAt : DateTime
   + readAt : DateTime [0..1]
   --
-  + from_mongo(raw) : NotificationModel
-  + to_mongo_insert() : dict
+  + list_notifications(current_user, limit) : NotificationListResponse
+  + mark_as_read(current_user, notification_id) : NotificationOut
 }
 
 class ReclamationModel {
@@ -177,8 +178,16 @@ class ReclamationModel {
   + deletedByUserId : String [0..1]
   + history : List<HistoryEntry>
   --
-  + from_mongo(raw) : ReclamationModel
-  + to_mongo_insert() : dict
+  + create_reclamation(current_user, subject, description, priority, attachment) : ReclamationOut
+  + list_reclamations(current_user) : ReclamationListResponse
+  + get_reclamation(current_user, reclamation_id) : ReclamationOut
+  + update_reclamation(current_user, reclamation_id, ...) : ReclamationOut
+  + delete_reclamation(current_user, reclamation_id) : void
+  + take_reclamation(admin_user, reclamation_id) : ReclamationOut
+  + resolve_reclamation(reclamation_id, admin_reply, status) : ReclamationOut
+  + mark_reply_read(current_user, reclamation_id) : ReclamationOut
+  + get_reclamation_attachment_response_data(current_user, reclamation_id) : tuple[Path, String]
+  + compute_sla(reclamation) : SlaResult
 }
 
 class ConversationModel {
@@ -191,8 +200,12 @@ class ConversationModel {
   + archivedAt : DateTime [0..1]
   + deletedAt : DateTime [0..1]
   --
-  + from_mongo(raw) : ConversationModel
-  + to_mongo_insert() : dict
+  + get_conversations(user_id) : List<ConversationOut>
+  + start_conversation(user_id) : ConversationOut
+  + rename_conversation(user_id, conversation_id, summary) : ConversationOut
+  + archive_conversation(user_id, conversation_id) : ConversationOut
+  + restore_conversation(user_id, conversation_id) : ConversationOut
+  + delete_conversation(user_id, conversation_id) : void
 }
 
 class ChatMessageModel {
@@ -207,8 +220,11 @@ class ChatMessageModel {
   + feedbackUserId : String [0..1]
   + createdAt : DateTime
   --
-  + from_mongo(raw) : ChatMessageModel
-  + to_mongo_insert() : dict
+  + get_messages(user_id, conversation_id) : List<MessageOut>
+  + ask_pending(user_id, content, conversation_id) : MessageOut
+  + set_message_feedback(user_id, message_id, feedback) : MessageOut
+  + get_generating_messages(user_id) : List<MessageOut>
+  + get_feedback_stats() : FeedbackStats
 }
 
 class DocumentModel {
@@ -236,10 +252,17 @@ class DocumentModel {
   + chunkCount : Integer [0..1]
   + lastIndexError : String [0..1]
   --
-  + from_mongo(raw) : DocumentModel
-  + to_mongo_insert() : dict
-  + to_out_schema() : DocumentOut
-  + to_preview_schema() : DocumentPreviewOut
+  + list_documents() : DocumentListResponse
+  + search_documents(query) : DocumentSearchResponse
+  + get_document_preview(document_id) : DocumentPreviewOut
+  + get_document_file_response_data(document_id) : tuple[Path, String]
+  + delete_document_from_index(document_id, admin_id) : DocumentActionResponse
+  + reindex_document(document_id, admin_id) : DocumentActionResponse
+  + publish_scheduled_documents() : int
+  + parse_document(file_path, extension) : str
+  + run_pipeline(file_path, document_id) : void
+  + apply_legal_succession(source_document) : void
+  + resolve_status(document) : str
 }
 
 class AuditEventModel {
@@ -258,9 +281,14 @@ class AuditEventModel {
   + summary : String
   + metadata : dict
   --
-  + log_event() : void
-  + list_recent() : list
-  + list_filtered() : list
+  + get_activities(filters) : AuditActivityList
+  + log_document_action(current_user, action_type, document_id) : void
+  + log_failed_login(email, reason) : void
+  + log_login_success(current_user) : void
+  + log_logout(current_user) : void
+  + log_chat_message(current_user, content, conversation_id) : void
+  + log_reclamation_action(current_user, action_type, reclamation_id) : void
+  + log_system_event(action_type, action_label, summary) : void
 }
 
 class DocumentFavoriteModel {
@@ -269,8 +297,7 @@ class DocumentFavoriteModel {
   + userId : String
   + favoritedAt : DateTime
   --
-  + from_mongo(raw) : DocumentFavoriteModel
-  + to_mongo_insert() : dict
+  + set_document_favorite(user_id, document_id) : void
 }
 
 ' ═══════════════════════════════════════
@@ -278,13 +305,13 @@ class DocumentFavoriteModel {
 '  Règle : association = ID stocké dans un champ
 ' ═══════════════════════════════════════
 
-AuditEventModel   "0..*" --> "1"    UserModel         : userId >
-SessionModel      "0..*" --> "1"    UserModel         : userId >
-NotificationModel "0..*" --> "1"    UserModel         : userId >
-ReclamationModel  "0..*" --> "1"    UserModel         : userId >
-ConversationModel "0..*" --> "1"    UserModel         : userId >
-ChatMessageModel  "1..*" --> "1"    ConversationModel : conversationId >
-DocumentModel     "0..*" --> "0..1" DocumentModel     : targetDocumentId >
+AuditEventModel   "0..*" -->  "1"    UserModel         : userId >
+UserModel         "1"    *--  "0..*" SessionModel      : possède >
+UserModel         "1"    *--  "0..*" NotificationModel : possède >
+UserModel         "1"    o--  "0..*" ReclamationModel  : soumet >
+UserModel         "1"    *--  "0..*" ConversationModel : possède >
+ConversationModel "1"    *--  "1..*" ChatMessageModel  : contient >
+DocumentModel     "0..*" -->  "0..1" DocumentModel     : targetDocumentId >
 
 ' Relation many-to-many avec classe d'association
 UserModel     "1" --- "0..*" DocumentModel

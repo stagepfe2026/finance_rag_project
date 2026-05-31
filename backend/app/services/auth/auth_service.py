@@ -28,25 +28,6 @@ class AuthService:
         self.users_repo.ensure_indexes()
         self.sessions_repo.ensure_indexes()
 
-    def create_default_accounts(self) -> None:
-        if not settings.auth_seed_default_users:
-            return
-
-        self.users_repo.save_oidc_user(
-            nom="Admin",
-            prenom="Systeme",
-            email=settings.auth_default_admin_email,
-            password_hash=hash_password(settings.auth_default_admin_password),
-            role=UserRole.ADMIN.value,
-        )
-        self.users_repo.save_oidc_user(
-            nom="Utilisateur",
-            prenom="Finance",
-            email=settings.auth_default_user_email,
-            password_hash=hash_password(settings.auth_default_user_password),
-            role=UserRole.FINANCE_USER.value,
-        )
-
     def sign_in(self, *, email: str, password: str) -> dict[str, Any]:
         user = self.users_repo.get_by_email(email)
         if not user or not verify_password(password, user.password_hash):
@@ -180,37 +161,6 @@ class AuthService:
         current_session.idle_expires_at = new_idle_expiry
         current_session.last_activity_at = now
         return current_session
-
-    def update_profile(self, *, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-        try:
-            user = self.users_repo.update_profile(
-                user_id=user_id,
-                nom=str(payload.get("nom", "")),
-                prenom=str(payload.get("prenom", "")),
-                email=str(payload.get("email", "")),
-                telephone=str(payload.get("telephone", "")),
-                avatar_url=str(payload.get("avatarUrl", "")),
-                adresse=str(payload.get("adresse", "")),
-                birth_date=str(payload.get("birthDate", "")),
-                direction=str(payload.get("direction", "")),
-                service=str(payload.get("service", "")),
-                poste=str(payload.get("poste", "")),
-                matricule=str(payload.get("matricule", "")),
-                bureau=str(payload.get("bureau", "")),
-                manager=str(payload.get("manager", "")),
-                member_since=str(payload.get("memberSince", "")),
-                preferred_language=str(payload.get("preferredLanguage", "fr")),
-                preferred_theme=str(payload.get("preferredTheme", "light")),
-                email_notifications_on=bool(payload.get("emailNotificationsOn", True)),
-                sms_notifications_on=bool(payload.get("smsNotificationsOn", False)),
-                is_two_factor_enabled=bool(payload.get("isTwoFactorEnabled", False)),
-            )
-        except ValueError:
-            raise
-
-        if not user:
-            raise ValueError("USER_NOT_FOUND")
-        return user.to_public_dict()
 
     async def logout(self, current_session: SessionModel | None) -> str | None:
         if not current_session:

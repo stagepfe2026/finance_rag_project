@@ -147,12 +147,6 @@ class UsersRepository:
         bureau: str = "",
         manager: str = "",
         member_since: str = "",
-        preferred_language: str = "fr",
-        preferred_theme: str = "light",
-        email_notifications_on: bool = True,
-        sms_notifications_on: bool = False,
-        is_two_factor_enabled: bool = False,
-        password_changed_at: datetime | None = None,
     ) -> str:
         normalized = email.strip().lower()
         collection = get_users_collection()
@@ -176,12 +170,6 @@ class UsersRepository:
                     "bureau": bureau,
                     "manager": manager,
                     "memberSince": member_since,
-                    "preferredLanguage": preferred_language,
-                    "preferredTheme": preferred_theme,
-                    "emailNotificationsOn": email_notifications_on,
-                    "smsNotificationsOn": sms_notifications_on,
-                    "isTwoFactorEnabled": is_two_factor_enabled,
-                    "passwordChangedAt": password_changed_at or datetime.now(UTC),
                     "deletedAt": None,
                 },
                 "$setOnInsert": {"createdAt": datetime.now(UTC)},

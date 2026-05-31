@@ -1,41 +1,18 @@
 import type { ReactNode } from "react";
 
-import type { ProfileTextFieldName } from "./profileForm";
-
 type ProfileSectionProps = {
   title: string;
   icon?: ReactNode;
   children: ReactNode;
 };
 
-type ProfileTextFieldProps = {
+type ProfileReadFieldProps = {
   label: string;
-  name: ProfileTextFieldName;
   value: string;
-  type?: "text" | "email" | "tel" | "date";
-  placeholder?: string;
-  onChange: (name: ProfileTextFieldName, value: string) => void;
 };
 
-type ProfileSelectFieldProps = {
-  label: string;
-  name: ProfileTextFieldName;
-  value: string;
-  options: Array<{ value: string; label: string }>;
-  onChange: (name: ProfileTextFieldName, value: string) => void;
-};
-
-type ProfileTextareaFieldProps = {
-  label: string;
-  name: ProfileTextFieldName;
-  value: string;
-  placeholder?: string;
-  onChange: (name: ProfileTextFieldName, value: string) => void;
-};
-
-
-const fieldClassName =
-  "mt-1 h-8 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#9d0208] focus:ring-2 focus:ring-[#9d0208]/10";
+const valueClassName =
+  "mt-1 h-8 w-full rounded-xl border border-slate-100 bg-slate-50 px-2.5 text-[11px] font-medium text-slate-700 flex items-center";
 
 export function ProfileSection({ title, icon, children }: ProfileSectionProps) {
   return (
@@ -49,65 +26,31 @@ export function ProfileSection({ title, icon, children }: ProfileSectionProps) {
   );
 }
 
-export function ProfileTextField({
-  label,
-  name,
-  value,
-  type = "text",
-  placeholder,
-  onChange,
-}: ProfileTextFieldProps) {
+export function ProfileTextField({ label, value }: ProfileReadFieldProps) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="text-[10px] font-semibold text-slate-600">{label}</span>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(event) => onChange(name, event.target.value)}
-        className={fieldClassName}
-      />
-    </label>
+      <div className={valueClassName}>{value || "—"}</div>
+    </div>
   );
 }
 
-export function ProfileSelectField({ label, name, value, options, onChange }: ProfileSelectFieldProps) {
+export function ProfileSelectField({ label, value }: ProfileReadFieldProps) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="text-[10px] font-semibold text-slate-600">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(name, event.target.value)}
-        className={`${fieldClassName} appearance-none`}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
+      <div className={valueClassName}>{value || "—"}</div>
+    </div>
   );
 }
 
-export function ProfileTextareaField({
-  label,
-  name,
-  value,
-  placeholder,
-  onChange,
-}: ProfileTextareaFieldProps) {
+export function ProfileTextareaField({ label, value }: ProfileReadFieldProps) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="text-[10px] font-semibold text-slate-600">{label}</span>
-      <textarea
-        value={value}
-        placeholder={placeholder}
-        onChange={(event) => onChange(name, event.target.value)}
-        className="mt-1 min-h-14 w-full resize-y rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-[11px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#9d0208] focus:ring-2 focus:ring-[#9d0208]/10"
-      />
-    </label>
+      <div className="mt-1 min-h-14 w-full rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-2 text-[11px] font-medium text-slate-700">
+        {value || "—"}
+      </div>
+    </div>
   );
 }
-
-export type ProfileFieldChange = (name: ProfileTextFieldName, value: string) => void;

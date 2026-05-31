@@ -1,5 +1,4 @@
 import sys
-from datetime import UTC, datetime
 from pathlib import Path
 
 # Permet d'executer le script depuis le dossier backend.
@@ -32,12 +31,6 @@ def seed_users() -> None:
             "bureau": "Batiment A, Bureau 201",
             "manager": "Secretaire general des finances",
             "member_since": "2018-01-15",
-            "preferred_language": "fr",
-            "preferred_theme": "light",
-            "email_notifications_on": True,
-            "sms_notifications_on": True,
-            "is_two_factor_enabled": True,
-            "password_changed_at": datetime(2026, 3, 12, 8, 30, tzinfo=UTC),
         },
         {
             "nom": "Ben Ali",
@@ -56,12 +49,6 @@ def seed_users() -> None:
             "bureau": "Batiment B, Bureau 304",
             "manager": "Fatima Zahra El Amrani",
             "member_since": "2015-09-01",
-            "preferred_language": "fr",
-            "preferred_theme": "light",
-            "email_notifications_on": True,
-            "sms_notifications_on": False,
-            "is_two_factor_enabled": True,
-            "password_changed_at": datetime(2026, 3, 12, 7, 0, tzinfo=UTC),
         },
     ]
 
@@ -83,12 +70,6 @@ def seed_users() -> None:
             bureau=user["bureau"],
             manager=user["manager"],
             member_since=user["member_since"],
-            preferred_language=user["preferred_language"],
-            preferred_theme=user["preferred_theme"],
-            email_notifications_on=user["email_notifications_on"],
-            sms_notifications_on=user["sms_notifications_on"],
-            is_two_factor_enabled=user["is_two_factor_enabled"],
-            password_changed_at=user["password_changed_at"],
         )
         print(f"[seed] user={user['email']} role={user['role']} id={user_id}")
 
