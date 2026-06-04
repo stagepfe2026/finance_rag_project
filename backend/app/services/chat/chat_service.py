@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any, Literal
 
@@ -139,17 +140,26 @@ class ChatService:
         self,
         *,
         assistant_message_id: str,
+        conversation_id: str,
         content: str,
         response_mode: Literal["short", "detailed"] = "detailed",
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
     ) -> None:
         """Run RAG in a background thread and update the assistant message."""
         try:
-            rag_result = self._ask_assistant(content, response_mode=response_mode, query_mode=query_mode)
+            conversation_history, previous_doc_ids = self._build_conversation_history(conversation_id, content)
+            rag_result = self._ask_assistant(
+                content,
+                response_mode=response_mode,
+                query_mode=query_mode,
+                conversation_history=conversation_history,
+                previous_doc_ids=previous_doc_ids,
+            )
+            answer = str(rag_result.get("answer", ""))
             assistant_sources = self._normalize_sources(rag_result.get("sources", []))
             self.chat_repo.update_content(
                 assistant_message_id,
-                content=str(rag_result.get("answer", "")),
+                content=answer,
                 sources=assistant_sources,
                 status="completed",
             )
@@ -172,12 +182,16 @@ class ChatService:
         question: str,
         response_mode: Literal["short", "detailed"] = "detailed",
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
+        conversation_history: str | None = None,
+        previous_doc_ids: list[str] | None = None,
     ) -> dict[str, Any]:
         try:
             return self.rag_service.answer(
                 question=question,
                 response_mode=response_mode,
                 query_mode=query_mode,
+                conversation_history=conversation_history,
+                previous_doc_ids=previous_doc_ids,
             )
         except Exception:
             self.logger.exception("Chat assistant request failed during RAG processing.")
@@ -188,6 +202,79 @@ class ChatService:
                 "answer": "Le service de recherche documentaire est temporairement indisponible. Verifiez que Qdrant et le moteur de generation sont bien demarres, puis reessayez.",
                 "sources": [],
             }
+
+    def _build_conversation_history(
+        self, conversation_id: str, question: str
+    ) -> tuple[str | None, list[str] | None]:
+        """Return (history_text, previous_doc_ids) for follow-up questions.
+
+        history_text  : formatted Q/A context injected into the LLM prompt.
+        previous_doc_ids : document_ids from the previous assistant message sources,
+                           used to restrict Qdrant search to the same documents.
+        Both are None when the question is independent or no prior exchange exists.
+        """
+        if not self._is_followup_question(question):
+            return None, None
+
+        last_user, last_assistant = self.chat_repo.list_last_completed_exchange(conversation_id)
+        if last_user is None or last_assistant is None:
+            return None, None
+
+        answer = last_assistant.content[:600]
+        if len(last_assistant.content) > 600:
+            answer += "..."
+
+        history_text = (
+            f"Question précédente : {last_user.content}\n"
+            f"Réponse précédente : {answer}"
+        )
+
+        # Extract document_ids from the previous assistant message sources.
+        previous_doc_ids = [
+            str(src.get("document_id", "")).strip()
+            for src in (last_assistant.sources or [])
+            if str(src.get("document_id", "")).strip()
+        ] or None
+
+        return history_text, previous_doc_ids
+
+    @staticmethod
+    def _is_followup_question(question: str) -> bool:
+        """Return True when the question contains words that reference a previous exchange.
+
+        Detects:
+        - Demonstratives: cet, cette, ces, cela, ça, ce cas, ce taux, ce texte
+        - Explicit back-references: tu m'as dit, tu as mentionné, au début, précédent
+        - Clarification requests: détailler, expliquer, préciser, développer
+        - Continuation markers: et pour, et si, et dans ce cas, de même
+        - Pronouns in context: il s'applique, elle concerne (only when starting the question)
+        """
+        q = question.strip().lower()
+
+        patterns = [
+            r"\bcet\s+\w+",                        # cet avantage, cet article
+            r"\bcette\s+\w+",                       # cette loi, cette règle
+            r"\bces\s+\w+",                         # ces taux, ces dispositions
+            r"\bcela\b", r"\bça\b",
+            r"\bce\s+(?:cas|taux|texte|article|avantage|droit|régime|taux|principe)\b",
+            r"\btu\s+m.as\b",                       # tu m'as dit / donné / mentionné
+            r"\btu\s+as\s+(?:mentionné|cité|dit|indiqué|précisé)\b",
+            r"\bau\s+début\b",
+            r"\btout\s+à\s+l.heure\b",
+            r"\bprécéd(?:ent|ente|emment)\b",
+            r"\bmentionné\b", r"\bcité\b", r"\bévoqué\b",
+            r"\bdont\s+tu\b",
+            r"\bmême\s+(?:loi|cas|avantage|taux|règle|article)\b",
+            r"\bdétaill(?:er|e)\b",
+            r"\bprécis(?:er|e)\b",
+            r"\bdévelopp(?:er|e)\b",
+            r"\bclarifi(?:er|e)\b",
+            r"\bet\s+(?:pour|si|dans\s+ce\s+cas)\b",
+            r"\bégalement\b",
+            r"^(?:il|elle)\s+(?:s.applique|concerne|prévoit|stipule|dispose)\b",
+        ]
+
+        return any(re.search(p, q) for p in patterns)
 
     @staticmethod
     def _normalize_sources(raw_sources: Any) -> list[dict[str, Any]]:

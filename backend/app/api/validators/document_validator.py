@@ -45,7 +45,7 @@ def validate_document_category(category: str) -> None:
 def validate_document_type(document_type: str | None) -> None:
     if document_type and document_type not in {item.value for item in LegalDocumentType}:
         raise HTTPException(status_code=400, detail="document_type doit etre une valeur valide.")
-    if not document_type or document_type == LegalDocumentType.autre.value:
+    if not document_type :
         raise HTTPException(status_code=400, detail="Le type de document est obligatoire.")
 
 

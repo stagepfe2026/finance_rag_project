@@ -86,7 +86,7 @@ class LegalMetadataService:
     @staticmethod
     def _validate_document_type(document_type: str) -> None:
         allowed = {item.value for item in LegalDocumentType}
-        if document_type not in allowed or document_type == LegalDocumentType.autre.value:
+        if document_type not in allowed:
             raise HTTPException(
                 status_code=400,
                 detail="Le type de document est obligatoire.",

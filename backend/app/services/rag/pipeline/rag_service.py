@@ -67,14 +67,22 @@ class RagService:
         question: str,
         response_mode: Literal["short", "detailed"] = "detailed",
         query_mode: Literal["current", "future_preview", "comparison"] = "current",
+        conversation_history: str | None = None,
+        previous_doc_ids: list[str] | None = None,
     ) -> dict:
         normalized_question = self.nlp_service.preprocess_query(question)
-        query_vector = self.embedding_service.generate_embeddings([normalized_question])[0]
+
+        # When the question is a follow-up, enrich the retrieval query with
+        # keywords from the previous exchange so Qdrant finds the right documents.
+        # The original normalized_question is kept intact for LLM generation.
+        retrieval_question = self._build_retrieval_query(normalized_question, conversation_history)
+
+        query_vector = self.embedding_service.generate_embeddings([retrieval_question])[0]
         question_profile = self.legal_ranking_service.classify_question(normalized_question)
 
         # Step 1: Retrieval — get candidate chunks
         retrieval_result = self.retrieval_service.retrieve(
-            normalized_question=normalized_question,
+            normalized_question=retrieval_question,
             query_vector=query_vector,
             question_profile=question_profile,
             query_mode=query_mode,
@@ -119,6 +127,26 @@ class RagService:
         related_ranked_chunks = retrieval_result["related_ranked_chunks"]
         related_relevant_chunks = retrieval_result["related_relevant_chunks"]
         dense_chunks = retrieval_result["dense_chunks"]
+
+        # For follow-up questions, restrict results to the same source documents
+        # as the previous answer. This prevents cross-document contamination when
+        # multiple documents share similar terminology (e.g. "pénalités de retard").
+        if previous_doc_ids:
+            doc_id_set = set(previous_doc_ids)
+            filtered_main = [
+                c for c in ranked_main_chunks
+                if str(c.get("document_id", "")).strip() in doc_id_set
+            ]
+            if filtered_main:
+                ranked_main_chunks = filtered_main
+                filtered_relevant = [
+                    c for c in relevant_main_chunks
+                    if str(c.get("document_id", "")).strip() in doc_id_set
+                ]
+                # If the relevance threshold filtered out all document chunks,
+                # fall back to the ranked chunks so the pipeline does not abort
+                # with MSG_UNRELIABLE on a valid follow-up question.
+                relevant_main_chunks = filtered_relevant if filtered_relevant else filtered_main
 
         self.logger.info(
             "RAG retrieval question=%r profile=%s query_mode=%s category=%s main_retrieved=%d main_ranked=%d main_relevant=%d related_ranked=%d related_relevant=%d",
@@ -212,6 +240,7 @@ class RagService:
             response_mode=response_mode,
             question_profile=question_profile,
             query_mode=query_mode,
+            conversation_history=conversation_history,
         )
 
         # Step 5: Generate answer
@@ -235,7 +264,9 @@ class RagService:
 
         answer = self._strip_source_tags(answer)
 
-        if self.retrieval_filter_service._needs_fallback(answer, final_chunks):
+        if self.retrieval_filter_service._needs_fallback(
+            answer, final_chunks, extra_trusted_text=conversation_history or ""
+        ):
             self.logger.warning(
                 "RAG fallback triggered for question=%r raw_answer=%r",
                 normalized_question,
@@ -254,6 +285,74 @@ class RagService:
             "answer": answer,
             "sources": self.document_context_service._build_document_sources(final_chunks),
         }
+
+    @staticmethod
+    def _build_retrieval_query(question: str, conversation_history: str | None) -> str:
+        """Enrich the search query with keywords from the previous exchange.
+
+        When a follow-up question uses vague references ("cet avantage", "cette loi"),
+        Qdrant receives an enriched query that includes domain keywords from the
+        previous question so it retrieves the right documents.
+
+        The original question is kept intact — only the retrieval query is enriched.
+        Returns the original question unchanged when there is no conversation history.
+        """
+        if not conversation_history:
+            return question
+
+        # Parse both previous question and previous answer from the history block.
+        prev_question = ""
+        prev_answer = ""
+        for line in conversation_history.splitlines():
+            if line.startswith("Question précédente :"):
+                prev_question = line.replace("Question précédente :", "").strip()
+            elif line.startswith("Réponse précédente :"):
+                prev_answer = line.replace("Réponse précédente :", "").strip()
+
+        if not prev_question and not prev_answer:
+            return question
+
+        # French functional words that carry no retrieval value.
+        _STOP = {
+            "les", "des", "une", "est", "que", "qui", "pas", "sur", "par",
+            "pour", "dans", "avec", "cette", "cet", "ces", "son", "ses",
+            "leur", "leurs", "tout", "tous", "bien", "mais", "aussi", "comme",
+            "plus", "tres", "etre", "avoir", "faire", "dire", "aller", "voir",
+            "nous", "vous", "ils", "elles", "moi", "toi", "lui", "elle",
+            "mon", "ton", "notre", "votre", "mes", "tes", "nos", "vos",
+            "aux", "sont", "ont", "dont", "quels", "quelles", "quel",
+            "quelle", "comment", "pourquoi", "quand", "quoi", "from", "the",
+            "vertu", "selon", "conformement", "conformément", "notamment",
+            "suivant", "dispositions", "presente", "présente",
+        }
+
+        question_lower = question.lower()
+
+        # Extract from the answer first — it contains document names and article
+        # numbers which are the most precise identifiers for Qdrant.
+        answer_keywords = [
+            word for word in re.sub(r"[^\w\s]", " ", prev_answer.lower()).split()
+            if len(word) > 3
+            and word not in _STOP
+            and word not in question_lower
+        ]
+
+        # Extract from the previous question as secondary source.
+        question_keywords = [
+            word for word in re.sub(r"[^\w\s]", " ", prev_question.lower()).split()
+            if len(word) > 3
+            and word not in _STOP
+            and word not in question_lower
+        ]
+
+        # Merge: answer keywords first (higher precision), then question keywords.
+        combined = list(dict.fromkeys(answer_keywords + question_keywords))
+
+        if not combined:
+            return question
+
+        enrichment = " ".join(combined[:20])  # cap at 20 words to avoid bloating the vector
+        return f"{question} {enrichment}"
 
     @staticmethod
     def _strip_source_tags(answer: str) -> str:

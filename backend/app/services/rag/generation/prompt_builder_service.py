@@ -66,6 +66,7 @@ class PromptBuilderService:
         response_mode: Literal["short", "detailed"],
         question_profile: str,
         query_mode: Literal["current", "future_preview", "comparison"],
+        conversation_history: str | None = None,
     ) -> str:
         response_instruction = (
             "Donne une reponse courte, directe et precise en 3 a 5 lignes maximum."
@@ -146,10 +147,21 @@ class PromptBuilderService:
             "Si un extrait commence par [Article X ...], les informations de cet extrait appartiennent a cet article uniquement."
         )
 
+        history_block = (
+            f"\nContexte de l'échange précédent :\n{conversation_history}\n"
+            "INSTRUCTION : La question actuelle fait référence à l'échange ci-dessus. "
+            "Si la réponse précédente contient déjà l'information demandée, "
+            "cite-la directement sans reformuler. "
+            "Sinon, appuie-toi sur les sources juridiques fournies pour répondre.\n"
+            if conversation_history
+            else ""
+        )
+
         return f"""
 Tu es un assistant juridique specialise en recherche documentaire.
 Tu dois repondre uniquement a partir du contexte fourni.
 N'ajoute aucune information absente du contexte.
+Ne mentionne jamais les numéros de sources (Source 1, Source 2, sources 1 et 3, etc.) dans ta réponse. Cite directement le nom du document ou de l'article.
 {response_instruction}
 {profile_instruction}
 {query_mode_instruction}
@@ -164,7 +176,7 @@ Si l'information n'apparait pas clairement dans le contexte, reponds exactement 
 
 Contexte:
 {context}
-
+{history_block}
 Question:
 {question}
 

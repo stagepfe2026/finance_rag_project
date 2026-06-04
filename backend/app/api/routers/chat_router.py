@@ -205,6 +205,7 @@ async def ask_chat(
     background_tasks.add_task(
         service.run_rag_background,
         assistant_message_id=data["assistantMessage"]["_id"],
+        conversation_id=data["conversation"]["_id"],
         content=normalized_content,
         response_mode=payload.response_mode,
         query_mode=payload.query_mode.value,

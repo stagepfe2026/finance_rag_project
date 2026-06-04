@@ -169,7 +169,11 @@ class RetrievalFilterService:
         return merged_chunks[: settings.final_top_k]
 
     @staticmethod
-    def _has_unsupported_numbers(answer: str, final_chunks: list[dict]) -> bool:
+    def _has_unsupported_numbers(
+        answer: str,
+        final_chunks: list[dict],
+        extra_trusted_text: str = "",
+    ) -> bool:
         """Return True when a legally-sensitive number in the answer is absent from context.
 
         Only specific high-risk formats are checked (percentages, monetary amounts,
@@ -179,8 +183,13 @@ class RetrievalFilterService:
         Article numbers accept both singular and plural forms in context
         ("article 81" matches "articles 81") to avoid false positives when
         the LLM uses singular form for an article referenced in plural in the chunks.
+
+        extra_trusted_text: previous conversation exchange. Numbers that appear
+        there were already validated and must not re-trigger the fallback.
         """
         context_raw = " ".join(chunk["text"] for chunk in final_chunks)
+        if extra_trusted_text:
+            context_raw = context_raw + " " + extra_trusted_text
         normalized_context = _normalize_numbers(context_raw)
         normalized_answer = _normalize_numbers(answer)
 
@@ -211,7 +220,12 @@ class RetrievalFilterService:
                         return True
         return False
 
-    def _needs_fallback(self, answer: str, final_chunks: list[dict]) -> bool:
+    def _needs_fallback(
+        self,
+        answer: str,
+        final_chunks: list[dict],
+        extra_trusted_text: str = "",
+    ) -> bool:
         cleaned_answer = answer.strip()
         if not cleaned_answer:
             return True
@@ -230,7 +244,7 @@ class RetrievalFilterService:
 
         if both_strong:
             # High confidence from both signals — only check numerical grounding.
-            if self._has_unsupported_numbers(cleaned_answer, final_chunks):
+            if self._has_unsupported_numbers(cleaned_answer, final_chunks, extra_trusted_text):
                 logger.warning(
                     "_needs_fallback: unsupported numbers (both_strong) reranker=%.4f vector=%.4f",
                     best_reranker_score,
@@ -243,7 +257,7 @@ class RetrievalFilterService:
         # Apply content-based checks rather than an unconditional fallback.
         # mmarco-mMiniLMv2 can score French/Arabic legal text below thresholds
         # even when the retrieved chunks are correct — never short-circuit here.
-        if self._has_unsupported_numbers(cleaned_answer, final_chunks):
+        if self._has_unsupported_numbers(cleaned_answer, final_chunks, extra_trusted_text):
             logger.warning(
                 "_needs_fallback: unsupported numbers (weak signals) reranker=%.4f vector=%.4f",
                 best_reranker_score,

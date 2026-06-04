@@ -186,3 +186,31 @@ class ChatRepository:
             -1,
         )
         return [ChatMessageModel.from_mongo(raw) for raw in cursor]
+
+    def list_last_completed_exchange(self, conversation_id: str) -> tuple[ChatMessageModel | None, ChatMessageModel | None]:
+        """Return the last completed (user, assistant) message pair for a conversation.
+
+        Used to inject conversation context into the RAG prompt for follow-up questions.
+        Returns (None, None) if no completed exchange exists yet.
+        """
+        cursor = self.messages.find(
+            {
+                "conversationId": conversation_id,
+                "status": "completed",
+                "role": {"$in": ["user", "assistant"]},
+            }
+        ).sort("createdAt", -1).limit(10)
+
+        messages = [ChatMessageModel.from_mongo(raw) for raw in cursor]
+
+        last_user: ChatMessageModel | None = None
+        last_assistant: ChatMessageModel | None = None
+
+        for msg in messages:
+            if last_assistant is None and msg.role == "assistant" and msg.content.strip():
+                last_assistant = msg
+            elif last_user is None and msg.role == "user" and last_assistant is not None:
+                last_user = msg
+                break
+
+        return last_user, last_assistant

@@ -335,6 +335,196 @@ function addPageFooter(
   doc.text(`Page ${pageNumber}`, pageWidth - margin, footerY, { align: "right" });
 }
 
+// ─── Single message export ────────────────────────────────────────────────────
+export function exportMessageToPdf(content: string) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+  const pageWidth  = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin     = 40;
+  const contentW   = pageWidth - margin * 2;
+  const headerH    = 48;
+  const footerH    = 30;
+  const bottomBound = pageHeight - footerH - 8;
+
+  let pageNumber = 1;
+  let cursorY    = headerH + 18;
+
+  const exportedAt = formatDate(new Date().toISOString());
+
+  const startPage = (isFirst: boolean) => {
+    // Header
+    doc.setFillColor(...WHITE);
+    doc.rect(0, 0, pageWidth, headerH, "F");
+
+    const logoW = 110;
+    const logoH = 24;
+    try {
+      doc.addImage(cimfLogo, "PNG", margin, (headerH - logoH) / 2, logoW, logoH);
+    } catch {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(...CIMF_RED);
+      doc.text("CIMF", margin, headerH / 2 + 4);
+    }
+
+    // Title right-aligned on first page
+    if (isFirst) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...DARK);
+      doc.text("Réponse assistant", pageWidth - margin, headerH / 2 + 3, { align: "right" });
+    }
+
+    doc.setDrawColor(...CIMF_RED);
+    doc.setLineWidth(1);
+    doc.line(0, headerH, pageWidth, headerH);
+
+    if (isFirst) {
+      cursorY = headerH + 14;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...MUTED);
+      doc.text(`Exportée le ${exportedAt}`, margin, cursorY);
+      cursorY += 10;
+      doc.setDrawColor(...LIGHT_GRAY);
+      doc.setLineWidth(0.5);
+      doc.line(margin, cursorY, pageWidth - margin, cursorY);
+      cursorY += 14;
+    } else {
+      cursorY = headerH + 16;
+    }
+  };
+
+  const newPage = () => {
+    addPageFooter(doc, pageWidth, pageHeight, margin, pageNumber, exportedAt);
+    doc.addPage();
+    pageNumber += 1;
+    startPage(false);
+  };
+
+  const ensureSpace = (h: number) => {
+    if (cursorY + h > bottomBound) newPage();
+  };
+
+  startPage(true);
+
+  // ── Render assistant message card ───────────────────────────────────────────
+  const LINE_H     = 11.5;
+  const CARD_PAD_V = 9;
+  const CARD_PAD_H = 11;
+  const LABEL_H    = 12;
+  const SEP_H      = 3;
+
+  const safeContent = (content ?? "").trim() || "—";
+  const bodyW       = contentW - CARD_PAD_H * 2 - 5;
+  const segments    = parseContent(safeContent);
+
+  const contentH = segments.reduce((height, segment) => {
+    if (segment.type === "text") {
+      const textLines = doc.splitTextToSize(segment.value, bodyW);
+      return height + textLines.length * LINE_H + 6;
+    }
+    const dataset = getNumericDataset(segment.value);
+    return height + 24 + segment.value.rows.length * 19 + (dataset ? 190 : 0);
+  }, 0);
+
+  const cardH = CARD_PAD_V + LABEL_H + SEP_H + contentH + CARD_PAD_V;
+  ensureSpace(Math.min(cardH, bottomBound - cursorY - 10));
+
+  const barColor: [number, number, number] = [80, 80, 85];
+
+  doc.setFillColor(...ASST_BG);
+  doc.setDrawColor(...LIGHT_GRAY);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(margin, cursorY, contentW, cardH, 3, 3, "FD");
+
+  doc.setFillColor(...barColor);
+  doc.roundedRect(margin, cursorY, 3, cardH, 1.5, 1.5, "F");
+
+  const textX = margin + CARD_PAD_H;
+  let   lineY = cursorY + CARD_PAD_V;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.8);
+  doc.setTextColor(...barColor);
+  doc.text("ASSISTANT", textX, lineY + 8);
+
+  lineY += LABEL_H + SEP_H;
+  doc.setDrawColor(...LIGHT_GRAY);
+  doc.setLineWidth(0.3);
+  doc.line(textX, lineY, margin + contentW - 6, lineY);
+  lineY += 7;
+
+  segments.forEach((segment) => {
+    if (segment.type === "text") {
+      const textLines = doc.splitTextToSize(segment.value, bodyW);
+      if (lineY + textLines.length * LINE_H > bottomBound) newPage();
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(...DARK);
+      doc.text(textLines, textX, lineY, { lineHeightFactor: 1.45 });
+      lineY += textLines.length * LINE_H + 8;
+      return;
+    }
+
+    autoTable(doc, {
+      startY: lineY,
+      head: [segment.value.columns],
+      body: segment.value.rows.map((row) =>
+        segment.value.columns.map((column) => row[column] ?? ""),
+      ),
+      margin: { left: textX, right: margin + CARD_PAD_H },
+      tableWidth: bodyW,
+      pageBreak: "avoid",
+      styles: {
+        font: "helvetica",
+        fontSize: 7.3,
+        cellPadding: 4,
+        lineColor: LIGHT_GRAY,
+        lineWidth: 0.4,
+        textColor: DARK,
+      },
+      headStyles: {
+        fillColor: DARK,
+        textColor: WHITE,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: {
+        fillColor: [243, 244, 246],
+      },
+    });
+
+    const lastTable = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable;
+    lineY = (lastTable?.finalY ?? lineY) + 10;
+
+    const dataset = getNumericDataset(segment.value);
+    if (dataset) {
+      const chartH = 160;
+      if (lineY + chartH > bottomBound) newPage();
+      drawBarChart(doc, dataset, textX, lineY, bodyW, chartH);
+      lineY += chartH + 8;
+
+      const summary = buildChartSummary(dataset);
+      if (summary) {
+        const summaryLines = doc.splitTextToSize(summary, bodyW - 16);
+        const summaryH = summaryLines.length * LINE_H + 12;
+        doc.setFillColor(243, 244, 246);
+        doc.setDrawColor(...LIGHT_GRAY);
+        doc.roundedRect(textX, lineY, bodyW, summaryH, 3, 3, "FD");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.8);
+        doc.setTextColor(...DARK);
+        doc.text(summaryLines, textX + 8, lineY + 12, { lineHeightFactor: 1.4 });
+        lineY += summaryH + 8;
+      }
+    }
+  });
+
+  addPageFooter(doc, pageWidth, pageHeight, margin, pageNumber, exportedAt);
+  doc.save("reponse-assistant.pdf");
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 export function exportConversationToPdf(
   conversation: Conversation | null,
