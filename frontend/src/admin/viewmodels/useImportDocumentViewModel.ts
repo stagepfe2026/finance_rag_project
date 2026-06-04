@@ -222,7 +222,6 @@ export function useImportDocumentViewModel() {
       setDocumentType("");
       setDatePublication("");
       setDateEntreeVigueur("");
-      setVersion("");
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       previewUrlsRef.current = [];
       setPreviewItems([]);

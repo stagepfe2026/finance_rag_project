@@ -120,15 +120,13 @@ export default function DocumentPreviewAside({
           {/* Relation */}
           {document.relationToTarget !== "none" && (
             <div className="rounded border border-[#e5eaf2] bg-[#f7f9fc] px-3 py-2.5 text-[12px] space-y-1">
-              {document.relationToTarget !== "none" && (
-                <p className="text-[#071f3d]">
-                  <span className="text-[#8a96ad]">Relation :</span>{" "}
-                  {legalRelationTypeLabels[document.relationToTarget]}
-                  {document.targetDocumentId && (
-                    <span className="ml-1 text-[#8a96ad]">({document.targetDocumentId})</span>
-                  )}
-                </p>
-              )}
+              <p className="text-[#071f3d]">
+                <span className="text-[#8a96ad]">Relation :</span>{" "}
+                {legalRelationTypeLabels[document.relationToTarget]}
+                {document.targetDocumentId && (
+                  <span className="ml-1 text-[#8a96ad]">({document.targetDocumentId})</span>
+                )}
+              </p>
             </div>
           )}
 

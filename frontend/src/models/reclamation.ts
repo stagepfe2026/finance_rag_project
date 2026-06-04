@@ -38,6 +38,8 @@ export type Reclamation = {
   description: string;
   issueCategory: ReclamationProblemType;
   customIssueCategory: string | null;
+  problemType: ReclamationProblemType;
+  customProblemType: string | null;
   priority: ReclamationPriority;
   status: ReclamationStatus;
   attachment: ReclamationAttachment | null;
