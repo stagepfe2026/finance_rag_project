@@ -1,5 +1,7 @@
 import os
 
+# Le backend Docker fonctionne volontairement sans acces reseau Hugging Face:
+# les modeles doivent etre precharges dans l'image pour eviter les surprises au demarrage.
 os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 
@@ -41,6 +43,8 @@ notification_manager = NotificationConnectionManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialisation unique au demarrage: connexions, index MongoDB, services partages
+    # et dependances lourdes comme Ollama/RAG.
     connect_to_mongo()
     ensure_mongodb_validators(get_database())
     auth_service.setup_indexes()
@@ -86,6 +90,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # Fermeture explicite pour liberer proprement la connexion MongoDB.
     close_mongo_connection()
 
 

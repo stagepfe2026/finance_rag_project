@@ -11,6 +11,7 @@ class DocumentRelationService:
         self.legal_status_service = LegalStatusService(self.document_repository)
 
     def apply_legal_succession(self, source_document: DocumentModel) -> None:
+        # Applique l'effet juridique d'un nouveau document sur son document cible.
         relation_to_target = source_document.relation_to_target
         related_document_id = source_document.target_document_id
 
@@ -35,6 +36,7 @@ class DocumentRelationService:
             )
 
         if self.legal_status_service.is_scheduled(source_document):
+            # Un texte futur ne remplace pas immediatement l'ancien texte.
             if source_document.id:
                 self.document_repository.update_metadata(
                     source_document.id,
@@ -54,6 +56,7 @@ class DocumentRelationService:
             source_document,
             related_document,
         ):
+            # Si la date ne permet pas la succession, le nouveau document reste actif seul.
             if source_document.id:
                 self.document_repository.update_metadata(
                     source_document.id,
@@ -67,6 +70,7 @@ class DocumentRelationService:
                 legal_status=LegalStatus.actif.value,
             )
 
+        # Le document cible devient remplace/abroge selon la relation declaree.
         self.document_repository.register_as_target(
             related_document_id,
             relation_to_target,

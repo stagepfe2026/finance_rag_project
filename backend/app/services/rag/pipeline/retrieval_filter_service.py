@@ -10,16 +10,16 @@ from app.services.rag.processing.nlp_service import NLPService
 
 logger = logging.getLogger(__name__)
 
-# Numerical patterns that are high-risk for cross-article confusion in legal/financial text.
-# Only these specific formats are checked — bare integers (e.g. "3") are too common to validate.
+# Motifs numeriques a risque dans les textes juridiques/financiers.
+# Les entiers seuls sont trop frequents pour etre valides de facon fiable.
 _NUMERIC_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"\b\d+(?:[.,]\d+)?\s*%"),                          # percentages: 2%, 50%, 3,5%
-    re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:dinars?|DT|TND)\b", re.IGNORECASE),  # monetary: 500 DT
-    re.compile(r"\bArticle\s+\d+(?:bis|ter|quater)?\b", re.IGNORECASE),       # article numbers
-    re.compile(r"\bArt\.\s*\d+\b", re.IGNORECASE),                 # abbreviated articles
+    re.compile(r"\b\d+(?:[.,]\d+)?\s*%"),  # pourcentages: 2%, 50%, 3,5%
+    re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:dinars?|DT|TND)\b", re.IGNORECASE),  # montants: 500 DT
+    re.compile(r"\bArticle\s+\d+(?:bis|ter|quater)?\b", re.IGNORECASE),  # numeros d'articles
+    re.compile(r"\bArt\.\s*\d+\b", re.IGNORECASE),  # articles abreges
 ]
 
-# Normalize "2 %" → "2%" so whitespace variants don't cause false positives.
+# Normalise "2 %" en "2%" pour eviter les faux ecarts lies aux espaces.
 _PERCENT_SPACE_RE = re.compile(r"(\d)\s+%")
 
 
@@ -32,8 +32,7 @@ class RetrievalFilterService:
         self.nlp_service = nlp_service
 
     def _filter_relevant_chunks(self, ranked_chunks: list[dict]) -> list[dict]:
-        # .get() with fallback prevents KeyError on related chunks scored by
-        # _score_chunks_by_vector, which does not set lexical_score.
+        # .get() evite un KeyError sur les chunks lies scores sans lexical_score.
         candidates = [
             chunk
             for chunk in ranked_chunks
@@ -52,13 +51,10 @@ class RetrievalFilterService:
         return self._apply_relative_threshold(candidates)
 
     def _filter_relevant_chunks_vector(self, ranked_chunks: list[dict]) -> list[dict]:
-        """Filter for chunks scored by vector-only path (no BM25/RRF available).
+        """Filtre les chunks scores uniquement par vecteur, sans BM25/RRF.
 
-        Related-document chunks are retrieved via pure vector search:
-        lexical_score and rrf_score are never computed for them, so using
-        _filter_relevant_chunks (which requires lexical_score >= 0.12) would
-        silently empty the list every time.  This filter uses only the signals
-        that are actually present: vector_score and final_score.
+        Les chunks des documents lies n'ont pas lexical_score ni rrf_score.
+        Ce filtre utilise donc seulement vector_score et final_score.
         """
         candidates = [
             chunk for chunk in ranked_chunks
@@ -69,12 +65,10 @@ class RetrievalFilterService:
 
     @staticmethod
     def _apply_relative_threshold(chunks: list[dict]) -> list[dict]:
-        """Drop chunks whose final_score is below 40% of the top chunk's score.
+        """Retire les chunks trop faibles par rapport au meilleur resultat.
 
-        Absolute thresholds (e.g. min_rrf_final_score=0.005) let in weakly
-        relevant chunks when the best score is high.  The relative gate
-        ensures that only chunks competitive with the top result are kept,
-        regardless of the absolute score range of the scoring method used.
+        Le seuil relatif evite de garder des chunks peu competitifs quand le
+        meilleur score est beaucoup plus haut que les autres.
         """
         if not chunks:
             return []
@@ -243,7 +237,7 @@ class RetrievalFilterService:
         )
 
         if both_strong:
-            # High confidence from both signals — only check numerical grounding.
+            # Confiance forte: on verifie seulement l'ancrage numerique.
             if self._has_unsupported_numbers(cleaned_answer, final_chunks, extra_trusted_text):
                 logger.warning(
                     "_needs_fallback: unsupported numbers (both_strong) reranker=%.4f vector=%.4f",
@@ -253,10 +247,8 @@ class RetrievalFilterService:
                 return True
             return False
 
-        # One or both confidence signals are weak.
-        # Apply content-based checks rather than an unconditional fallback.
-        # mmarco-mMiniLMv2 can score French/Arabic legal text below thresholds
-        # even when the retrieved chunks are correct — never short-circuit here.
+        # Signal faible: on applique des controles de contenu plutot qu'un rejet automatique.
+        # Le reranker peut sous-noter du texte juridique FR/AR meme si les chunks sont bons.
         if self._has_unsupported_numbers(cleaned_answer, final_chunks, extra_trusted_text):
             logger.warning(
                 "_needs_fallback: unsupported numbers (weak signals) reranker=%.4f vector=%.4f",
@@ -265,7 +257,7 @@ class RetrievalFilterService:
             )
             return True
 
-        # Short answers from a weak context are acceptable.
+        # Une reponse courte reste acceptable meme avec un contexte moins fort.
         if len(cleaned_answer) <= settings.fallback_max_answer_length:
             return False
 

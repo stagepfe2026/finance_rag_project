@@ -33,6 +33,7 @@ class AuthService:
         if not user or not verify_password(password, user.password_hash):
             raise ValueError("INVALID_CREDENTIALS")
 
+        # Une seule session active par utilisateur: le nouveau login remplace les anciennes sessions.
         self.sessions_repo.close_all_for_user(user.id or "", reason="LOGIN_ROTATION")
         session_payload = self._create_session(user_id=user.id or "", auth_method="local")
         return {
@@ -45,6 +46,7 @@ class AuthService:
 
     async def begin_sso_login(self) -> dict[str, str]:
         metadata = await self._get_oidc_metadata()
+        # Le state protege le callback OIDC contre les reponses forgees.
         state = generate_state_token()
         params = {
             "client_id": settings.auth_oidc_client_id,
@@ -87,6 +89,7 @@ class AuthService:
         if not email:
             raise ValueError("OIDC_EMAIL_REQUIRED")
 
+        # Les utilisateurs SSO sont synchronises a chaque connexion pour garder le profil a jour.
         user_id = self.users_repo.save_oidc_user(
             nom=str(claims.get("family_name", claims.get("name", "Utilisateur"))),
             prenom=str(claims.get("given_name", "OIDC")),

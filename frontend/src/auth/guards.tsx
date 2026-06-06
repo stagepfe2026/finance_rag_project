@@ -18,10 +18,12 @@ export function RequireAuth({ allowedRoles }: { allowedRoles: Array<"ADMIN" | "F
   }
 
   if (!isAuthenticated || !user) {
+    // On memorise la page demandee pour y revenir apres connexion si elle reste autorisee.
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   if (!allowedRoles.includes(user.role)) {
+    // Un utilisateur connecte mais sans droit est renvoye vers son espace naturel.
     return <Navigate to={user.role === "ADMIN" ? "/admin/dashboard" : "/user/accueil"} replace />;
   }
 

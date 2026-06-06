@@ -5,8 +5,8 @@ from app.core.rag_messages import MSG_UNRELIABLE
 
 class PromptBuilderService:
     def format_context(self, chunks: list[dict]) -> str:
-        # Group chunks from the same document+article adjacently while preserving
-        # the overall relevance ordering (first-occurrence rank per group).
+        # Regroupe les chunks d'un meme document/article tout en conservant
+        # l'ordre global de pertinence du premier chunk du groupe.
         ordered_chunks = self._group_by_document_article(chunks)
 
         context_parts: list[str] = []
@@ -34,11 +34,10 @@ class PromptBuilderService:
 
     @staticmethod
     def _group_by_document_article(chunks: list[dict]) -> list[dict]:
-        """Return chunks reordered so same-document/same-article chunks are adjacent.
+        """Reordonne les chunks pour rapprocher ceux du meme document/article.
 
-        Group key is (document_id, article_number).  Groups are ordered by the
-        first occurrence of that key in the original list, so the overall
-        relevance ranking is preserved across groups.
+        La cle de groupe est (document_id, article_number). Les groupes gardent
+        le rang de leur premiere apparition pour respecter la pertinence globale.
         """
         seen_order: dict[tuple, int] = {}
         groups: dict[tuple, list[dict]] = {}
@@ -126,8 +125,7 @@ class PromptBuilderService:
             "Pour une question sur la regle actuelle, formule d abord la reponse autour du texte actuellement applicable, puis mentionne l ancien texte seulement si c est utile."
         )
 
-        # Prevents blending of numbers from different articles (e.g. a rate meant
-        # for revenue allocation being cited as an export tax rate).
+        # Evite de melanger des chiffres provenant d'articles differents.
         numerical_grounding_instruction = (
             "Regle de grounding numerique stricte : "
             "Pour tout taux, pourcentage, montant, numero d article, date ou valeur numerique que tu mentionnes, "
@@ -137,8 +135,7 @@ class PromptBuilderService:
             "Si plusieurs chiffres sont presentes dans le contexte, associe chaque chiffre explicitement a son sujet tel qu il apparait dans l extrait."
         )
 
-        # Prevents listing products/articles from adjacent chunks that belong to
-        # different articles but were retrieved in the same context window.
+        # Evite de lister des sujets d'articles voisins qui ne sont pas demandes.
         article_scope_instruction = (
             "Regle de perimetre d article : "
             "Si un extrait juridique contient plusieurs articles ou sujets distincts, "

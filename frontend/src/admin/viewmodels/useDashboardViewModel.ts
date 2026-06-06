@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AdminDashboard } from "../../models/admin-dashboard";
 import { fetchAdminDashboard } from "../../services/admin-dashboard.service";
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
+// Etat vide utilise avant le chargement du dashboard.
 const EMPTY: AdminDashboard = {
   summary: {
     documentsIndexed: 0, documentsTotal: 0,

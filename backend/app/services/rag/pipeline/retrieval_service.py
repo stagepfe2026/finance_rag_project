@@ -55,6 +55,8 @@ class RetrievalService:
         ranked = []
         for chunk in chunks:
             vector_score = float(chunk.get("score", 0.0))
+            # Le score vectoriel mesure la proximite semantique; le modificateur juridique
+            # favorise les textes adaptes au statut de la question (courant/futur/comparaison).
             legal_modifier = self.legal_ranking_service.score_legal_relevance(
                 chunk, question_profile, query_mode
             )
@@ -85,14 +87,14 @@ class RetrievalService:
         for key, chunk in enriched_map.items():
             d_rank = dense_ranks.get(key, n_dense + K)
             b_rank = bm25_ranks.get(key, n_bm25 + K)
+            # RRF fusionne le rang dense (vecteur) et le rang lexical (BM25)
+            # sans supposer que les deux scores sont sur la meme echelle.
             rrf_score = 1 / (K + d_rank) + 1 / (K + b_rank)
 
             legal_modifier = self.legal_ranking_service.score_legal_relevance(
                 chunk, question_profile, query_mode
             )
-            # Scale the modifier so it is proportional to the RRF score range
-            # (~0.016–0.033).  Without scaling, legal_modifier (±0.30) would
-            # be 4–18× larger than the RRF signal, making content rank irrelevant.
+            # Mise a l'echelle: sinon le bonus juridique dominerait completement le rang RRF.
             scaled_modifier = legal_modifier * settings.rrf_legal_modifier_scale
             ranked.append({
                 **chunk,
@@ -117,6 +119,7 @@ class RetrievalService:
         category_candidates = []
 
         for category in categories:
+            # Probe leger par categorie pour detecter le bon corpus avant la recherche complete.
             probe_chunks = self.qdrant_repository.search(
                 category=category,
                 query_vector=query_vector,
@@ -356,9 +359,8 @@ class RetrievalService:
                 enrich_fn=enrich_fn,
                 dedupe_fn=dedupe_fn,
             )
-            # Related chunks are scored by vector-only (_score_chunks_by_vector),
-            # so lexical_score is never set.  Use the vector-specific filter
-            # instead of the hybrid one to avoid always returning an empty list.
+            # Les chunks lies sont scores seulement par vecteur: lexical_score n'existe pas.
+            # On utilise donc le filtre vectoriel pour eviter une liste vide.
             related_relevant_chunks = filter_relevant_chunks_vector_fn(related_ranked_chunks)
 
         return {

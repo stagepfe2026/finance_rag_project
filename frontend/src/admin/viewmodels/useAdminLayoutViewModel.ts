@@ -58,7 +58,7 @@ export function useAdminLayoutViewModel() {
       queueRef.current = [...queueRef.current, ...newMessages];
       if (!showingRef.current) dequeueReminder();
     } catch {
-      // Silent — reminder errors must never block the layout
+      // Erreur ignoree: les rappels ne doivent jamais bloquer le layout.
     }
   }, [dequeueReminder]);
 

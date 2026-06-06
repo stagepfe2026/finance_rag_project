@@ -20,9 +20,8 @@ class NLPService:
         if article_chunks:
             normalized_chunks: list[str] = []
             for article_raw in article_chunks:
-                # Preserve the article identifier in every continuation sub-chunk so
-                # retrieval can match "quel article fixe X" against any sub-chunk,
-                # not only the first one that naturally starts with the article header.
+                # Conserve l'identifiant d'article dans les sous-chunks de continuation.
+                # Ainsi une question sur un article retrouve aussi les passages du milieu.
                 article_header = self.provider.extract_article_header(article_raw)
                 split_chunks = self.chunking_service.chunk_text(article_raw)
                 for sub_idx, sub_chunk in enumerate(split_chunks or [article_raw]):

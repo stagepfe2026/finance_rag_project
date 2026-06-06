@@ -72,15 +72,14 @@ class RagService:
     ) -> dict:
         normalized_question = self.nlp_service.preprocess_query(question)
 
-        # When the question is a follow-up, enrich the retrieval query with
-        # keywords from the previous exchange so Qdrant finds the right documents.
-        # The original normalized_question is kept intact for LLM generation.
+        # Pour une question de suivi, on enrichit seulement la recherche avec le contexte precedent.
+        # La question originale reste intacte pour la generation LLM.
         retrieval_question = self._build_retrieval_query(normalized_question, conversation_history)
 
         query_vector = self.embedding_service.generate_embeddings([retrieval_question])[0]
         question_profile = self.legal_ranking_service.classify_question(normalized_question)
 
-        # Step 1: Retrieval — get candidate chunks
+        # Etape 1: recuperer les chunks candidats dans la categorie la plus probable.
         retrieval_result = self.retrieval_service.retrieve(
             normalized_question=retrieval_question,
             query_vector=query_vector,
@@ -128,9 +127,8 @@ class RagService:
         related_relevant_chunks = retrieval_result["related_relevant_chunks"]
         dense_chunks = retrieval_result["dense_chunks"]
 
-        # For follow-up questions, restrict results to the same source documents
-        # as the previous answer. This prevents cross-document contamination when
-        # multiple documents share similar terminology (e.g. "pénalités de retard").
+        # Pour les suivis, on garde les memes documents sources que la reponse precedente.
+        # Cela evite de basculer vers un autre texte qui emploie les memes termes.
         if previous_doc_ids:
             doc_id_set = set(previous_doc_ids)
             filtered_main = [
@@ -143,9 +141,8 @@ class RagService:
                     c for c in relevant_main_chunks
                     if str(c.get("document_id", "")).strip() in doc_id_set
                 ]
-                # If the relevance threshold filtered out all document chunks,
-                # fall back to the ranked chunks so the pipeline does not abort
-                # with MSG_UNRELIABLE on a valid follow-up question.
+                # Si le seuil retire tout, on garde les chunks classes pour ne pas rejeter
+                # une vraie question de suivi.
                 relevant_main_chunks = filtered_relevant if filtered_relevant else filtered_main
 
         self.logger.info(
@@ -170,7 +167,7 @@ class RagService:
                 "sources": [],
             }
 
-        # Step 3: Filter — select the final chunk set
+        # Etape 3: fusionner les chunks principaux et les chunks des textes lies.
         final_chunks = self.retrieval_filter_service._build_final_chunks(
             main_relevant_chunks=relevant_main_chunks,
             related_relevant_chunks=related_relevant_chunks,
@@ -179,9 +176,8 @@ class RagService:
             query_mode=query_mode,
         )
 
-        # Expand the reranker candidate pool so the cross-encoder can rescue
-        # relevant chunks that were ranked lower by RRF/scoring.
-        # Pool = final_top_k × reranker_pool_multiplier (default: 4 × 3 = 12).
+        # Le reranker recoit plus de candidats que le nombre final pour pouvoir
+        # recuperer un chunk precis qui etait classe un peu trop bas par RRF.
         pool_size = settings.final_top_k * settings.reranker_pool_multiplier
         if len(final_chunks) < pool_size:
             all_candidates = self.retrieval_filter_service._dedupe_chunks(
@@ -204,7 +200,8 @@ class RagService:
             normalized_question, final_chunks, top_k=len(final_chunks)
         )
 
-        # Keep only chunks with acceptable confidence; fall back to top-k if none pass.
+        # On garde les chunks assez confiants; si aucun ne passe, on conserve quand meme
+        # les meilleurs pour permettre une reponse prudente ou un fallback.
         confident_chunks = [
             c for c in reranked_pool
             if c.get("reranker_score", 0.0) >= settings.min_reranker_score
@@ -232,7 +229,7 @@ class RagService:
             ],
         )
 
-        # Step 4: Build prompt
+        # Etape 4: construire le prompt final avec les sources retenues.
         context = self.prompt_builder_service.format_context(final_chunks)
         prompt = self.prompt_builder_service.compose_prompt(
             question=normalized_question,
@@ -243,7 +240,7 @@ class RagService:
             conversation_history=conversation_history,
         )
 
-        # Step 5: Generate answer
+        # Etape 5: generer la reponse avec Ollama.
         answer = self.generation_service.generate_answer(
             prompt=prompt,
             temperature=settings.temperature,
@@ -288,19 +285,16 @@ class RagService:
 
     @staticmethod
     def _build_retrieval_query(question: str, conversation_history: str | None) -> str:
-        """Enrich the search query with keywords from the previous exchange.
+        """Enrichit la requete de recherche avec les mots de l'echange precedent.
 
-        When a follow-up question uses vague references ("cet avantage", "cette loi"),
-        Qdrant receives an enriched query that includes domain keywords from the
-        previous question so it retrieves the right documents.
-
-        The original question is kept intact — only the retrieval query is enriched.
-        Returns the original question unchanged when there is no conversation history.
+        Quand une question de suivi utilise des references vagues, Qdrant recoit
+        quelques mots du contexte precedent pour retrouver les bons documents.
+        La question originale reste inchangee pour la generation.
         """
         if not conversation_history:
             return question
 
-        # Parse both previous question and previous answer from the history block.
+        # Extrait la question et la reponse precedentes depuis le bloc historique.
         prev_question = ""
         prev_answer = ""
         for line in conversation_history.splitlines():
@@ -312,7 +306,7 @@ class RagService:
         if not prev_question and not prev_answer:
             return question
 
-        # French functional words that carry no retrieval value.
+        # Mots fonctionnels sans valeur de recherche.
         _STOP = {
             "les", "des", "une", "est", "que", "qui", "pas", "sur", "par",
             "pour", "dans", "avec", "cette", "cet", "ces", "son", "ses",
@@ -328,8 +322,7 @@ class RagService:
 
         question_lower = question.lower()
 
-        # Extract from the answer first — it contains document names and article
-        # numbers which are the most precise identifiers for Qdrant.
+        # La reponse contient souvent les noms de documents/articles: ce sont les meilleurs indices.
         answer_keywords = [
             word for word in re.sub(r"[^\w\s]", " ", prev_answer.lower()).split()
             if len(word) > 3
@@ -337,7 +330,7 @@ class RagService:
             and word not in question_lower
         ]
 
-        # Extract from the previous question as secondary source.
+        # La question precedente sert de source secondaire.
         question_keywords = [
             word for word in re.sub(r"[^\w\s]", " ", prev_question.lower()).split()
             if len(word) > 3
@@ -345,13 +338,13 @@ class RagService:
             and word not in question_lower
         ]
 
-        # Merge: answer keywords first (higher precision), then question keywords.
+        # Fusion: mots de la reponse d'abord, puis mots de la question.
         combined = list(dict.fromkeys(answer_keywords + question_keywords))
 
         if not combined:
             return question
 
-        enrichment = " ".join(combined[:20])  # cap at 20 words to avoid bloating the vector
+        enrichment = " ".join(combined[:20])  # limite a 20 mots pour ne pas diluer le vecteur
         return f"{question} {enrichment}"
 
     @staticmethod

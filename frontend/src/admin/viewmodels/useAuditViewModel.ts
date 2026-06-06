@@ -182,7 +182,7 @@ export function useAuditViewModel() {
       .sort((a, b) => a.label.localeCompare(b.label, "fr"));
   }, [payload.items, userFilter]);
 
-  // Auto-reset actionFilter when the selected type is no longer available
+  // Reinitialise le filtre action si le type selectionne n'est plus disponible.
   useEffect(() => {
     if (actionFilter === "ALL") return;
     if (!availableActionTypes.some((t) => t.value === actionFilter)) {

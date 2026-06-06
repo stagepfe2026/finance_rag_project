@@ -11,6 +11,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import { agentRoutes } from "./agent/routes/agentRoutes";
 import { adminRoutes } from "./admin/routes/adminRoutes";
 
+// Routes principales: les gardes redirigent selon la session et le role utilisateur.
 export const router = createBrowserRouter([
   {
     path: "/",

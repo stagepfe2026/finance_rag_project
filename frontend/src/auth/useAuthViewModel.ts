@@ -36,6 +36,7 @@ export function useAuthViewModel(): AuthContextValue {
     let cancelled = false;
 
     async function loadInitialSession() {
+      // Au premier rendu, on demande au backend si le cookie de session est encore valide.
       try {
         const nextSession = await fetchSession();
         if (!cancelled) {
@@ -61,6 +62,7 @@ export function useAuthViewModel(): AuthContextValue {
   useEffect(() => {
     if (!session?.authenticated) return;
 
+    // Toute interaction utilisateur repousse le timeout d'inactivite cote frontend.
     function markActivity() { lastActivityRef.current = Date.now(); }
 
     const events: Array<keyof WindowEventMap> = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
@@ -68,12 +70,14 @@ export function useAuthViewModel(): AuthContextValue {
 
     const idleTimer = window.setInterval(() => {
       if (Date.now() - lastActivityRef.current >= IDLE_TIMEOUT_MS) {
+        // Le backend garde la verite finale, mais le frontend ferme vite l'interface inactive.
         setSession(null);
         setAuthMessage(SESSION_EXPIRED_MESSAGE);
         window.clearInterval(idleTimer);
       }
     }, 30_000);
 
+    // Rafraichissement periodique pour prolonger la session sans action manuelle.
     const refreshTimer = window.setInterval(() => { void doRefreshSession(); }, REFRESH_INTERVAL_MS);
 
     return () => {
@@ -86,6 +90,7 @@ export function useAuthViewModel(): AuthContextValue {
 
   async function doRefreshSession() {
     try {
+      // Si le refresh echoue, on nettoie l'etat local pour eviter une interface faussement connectee.
       const response = await refreshSessionRequest();
       if (response.session?.authenticated) setSession(response.session);
     } catch (error) {

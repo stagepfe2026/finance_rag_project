@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 import {
   categoryOptions,
   legalDocumentTypeOptions,
@@ -13,9 +12,14 @@ import {
   type ProgressStep,
 } from "../../models/import-document";
 import { fetchDocuments, indexDocument, previewWordDocument } from "../../services/documents.service";
-import type { DocumentItem } from "../../models/document";
+import {
+  documentCategoryLabels,
+  legalDocumentTypeLabels,
+  type DocumentItem,
+} from "../../models/document";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+// Chemin stable copie dans l'image Docker pour eviter les erreurs de worker PDF hashe.
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/assets/pdf.worker.min.mjs";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const MAX_DOCUMENT_UPLOAD_SIZE = 20 * 1024 * 1024;
@@ -39,6 +43,7 @@ function titleFromFileName(fileName: string) {
 async function buildPdfPreview(file: File) {
   const fileBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
+  // Limite volontaire: quelques pages suffisent pour confirmer le contenu sans ralentir l'import.
   const pagesToRender = Math.min(pdf.numPages, 6);
   const previewItems: PreviewItem[] = [];
 
@@ -177,6 +182,24 @@ export function useImportDocumentViewModel() {
     return "";
   }
 
+  function validateReplacementTarget(): string {
+    if (relationType !== "remplace" || !relatedDocumentId) return "";
+
+    const targetDocument = availableDocuments.find((doc) => doc.id === relatedDocumentId);
+    if (!targetDocument) return "Le document à remplacer est introuvable.";
+
+    // Regle metier: un remplacement ne peut viser qu'un document du meme dossier juridique.
+    if (targetDocument.category !== category) {
+      return `Le document remplacé doit appartenir à la même catégorie (${documentCategoryLabels[targetDocument.category]}).`;
+    }
+
+    if (targetDocument.legalType !== documentType) {
+      return `Le document remplacé doit avoir le même type juridique (${legalDocumentTypeLabels[targetDocument.legalType]}).`;
+    }
+
+    return "";
+  }
+
   function validateAllFields() {
     const fields: FieldName[] = ["title", "documentType", "datePublication", "dateEntreeVigueur", "relatedDocumentId"];
     const nextErrors: FieldErrors = {};
@@ -256,6 +279,14 @@ export function useImportDocumentViewModel() {
       return;
     }
 
+    const replacementError = validateReplacementTarget();
+    if (replacementError) {
+      setSubmitError(replacementError);
+      setFieldErrors((current) => ({ ...current, relatedDocumentId: replacementError }));
+      showSnackbar(replacementError);
+      return;
+    }
+
     setSubmitError("");
     setIsSubmitting(true);
     setIsIndexed(false);
@@ -289,7 +320,7 @@ export function useImportDocumentViewModel() {
       setIsSubmitting(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile, relationType, relatedDocumentId, category, title, documentType, datePublication, dateEntreeVigueur, showSnackbar]);
+  }, [selectedFile, relationType, relatedDocumentId, category, title, documentType, datePublication, dateEntreeVigueur, availableDocuments, showSnackbar]);
 
   const handleReset = useCallback(() => {
     setSelectedFile(null);
@@ -344,8 +375,22 @@ export function useImportDocumentViewModel() {
 
   const handleRelatedDocumentIdChange = useCallback((value: string) => {
     setRelatedDocumentId(value);
-    setFieldErrors((c) => ({ ...c, relatedDocumentId: "" }));
-  }, []);
+    const targetDocument = availableDocuments.find((doc) => doc.id === value);
+    if (!targetDocument || relationType !== "remplace") {
+      setFieldErrors((c) => ({ ...c, relatedDocumentId: "" }));
+      return;
+    }
+
+    const mismatchMessage =
+      targetDocument.category !== category
+        ? `Le document remplacé doit appartenir à la même catégorie (${documentCategoryLabels[targetDocument.category]}).`
+        : targetDocument.legalType !== documentType
+          ? `Le document remplacé doit avoir le même type juridique (${legalDocumentTypeLabels[targetDocument.legalType]}).`
+          : "";
+
+    setFieldErrors((current) => ({ ...current, relatedDocumentId: mismatchMessage }));
+    if (mismatchMessage) showSnackbar(mismatchMessage);
+  }, [availableDocuments, category, documentType, relationType, showSnackbar]);
 
   const fileMeta: FileMeta | null = useMemo(() => {
     if (!selectedFile) return null;
@@ -403,7 +448,7 @@ export function useImportDocumentViewModel() {
   }, [availableDocuments, relationSearch]);
 
   return {
-    // state
+    // Etat
     selectedFile,
     category,
     title,
@@ -424,15 +469,15 @@ export function useImportDocumentViewModel() {
     fieldErrors,
     snackbar,
     isIndexed,
-    // computed
+    // Valeurs calculees
     fileMeta,
     steps,
     relatedDocumentOptions,
-    // options
+    // Options de formulaire
     categoryOptions,
     legalDocumentTypeOptions,
     legalRelationTypeOptions,
-    // actions
+    // Actions
     handleFileSelect,
     handleSubmit,
     handleReset,

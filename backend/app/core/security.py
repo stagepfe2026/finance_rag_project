@@ -8,6 +8,7 @@ PBKDF2_ITERATIONS = 120_000
 
 
 def hash_password(password: str) -> str:
+    # Chaque mot de passe recoit un sel unique pour eviter les hashes identiques.
     salt = os.urandom(16).hex()
     digest = hashlib.pbkdf2_hmac(
         PBKDF2_ALGORITHM,
@@ -19,6 +20,7 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, stored_password_hash: str) -> bool:
+    # Les hashes mal formes sont traites comme invalides, sans lever d'erreur au login.
     try:
         scheme, iterations, salt, expected_digest = stored_password_hash.split("$", 3)
     except ValueError:
@@ -38,6 +40,7 @@ def verify_password(plain_password: str, stored_password_hash: str) -> bool:
         salt.encode("utf-8"),
         rounds,
     ).hex()
+    # Comparaison en temps constant pour limiter les fuites par timing.
     return hmac.compare_digest(computed, expected_digest)
 
 

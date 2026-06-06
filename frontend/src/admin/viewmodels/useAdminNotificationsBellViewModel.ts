@@ -55,7 +55,7 @@ export function useAdminNotificationsBellViewModel() {
       await markNotificationAsRead(item.id);
       setItems((prev) => prev.map((n) => n.id === item.id ? { ...n, isRead: true } : n));
     } catch {
-      // silent
+      // Erreur ignoree: la notification restera visible si la mise a jour echoue.
     }
   }, []);
 

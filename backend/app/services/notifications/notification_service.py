@@ -31,6 +31,7 @@ class NotificationConnectionManager:
             self._connections.pop(user_id, None)
 
     async def broadcast_to_user(self, user_id: str, payload: dict) -> None:
+        # Copie de la liste pour pouvoir retirer une websocket fermee pendant l'envoi.
         sockets = list(self._connections.get(user_id, set()))
         for socket in sockets:
             try:
@@ -66,6 +67,7 @@ class NotificationService:
         return self.serialize_notification(notification)
 
     async def alert_document_ready(self, document: DocumentModel) -> None:
+        # Tous les utilisateurs finance sont informes quand un document devient consultable.
         users = self.users_repository.list_by_roles(["FINANCE_USER"])
         created_at = document.indexed_at or datetime.now(UTC)
         notifications = [
@@ -108,6 +110,7 @@ class NotificationService:
         await self._store_and_emit([notification])
 
     async def notify_urgent_reclamation(self, reclamation: "ReclamationModel") -> None:
+        # Les reclamations urgentes sont poussees a tous les administrateurs connectes.
         admins = self.users_repository.list_by_roles(["ADMIN"])
         notifications = [
             NotificationModel(

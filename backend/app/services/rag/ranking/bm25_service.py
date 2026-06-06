@@ -6,17 +6,16 @@ from rank_bm25 import BM25Okapi
 class BM25Service:
     def __init__(self, chunks: list[dict], nlp_provider=None):
         self.chunks = chunks
-        # nlp_provider is FrenchNlpProvider; kept as Any to avoid a circular import.
+        # nlp_provider est FrenchNlpProvider; typage souple pour eviter un import circulaire.
         self._nlp_provider = nlp_provider
         corpus = [self._tokenize(chunk["text"]) for chunk in chunks]
         self.bm25 = BM25Okapi(corpus) if corpus else None
 
     def _tokenize(self, text: str) -> list[str]:
-        """Tokenize with spaCy lemmatization when available, else plain split.
+        """Tokenise avec lemmatisation spaCy si disponible, sinon split simple.
 
-        Using lemmatized forms (e.g. 'applicable' → 'appliquer') dramatically
-        improves recall for French morphological variants.  The plain-split
-        fallback guarantees correctness if the provider is unavailable.
+        Les lemmes ameliorent le rappel sur les variantes morphologiques
+        francaises. Le fallback garantit le fonctionnement sans provider NLP.
         """
         if self._nlp_provider is not None:
             try:

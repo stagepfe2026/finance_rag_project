@@ -1,7 +1,7 @@
 class ChunkingService:
-    # Characters that mark a sentence boundary when they appear at the end of a word token.
+    # Caracteres qui marquent une fin de phrase quand ils terminent un mot.
     _SENTENCE_TERMINALS = (".", "!", "?", "…", ";\n")
-    # Maximum words to scan backwards when looking for a sentence boundary.
+    # Nombre maximal de mots a remonter pour chercher une fin de phrase.
     _BOUNDARY_SCAN_WINDOW = 15
 
     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
@@ -9,7 +9,7 @@ class ChunkingService:
         self.chunk_overlap = chunk_overlap
 
     # ------------------------------------------------------------------
-    # Public API
+    # API publique
     # ------------------------------------------------------------------
 
     def chunk_text(self, text: str) -> list[str]:
@@ -23,8 +23,7 @@ class ChunkingService:
         while start < len(words):
             ideal_end = min(start + self.chunk_size, len(words))
 
-            # Snap the cut point to a sentence boundary so we never split a
-            # legal clause mid-sentence.  Only apply when not at the last word.
+            # Coupe sur une fin de phrase pour eviter de casser une clause juridique.
             end = (
                 self._find_sentence_boundary(words, ideal_end)
                 if ideal_end < len(words)
@@ -38,24 +37,21 @@ class ChunkingService:
             if end >= len(words):
                 break
 
-            # Advance by step relative to the *adjusted* end so overlap is
-            # measured from the actual cut, not the ideal one.
+            # Avance depuis la coupe reelle afin que l'overlap reste coherent.
             start = max(start + 1, end - self.chunk_overlap)
 
         return chunks
 
     # ------------------------------------------------------------------
-    # Private helpers
+    # Helpers prives
     # ------------------------------------------------------------------
 
     @classmethod
     def _find_sentence_boundary(cls, words: list[str], ideal_end: int) -> int:
-        """Return an index near ideal_end that falls after a sentence-final word.
+        """Retourne une position proche de ideal_end apres une fin de phrase.
 
-        Scans backwards from ideal_end within a fixed window.  The word at
-        position i is sentence-final if, after stripping trailing quotes and
-        brackets, it ends with a terminal punctuation mark.  Returns ideal_end
-        unchanged when no boundary is found in the window.
+        La recherche remonte dans une fenetre limitee. Si aucune ponctuation de
+        fin n'est trouvee, la coupe ideale est conservee.
         """
         search_from = max(0, ideal_end - cls._BOUNDARY_SCAN_WINDOW)
         for i in range(ideal_end - 1, search_from - 1, -1):

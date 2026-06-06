@@ -7,6 +7,7 @@ _client: MongoClient | None = None
 
 
 def connect_to_mongo() -> MongoClient:
+    # Client singleton: PyMongo gere deja le pool de connexions en interne.
     global _client
     if _client is None:
         _client = MongoClient(settings.mongodb_uri)
@@ -15,6 +16,7 @@ def connect_to_mongo() -> MongoClient:
 
 
 def get_database() -> Database:
+    # Le nom de base change selon l'environnement via MONGODB_DB_NAME.
     client = connect_to_mongo()
     return client[settings.mongodb_db_name]
 

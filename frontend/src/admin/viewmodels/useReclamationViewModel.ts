@@ -37,6 +37,7 @@ export function useReclamationViewModel() {
 
   async function loadReclamations() {
     try {
+      // Chargement admin centralise pour reutilisation apres traitement ou prise en charge.
       setIsLoading(true);
       const items = await fetchAdminReclamations();
       setReclamations(items);
@@ -69,6 +70,7 @@ export function useReclamationViewModel() {
 
   const filteredReclamations = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
+    // Les filtres restent cote client car la liste admin est courte et doit reagir instantanement.
     return reclamations.filter((item) => {
       const matchesSearch =
         !normalizedSearch ||
@@ -105,6 +107,7 @@ export function useReclamationViewModel() {
   const alreadyHandled = Boolean(selectedReclamation?.adminReplyAt || selectedReclamation?.adminReply);
   const liveStatus: Reclamation["status"] = alreadyHandled
     ? "RESOLVED"
+    // Avant envoi, la saisie d'une reponse montre visuellement que le ticket est en cours.
     : adminReply.trim().length > 0
       ? "IN_PROGRESS"
       : selectedReclamation?.status ?? "PENDING";
@@ -122,6 +125,7 @@ export function useReclamationViewModel() {
 
     try {
       setIsSubmitting(true);
+      // La resolution enregistre la reponse admin et notifie l'utilisateur cote backend.
       const updated = await resolveReclamationAsAdmin(selectedReclamation._id, adminReply, "RESOLVED");
       setReclamations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
       setSnackbar({ open: true, tone: "success", message: "La réclamation a été traitée avec succès." });
@@ -140,6 +144,7 @@ export function useReclamationViewModel() {
     if (!selectedReclamation) return;
     try {
       setIsTaking(true);
+      // La prise en charge verrouille le ticket en "en cours" avant la reponse finale.
       const updated = await takeReclamationAsAdmin(selectedReclamation._id);
       setReclamations((current) => current.map((item) => (item._id === updated._id ? updated : item)));
       setSnackbar({ open: true, tone: "success", message: "Reclamation prise en charge avec succes." });

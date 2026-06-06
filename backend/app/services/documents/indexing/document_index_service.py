@@ -92,6 +92,14 @@ class DocumentIndexService:
             relation_type=relation_type,
             related_document_id=related_document_id,
         )
+        # Meme regle que le frontend: un document ne peut remplacer qu'un document
+        # de meme categorie et de meme type juridique.
+        self._validate_replacement_target(
+            relation_type=str(prepared_legal_metadata["relation_type"]),
+            related_document_id=prepared_legal_metadata["related_document_id"],
+            category=category,
+            document_type=str(prepared_legal_metadata["document_type"]),
+        )
         if self.document_repository.already_exists(
             title=title,
             category=category,
@@ -182,6 +190,38 @@ class DocumentIndexService:
                 except Exception:
                     pass
             raise
+
+    def _validate_replacement_target(
+        self,
+        *,
+        relation_type: str,
+        related_document_id: str | None,
+        category: str,
+        document_type: str,
+    ) -> None:
+        if relation_type != "remplace":
+            return
+
+        # Validation serveur indispensable: elle protege l'API meme si le formulaire
+        # frontend est contourne ou si les donnees chargees cote client sont obsoletes.
+        if not related_document_id:
+            raise HTTPException(status_code=400, detail="Selectionnez le document a remplacer.")
+
+        target_document = self.document_repository.get_by_id(related_document_id)
+        if target_document is None or target_document.deleted_at is not None:
+            raise HTTPException(status_code=404, detail="Le document a remplacer est introuvable.")
+
+        if target_document.category != category:
+            raise HTTPException(
+                status_code=400,
+                detail="Le document remplace doit appartenir a la meme categorie.",
+            )
+
+        if target_document.legal_type != document_type:
+            raise HTTPException(
+                status_code=400,
+                detail="Le document remplace doit avoir le meme type juridique.",
+            )
 
     def list_documents(
         self,

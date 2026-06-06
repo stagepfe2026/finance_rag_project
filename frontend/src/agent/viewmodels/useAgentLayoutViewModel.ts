@@ -36,7 +36,7 @@ export function useAgentLayoutViewModel() {
   const notifiedMessageIdsRef = useRef<Set<string>>(new Set());
   const locationRef           = useRef(location);
 
-  // Keep locationRef current so polling callbacks always read the live route
+  // Garde la route courante accessible aux callbacks de polling.
   useEffect(() => { locationRef.current = location; });
 
   useEffect(() => {

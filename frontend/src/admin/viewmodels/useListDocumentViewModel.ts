@@ -34,7 +34,7 @@ const emptyPreview: DocumentPreview = {
   extractedText: "",
 };
 
-// ─── Pure helper functions ────────────────────────────────────────────────────
+// Fonctions pures utilisees pour garder le rendu et l'export lisibles.
 function formatDocumentDate(document: DocumentItem) {
   const rawDate = document.issuedAt || document.indexedAt || document.createdAt;
   if (!rawDate) return "-";
@@ -78,6 +78,7 @@ function normalizeFileType(fileType: string) {
 }
 
 function sanitizeFilenamePart(value: string) {
+  // Nom de fichier compatible Windows/Linux, sans accents ni caracteres speciaux.
   return value
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -92,7 +93,7 @@ function makeFilename(extension: "pdf" | "xlsx") {
   return `documents-export-${sanitizeFilenamePart(stamp)}.${extension}`;
 }
 
-// ─── ViewModel ───────────────────────────────────────────────────────────────
+// ViewModel: centralise les filtres, actions document et exports de la page.
 export function useListDocumentViewModel() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | DocumentCategoryValue>("all");
@@ -117,6 +118,7 @@ export function useListDocumentViewModel() {
     let cancelled = false;
 
     async function loadDocuments() {
+      // Recharge la liste a chaque changement de filtre, avec protection contre les retours tardifs.
       setIsLoading(true);
       closeSnackbar();
 
@@ -187,6 +189,7 @@ export function useListDocumentViewModel() {
     const normalizedType = document.fileType.toLowerCase();
 
     if (normalizedType.includes("pdf")) {
+      // Pour les PDF, le panneau affiche un lien direct vers le fichier au lieu de charger le texte.
       setPreviewDocument(null);
       return;
     }
@@ -236,6 +239,7 @@ export function useListDocumentViewModel() {
         documentId: documentToDelete.id,
       });
       if (result.data) {
+        // On remplace localement la ligne pour refléter le statut abroge sans recharger toute la page.
         setDocuments((current) =>
           current.map((item) => (item.id === documentToDelete.id ? result.data ?? item : item)),
         );
@@ -290,6 +294,7 @@ export function useListDocumentViewModel() {
       closeSnackbar();
       setIsExportingPdf(true);
 
+      // Les exports reprennent les donnees deja filtrees a l'ecran.
       const rows = documents.map((document) => ({
         title: document.title || "-",
         category: document.category || "-",

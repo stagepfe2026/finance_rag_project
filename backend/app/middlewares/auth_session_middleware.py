@@ -15,6 +15,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
         self.users_repo = UsersRepository()
 
     async def dispatch(self, request: Request, call_next):
+        # Ces valeurs sont lues par les dependances FastAPI d'authentification.
         request.state.current_user = None
         request.state.current_session = None
         request.state.session_expires_at = None
@@ -22,12 +23,14 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
 
         raw_token = request.cookies.get(settings.auth_session_cookie_name)
         if raw_token:
+            # Le cookie contient le token brut; MongoDB ne stocke que son hash.
             token_hash = hash_session_token(raw_token)
             session = self.sessions_repo.find_by_token(token_hash)
             if session:
                 now = datetime.now(UTC)
 
                 if session.absolute_expires_at <= now or session.refresh_expires_at <= now:
+                    # Fin definitive de session: duree max ou refresh expire.
                     self.sessions_repo.close(
                         session.id or "",
                         reason="SESSION_MAX_DURATION_EXPIRED",
@@ -35,6 +38,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                     )
                     request.state.session_error_code = "SESSION_MAX_DURATION_EXPIRED"
                 elif session.idle_expires_at <= now:
+                    # Session inactive trop longtemps: on force une reconnexion.
                     self.sessions_repo.close(
                         session.id or "",
                         reason="SESSION_IDLE_TIMEOUT",
@@ -43,6 +47,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                     request.state.session_error_code = "SESSION_IDLE_TIMEOUT"
                 else:
                     if session.access_expires_at <= now:
+                        # Renouvellement court de l'access token tant que refresh/absolute restent valides.
                         new_access_expiry = min(
                             now + timedelta(minutes=settings.auth_access_token_minutes),
                             session.refresh_expires_at,
@@ -54,6 +59,7 @@ class AuthSessionMiddleware(BaseHTTPMiddleware):
                         )
                         session.access_expires_at = new_access_expiry
 
+                    # Toute requete authentifiee prolonge l'inactivite autorisee.
                     new_idle_expiry = min(
                         now + timedelta(minutes=settings.auth_session_idle_minutes),
                         session.absolute_expires_at,

@@ -42,6 +42,7 @@ export function useRechercheDocumentViewModel() {
   const [previewError, setPreviewError] = useState("");
 
   const recentSearchesStorageKey = useMemo(
+    // Historique separe par utilisateur pour eviter de melanger les recherches entre comptes.
     () => `${RECENT_DOCUMENT_SEARCHES_KEY}:${user?.id ?? "anonymous"}`,
     [user?.id],
   );
@@ -74,6 +75,7 @@ export function useRechercheDocumentViewModel() {
       return;
     }
 
+    // Petit debounce: on n'enregistre pas une recherche a chaque frappe clavier.
     const timer = window.setTimeout(() => {
       setRecentSearches((current) => {
         const next = [keyword, ...current.filter((item) => item.toLowerCase() !== keyword.toLowerCase())].slice(
@@ -91,6 +93,7 @@ export function useRechercheDocumentViewModel() {
   }, [query, recentSearchesStorageKey]);
 
   const filtersSignature = useMemo(
+    // Signature stable pour declencher la recherche quand un filtre change, sans multiplier les dependances.
     () =>
       JSON.stringify({
         query,
@@ -131,6 +134,7 @@ export function useRechercheDocumentViewModel() {
 
     const timer = window.setTimeout(async () => {
       try {
+        // Debounce de recherche pour ne pas appeler l'API a chaque modification instantanee.
         setIsLoading(true);
         setPageError("");
 
@@ -153,6 +157,7 @@ export function useRechercheDocumentViewModel() {
         setTotal(response.total);
 
         setSelectedDocument((current) =>
+          // Priorite au document demande par URL, puis conservation de la selection actuelle.
           response.items.find((item) => item.id === requestedDocumentId) ??
           response.items.find((item) => item.id === current?.id) ??
           null,
@@ -190,6 +195,7 @@ export function useRechercheDocumentViewModel() {
 
     async function loadPreview() {
       try {
+        // L'aperçu est charge a part pour garder la liste de resultats rapide.
         setPreviewLoading(true);
         setPreviewError("");
 

@@ -24,6 +24,7 @@ class DocumentPipelineService:
         self.legal_status_service = legal_status_service
 
     def parse_and_chunk(self, file_path: str, extension: str) -> tuple[str, list[str]]:
+        # Pipeline texte: extraction brute, nettoyage NLP, puis decoupage en chunks RAG.
         raw_text = self.parser_service.parse_document(file_path, extension)
         cleaned_text = self.nlp_service.preprocess_document(raw_text)
 
@@ -53,6 +54,7 @@ class DocumentPipelineService:
         issued_at: str | None,
         chunks: list[str],
     ) -> int:
+        # Les embeddings et les chunks doivent rester dans le meme ordre pour Qdrant.
         embeddings = self.embedding_service.generate_embeddings(chunks)
         inserted_count = self.qdrant_repository.save_chunks(
             category=category,
@@ -90,6 +92,7 @@ class DocumentPipelineService:
         related_document_title: str | None,
         issued_at: str | None,
     ) -> tuple[str, list[str], int]:
+        # Methode pratique utilisee lors des reindexations completes.
         cleaned_text, chunks = self.parse_and_chunk(file_path, extension)
         inserted_count = self.embed_and_upsert(
             category=category,

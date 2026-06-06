@@ -17,8 +17,7 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-# Inline article pattern — mirrors _ARTICLE_RE in nlp_provider to avoid a
-# circular import between the infrastructure and repository layers.
+# Motif article duplique ici pour eviter un import circulaire avec la couche NLP.
 _ARTICLE_RE = re.compile(
     r"(?:Article|Art\.?)\s+"
     r"(?:Premier|1er|\d+(?:bis|ter|quater|quinquies)?)"
@@ -213,6 +212,7 @@ class QdrantRepository:
 
         response = None
         try:
+            # En mode courant, Qdrant filtre les textes futurs grace a date_entree_vigueur.
             response = self.client.query_points(
                 collection_name=collection_name,
                 query=query_vector,
@@ -262,6 +262,7 @@ class QdrantRepository:
 
         while True:
             try:
+                # Scroll pagine tout le corpus d'une categorie pour construire le classement BM25.
                 points, next_offset = self.client.scroll(
                     collection_name=collection_name,
                     scroll_filter=query_filter,
@@ -313,6 +314,7 @@ class QdrantRepository:
             )
 
         if query_mode == "current":
+            # Les questions courantes ne doivent pas utiliser des textes pas encore en vigueur.
             must_conditions.append(
                 FieldCondition(
                     key="date_entree_vigueur",
@@ -326,9 +328,8 @@ class QdrantRepository:
     def _point_to_chunk(point: object, category: str) -> dict:
         payload = getattr(point, "payload", None) or {}
         chunk_text: str = payload.get("text", "")
-        # article_number / article_title: prefer dedicated payload field (set on new
-        # documents); fall back to runtime extraction for legacy documents that were
-        # indexed before these fields were added.
+        # Compatibilite anciens index: si article_number/article_title n'existent pas,
+        # on les recalcule depuis le texte du chunk.
         article_number = payload.get("article_number") or QdrantRepository._extract_article_fields(chunk_text)[0]
         article_title = payload.get("article_title") or QdrantRepository._extract_article_fields(chunk_text)[1]
         return {
@@ -396,4 +397,3 @@ class QdrantRepository:
             document_id=document_id,
             query_mode=query_mode,
         )
-

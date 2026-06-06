@@ -12,6 +12,11 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Preload the cross-encoder reranker so the runtime container can run with
+# HF_HUB_OFFLINE=1 and still keep the full reranking quality.
+ARG RERANKER_MODEL_NAME=cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('${RERANKER_MODEL_NAME}')"
+
 COPY app ./app
 COPY storage ./storage
 

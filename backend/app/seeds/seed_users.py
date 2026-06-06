@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-# Permet d'executer le script depuis le dossier backend.
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+# Permet d'executer le script directement, y compris dans le conteneur Docker.
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from app.core.security import hash_password
 from app.models import UserRole
@@ -13,6 +13,9 @@ def seed_users() -> None:
     repo = UsersRepository()
     repo.ensure_indexes()
 
+    # Comptes de reference pour tester les deux parcours applicatifs:
+    # - ADMIN pour l'administration et l'indexation des documents.
+    # - FINANCE_USER pour l'espace utilisateur et les recherches RAG.
     users = [
         {
             "nom": "Abidi",
@@ -53,6 +56,8 @@ def seed_users() -> None:
     ]
 
     for user in users:
+        # save_oidc_user est reutilise ici pour creer ou mettre a jour le profil
+        # sans dupliquer un compte si le seed est lance plusieurs fois.
         user_id = repo.save_oidc_user(
             nom=user["nom"],
             prenom=user["prenom"],
