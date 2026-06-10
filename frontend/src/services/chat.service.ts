@@ -67,7 +67,7 @@ export async function renameConversation(conversationId: string, summary: string
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ summary }),
+    body: JSON.stringify({ title: summary }),
   });
   const data = await parseJson(response);
 

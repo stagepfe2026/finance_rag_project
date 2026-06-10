@@ -19,7 +19,7 @@ const MAX_RECENT_DOCUMENT_SEARCHES = 5;
 
 export function useRechercheDocumentViewModel() {
   const { user } = useAuth();
-  const { toggleFavoriteDocument } = useOutletContext<UserLayoutContextValue>();
+  const { toggleFavoriteDocument, favoriteDocuments } = useOutletContext<UserLayoutContextValue>();
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -33,6 +33,19 @@ export function useRechercheDocumentViewModel() {
   const [total, setTotal] = useState(0);
 
   const [selectedDocument, setSelectedDocument] = useState<DocumentSearchItem | null>(null);
+
+  // Sync isFavorite dans results quand favoriteDocuments change (ex: retrait depuis le panneau favoris)
+  useEffect(() => {
+    if (results.length === 0) return;
+    const favoriteIds = new Set(favoriteDocuments.map((d) => d.id));
+    setResults((current) =>
+      current.map((entry) => ({ ...entry, isFavorite: favoriteIds.has(entry.id) })),
+    );
+    setSelectedDocument((current) =>
+      current ? { ...current, isFavorite: favoriteIds.has(current.id) } : current,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favoriteDocuments]);
   const [preview, setPreview] = useState<DocumentPreview | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -232,10 +245,10 @@ export function useRechercheDocumentViewModel() {
       const nextValue = await toggleFavoriteDocument(item);
 
       setResults((current) =>
-        current.map((entry) => (entry.id === item.id ? { ...entry, isFavored: nextValue } : entry)),
+        current.map((entry) => (entry.id === item.id ? { ...entry, isFavorite: nextValue } : entry)),
       );
       setSelectedDocument((current) =>
-        current?.id === item.id ? { ...current, isFavored: nextValue } : current,
+        current?.id === item.id ? { ...current, isFavorite: nextValue } : current,
       );
     } catch (error) {
       setPageError(error instanceof Error ? error.message : "Erreur pendant la mise a jour du favori.");

@@ -103,7 +103,7 @@ class AuditService:
         seen: dict[str, dict[str, str]] = {}
         for item in items:
             uid = str(item.get("userId", "")).strip()
-            if uid and uid not in seen:
+            if uid and uid != "system" and uid not in seen:
                 seen[uid] = {
                     "value": uid,
                     "label": str(item.get("userName", "") or item.get("userEmail", "") or uid),
