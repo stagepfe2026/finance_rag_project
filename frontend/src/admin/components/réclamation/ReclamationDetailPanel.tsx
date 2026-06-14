@@ -83,11 +83,6 @@ export default function ReclamationDetailPanel({
         </span>
       </div>
 
-      {/* EMAIL */}
-      <div className="admin-reclamation-email flex-shrink-0 border-b border-[#f0f3f8] bg-[#fcfdfe] px-3.5 py-1 text-[10px] text-[#8a96ad]">
-        {reclamation.userEmail}
-      </div>
-
       {/* BODY */}
       <div className="flex-1 overflow-y-auto">
 

@@ -2,6 +2,7 @@ from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
 
+# Crée un index unique partiel sur un champ string, en le recréant si la définition a changé.
 def create_partial_unique_string_index(collection: Collection, field_name: str) -> None:
     index_name = f"{field_name}_1"
     try:

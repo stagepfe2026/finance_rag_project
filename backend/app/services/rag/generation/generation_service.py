@@ -3,9 +3,11 @@ from app.infrastructure.generation.base_generation_provider import BaseGeneratio
 
 
 class GenerationService:
+    # Initialise le service avec le fournisseur de generation LLM.
     def __init__(self, provider: BaseGenerationProvider):
         self.provider = provider
 
+    # Genere une reponse textuelle via le fournisseur LLM configure.
     def generate_answer(
         self,
         prompt: str,

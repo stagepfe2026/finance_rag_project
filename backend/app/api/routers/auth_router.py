@@ -10,11 +10,10 @@ from app.core.config import settings
 from app.schemas import (
     AuthResponse,
     LoginRequest,
-    OidcLoginStartOut,
     SessionInfoOut,
 )
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -90,45 +89,6 @@ async def login(payload: LoginRequest, request: Request):
     try_log_audit(request, "log_login_success", current_user=auth_service._to_auth_user(result["user"]))
     return response
 
-
-@router.get("/oidc/login", response_model=OidcLoginStartOut)
-async def begin_sso_login(request: Request):
-    auth_service = get_auth_service(request)
-    result = await auth_service.begin_sso_login()
-    response = JSONResponse(content={"authorization_url": result["authorization_url"]})
-    response.set_cookie(
-        key="rag_finance_oidc_state",
-        value=result["state"],
-        max_age=600,
-        httponly=True,
-        secure=settings.auth_cookie_secure,
-        samesite=settings.auth_cookie_samesite,
-        domain=settings.auth_cookie_domain,
-        path="/",
-    )
-    return response
-
-
-@router.get("/callback")
-async def oidc_callback(request: Request, code: str, state: str | None = None):
-    auth_service = get_auth_service(request)
-    expected_state = request.cookies.get("rag_finance_oidc_state")
-    if expected_state and state != expected_state:
-        return RedirectResponse(url=f"{settings.auth_frontend_base_url}/login?error=oidc_state")
-
-    try:
-        result = await auth_service.complete_sso_login(code=code)
-    except Exception:
-        return RedirectResponse(url=f"{settings.auth_frontend_base_url}/login?error=oidc_callback")
-
-    response = RedirectResponse(url=f"{settings.auth_frontend_base_url}{result['redirect_to']}")
-    _apply_session_cookies(
-        response,
-        session_token=result["session_token"],
-        csrf_token=result["csrf_token"],
-    )
-    response.delete_cookie("rag_finance_oidc_state", domain=settings.auth_cookie_domain, path="/")
-    return response
 
 
 @router.get("/session", response_model=SessionInfoOut)

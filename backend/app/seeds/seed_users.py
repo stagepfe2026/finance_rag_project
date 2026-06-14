@@ -36,6 +36,24 @@ def seed_users() -> None:
             "member_since": "2018-01-15",
         },
         {
+            "nom": "Ben Ahmed",
+            "prenom": "Oussama",
+            "email": "oussmabenahmed@gmail.com",
+            "password": "password123",
+            "role": UserRole.ADMIN.value,
+            "telephone": "+216 71 333 220",
+            "avatar_url": "https://randomuser.me/api/portraits/men/52.jpg",
+            "adresse": "Rue de la Liberte, Sfax",
+            "birth_date": "1987-09-23",
+            "direction": "Direction des systemes d information",
+            "service": "Service securite et conformite",
+            "poste": "Administrateur systeme",
+            "matricule": "MAT-ADM-2024-0002",
+            "bureau": "Batiment A, Bureau 215",
+            "manager": "Secretaire general des finances",
+            "member_since": "2020-03-10",
+        },
+        {
             "nom": "Ben Ali",
             "prenom": "Ahmed",
             "email": "ahmed_benali@cimf.local",
@@ -53,12 +71,28 @@ def seed_users() -> None:
             "manager": "Fatima Zahra El Amrani",
             "member_since": "2015-09-01",
         },
+        {
+            "nom": "Najar",
+            "prenom": "Assma",
+            "email": "assmanajar@gmail.com",
+            "password": "password123",
+            "role": UserRole.FINANCE_USER.value,
+            "telephone": "+216 71 444 330",
+            "avatar_url": "https://randomuser.me/api/portraits/women/44.jpg",
+            "adresse": "Avenue de la Republique, Sousse",
+            "birth_date": "1992-06-14",
+            "direction": "Direction du controle fiscal",
+            "service": "Service contentieux et recouvrement",
+            "poste": "Analyste financiere",
+            "matricule": "MAT-2024-56789",
+            "bureau": "Batiment C, Bureau 112",
+            "manager": "Khaled Mansouri",
+            "member_since": "2022-07-01",
+        },
     ]
 
     for user in users:
-        # save_oidc_user est reutilise ici pour creer ou mettre a jour le profil
-        # sans dupliquer un compte si le seed est lance plusieurs fois.
-        user_id = repo.save_oidc_user(
+        user_id = repo.upsert_user(
             nom=user["nom"],
             prenom=user["prenom"],
             email=user["email"],
@@ -79,8 +113,10 @@ def seed_users() -> None:
         print(f"[seed] user={user['email']} role={user['role']} id={user_id}")
 
     print("\nCredentials de test:")
-    print("- hatem_abidi@cimf.local / password123 (ADMIN)")
-    print("- ahmed_benali@cimf.local / password123 (FINANCE_USER)")
+    print("- hatem_abidi@cimf.local    / password123 (ADMIN)")
+    print("- oussmabenahmed@gmail.com  / password123 (ADMIN)")
+    print("- ahmed_benali@cimf.local   / password123 (FINANCE_USER)")
+    print("- assmanajar@gmail.com      / password123 (FINANCE_USER)")
 
 
 if __name__ == "__main__":

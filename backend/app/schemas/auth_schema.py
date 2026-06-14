@@ -43,5 +43,3 @@ class AuthResponse(BaseModel):
     session: SessionInfoOut | None = None
 
 
-class OidcLoginStartOut(BaseModel):
-    authorization_url: str

@@ -37,6 +37,7 @@ class LegalRankingService:
         "entre les",
     }
 
+    # Classifie la question en profil courant, historique ou comparatif.
     def classify_question(self, question: str) -> str:
         lowered_question = question.lower()
         years = re.findall(r"\b(?:19|20)\d{2}\b", lowered_question)
@@ -50,6 +51,7 @@ class LegalRankingService:
             return "current"
         return "current"
 
+    # Calcule un bonus de pertinence juridique pour un chunk selon le profil de la question.
     def score_legal_relevance(
         self,
         chunk: dict,
@@ -90,6 +92,7 @@ class LegalRankingService:
 
         return status_bonus + recency_bonus
 
+    # Calcule un bonus de recence base sur la date du chunk.
     @staticmethod
     def _compute_recency_bonus(chunk: dict) -> float:
         date_value = chunk.get("date_entree_vigueur") or chunk.get("date_publication") or chunk.get("realized_at")

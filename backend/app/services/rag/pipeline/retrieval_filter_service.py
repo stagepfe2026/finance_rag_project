@@ -23,14 +23,17 @@ _NUMERIC_PATTERNS: list[re.Pattern[str]] = [
 _PERCENT_SPACE_RE = re.compile(r"(\d)\s+%")
 
 
+# Normalise les pourcentages en supprimant l'espace avant le symbole %.
 def _normalize_numbers(text: str) -> str:
     return _PERCENT_SPACE_RE.sub(r"\1%", text)
 
 
 class RetrievalFilterService:
+    # Initialise le service avec le service NLP pour l'analyse des tokens.
     def __init__(self, nlp_service: NLPService):
         self.nlp_service = nlp_service
 
+    # Filtre les chunks pertinents selon les seuils de score vectoriel, lexical et final.
     def _filter_relevant_chunks(self, ranked_chunks: list[dict]) -> list[dict]:
         # .get() evite un KeyError sur les chunks lies scores sans lexical_score.
         candidates = [
@@ -42,6 +45,7 @@ class RetrievalFilterService:
         ]
         return self._apply_relative_threshold(candidates)
 
+    # Filtre les chunks pertinents selon les seuils de score RRF et final.
     def _filter_relevant_chunks_rrf(self, ranked_chunks: list[dict]) -> list[dict]:
         candidates = [
             chunk for chunk in ranked_chunks
@@ -50,6 +54,7 @@ class RetrievalFilterService:
         ]
         return self._apply_relative_threshold(candidates)
 
+    # Filtre les chunks scores uniquement par vecteur, sans BM25 ni RRF.
     def _filter_relevant_chunks_vector(self, ranked_chunks: list[dict]) -> list[dict]:
         """Filtre les chunks scores uniquement par vecteur, sans BM25/RRF.
 
@@ -63,6 +68,7 @@ class RetrievalFilterService:
         ]
         return self._apply_relative_threshold(candidates)
 
+    # Retire les chunks dont le score est trop faible par rapport au meilleur resultat.
     @staticmethod
     def _apply_relative_threshold(chunks: list[dict]) -> list[dict]:
         """Retire les chunks trop faibles par rapport au meilleur resultat.
@@ -78,6 +84,7 @@ class RetrievalFilterService:
         cutoff = best * 0.40
         return [c for c in chunks if c.get("final_score", 0.0) >= cutoff]
 
+    # Deduplique une liste de chunks sur la cle (document_id, chunk_index).
     @staticmethod
     def _dedupe_chunks(chunks: list[dict]) -> list[dict]:
         deduped: list[dict] = []
@@ -95,6 +102,7 @@ class RetrievalFilterService:
 
         return deduped
 
+    # Filtre les chunks pour ne garder que ceux dont le statut juridique est actif.
     @staticmethod
     def _filter_current_applicable_chunks(chunks: list[dict]) -> list[dict]:
         return [
@@ -103,6 +111,7 @@ class RetrievalFilterService:
             if str(chunk.get("legal_status", "actif")).strip() == "actif"
         ]
 
+    # Construit la liste finale de chunks en fusionnant les chunks principaux et lies.
     def _build_final_chunks(
         self,
         *,
@@ -162,6 +171,7 @@ class RetrievalFilterService:
         merged_chunks.sort(key=lambda item: item["final_score"], reverse=True)
         return merged_chunks[: settings.final_top_k]
 
+    # Retourne True si la reponse contient un nombre sensible absent du contexte.
     @staticmethod
     def _has_unsupported_numbers(
         answer: str,
@@ -214,6 +224,7 @@ class RetrievalFilterService:
                         return True
         return False
 
+    # Determine si la reponse generee doit etre remplacee par le message de fallback.
     def _needs_fallback(
         self,
         answer: str,

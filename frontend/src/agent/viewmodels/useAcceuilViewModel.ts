@@ -11,7 +11,6 @@ import type {
   RecentDocumentItem,
 } from "../../models/acceuil";
 
-// ─── Pure helper functions ────────────────────────────────────────────────────
 function formatRelativeDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -39,7 +38,6 @@ function formatDocumentDate(document: DocumentItem) {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short" }).format(date);
 }
 
-// ─── ViewModel ───────────────────────────────────────────────────────────────
 export function useAcceuilViewModel() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Utilisateur");

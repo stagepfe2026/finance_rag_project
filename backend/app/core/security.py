@@ -52,9 +52,5 @@ def hash_session_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-def generate_state_token() -> str:
-    return secrets.token_urlsafe(24)
-
-
 def generate_csrf_token() -> str:
     return secrets.token_urlsafe(24)

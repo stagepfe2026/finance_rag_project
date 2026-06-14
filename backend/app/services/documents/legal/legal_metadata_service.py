@@ -7,10 +7,12 @@ from fastapi import HTTPException
 
 
 class LegalMetadataService:
+    # Initialise le service avec le repository de documents et le service de statut juridique.
     def __init__(self, document_repository: DocumentRepository | None = None) -> None:
         self.document_repository = document_repository or DocumentRepository()
         self.legal_status_service = LegalStatusService(self.document_repository)
 
+    # Valide et construit les metadonnees juridiques normalisees d'un document.
     def build_legal_metadata(
         self,
         *,
@@ -68,6 +70,7 @@ class LegalMetadataService:
             "related_document_id": normalized_related_document_id,
         }
 
+    # Verifie que le document cible existe et n'est pas supprime.
     def validate_target_exists(self, document_id: str) -> None:
         normalized_document_id = document_id.strip()
         if not normalized_document_id:
@@ -83,6 +86,7 @@ class LegalMetadataService:
                 ),
             )
 
+    # Valide que le type de document fait partie des valeurs autorisees.
     @staticmethod
     def _validate_document_type(document_type: str) -> None:
         allowed = {item.value for item in LegalDocumentType}
@@ -92,6 +96,7 @@ class LegalMetadataService:
                 detail="Le type de document est obligatoire.",
             )
 
+    # Valide que le type de relation fait partie des valeurs autorisees.
     @staticmethod
     def _validate_relation_type(relation_type: str) -> None:
         allowed = {item.value for item in LegalRelationType}

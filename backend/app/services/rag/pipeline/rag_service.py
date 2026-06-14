@@ -23,6 +23,7 @@ _SOURCE_TAG_RE = re.compile(r"[\s,]*\[Source\s*\d+\][\s,]*")
 
 
 class RagService:
+    # Initialise le service RAG et construit tous les sous-services internes.
     def __init__(
         self,
         embedding_service: EmbeddingService,
@@ -62,6 +63,7 @@ class RagService:
 
         self.logger = logging.getLogger(__name__)
 
+    # Orchestre le pipeline RAG complet et retourne la reponse avec les sources.
     def answer(
         self,
         question: str,
@@ -283,6 +285,7 @@ class RagService:
             "sources": self.document_context_service._build_document_sources(final_chunks),
         }
 
+    # Enrichit la requete de recherche avec les mots cles de l'echange precedent.
     @staticmethod
     def _build_retrieval_query(question: str, conversation_history: str | None) -> str:
         """Enrichit la requete de recherche avec les mots de l'echange precedent.
@@ -347,6 +350,7 @@ class RagService:
         enrichment = " ".join(combined[:20])  # limite a 20 mots pour ne pas diluer le vecteur
         return f"{question} {enrichment}"
 
+    # Supprime les balises [Source N] de la reponse generee.
     @staticmethod
     def _strip_source_tags(answer: str) -> str:
         cleaned = _SOURCE_TAG_RE.sub(" ", answer)

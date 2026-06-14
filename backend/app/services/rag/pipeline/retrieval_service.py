@@ -11,6 +11,7 @@ from app.services.rag.ranking.legal_ranking_service import LegalRankingService
 
 
 class RetrievalService:
+    # Initialise le service de recuperation avec les repositories et services NLP/ranking.
     def __init__(
         self,
         qdrant_repository: QdrantRepository,
@@ -28,9 +29,11 @@ class RetrievalService:
         self.legal_ranking_service = legal_ranking_service
         self.logger = logging.getLogger(__name__)
 
+    # Tokenise un texte en ensemble de tokens pour la recherche lexicale.
     def _tokenize(self, text: str) -> set[str]:
         return self.nlp_service.tokenize_for_lexical_search(text)
 
+    # Calcule le taux de recouvrement de tokens entre la question et un chunk de texte.
     def _compute_lexical_overlap_score(self, question: str, chunk_text: str) -> float:
         question_tokens = self._tokenize(question)
         chunk_tokens = self._tokenize(chunk_text)
@@ -41,10 +44,12 @@ class RetrievalService:
         overlap = question_tokens.intersection(chunk_tokens)
         return len(overlap) / len(question_tokens)
 
+    # Calcule le score de correspondance lexicale entre la question et le nom d'une categorie.
     def _compute_category_name_score(self, question: str, category: str) -> float:
         category_label = category.replace("_", " ")
         return self._compute_lexical_overlap_score(question, category_label)
 
+    # Classe les chunks par score vectoriel combine au modificateur juridique.
     def _score_chunks_by_vector(
         self,
         chunks: list[dict],
@@ -70,6 +75,7 @@ class RetrievalService:
         ranked.sort(key=lambda c: c["final_score"], reverse=True)
         return ranked
 
+    # Fusionne les rangs dense et lexical via RRF et applique le modificateur juridique.
     def _rrf_rerank(
         self,
         *,
@@ -107,6 +113,7 @@ class RetrievalService:
         ranked.sort(key=lambda x: x["final_score"], reverse=True)
         return ranked
 
+    # Sonde chaque categorie avec un nombre reduit de chunks pour detecter la meilleure.
     def _probe_categories(
         self,
         question: str,
@@ -157,6 +164,7 @@ class RetrievalService:
         )
         return category_candidates
 
+    # Retourne la categorie Qdrant la plus pertinente pour la question, ou None si aucune.
     def _detect_best_category(
         self,
         question: str,
@@ -186,6 +194,7 @@ class RetrievalService:
 
         return None
 
+    # Collecte les paires (categorie, document_id) des documents lies a un chunk.
     def _collect_related_document_targets(self, chunk: dict) -> list[tuple[str, str]]:
         targets: list[tuple[str, str]] = []
         category = str(chunk.get("category", "")).strip()
@@ -208,6 +217,7 @@ class RetrievalService:
             deduped.append(target)
         return deduped
 
+    # Retourne True si la recuperation de documents lies est necessaire pour ce profil de question.
     def _should_run_related_retrieval(
         self,
         *,
@@ -220,6 +230,7 @@ class RetrievalService:
 
         return any(self._collect_related_document_targets(chunk) for chunk in main_ranked_chunks[:3])
 
+    # Recupere et classe les chunks des documents lies pour la comparaison juridique.
     def _retrieve_related_ranked_chunks(
         self,
         *,
@@ -262,6 +273,7 @@ class RetrievalService:
         related_ranked_chunks.sort(key=lambda item: item["final_score"], reverse=True)
         return dedupe_fn(related_ranked_chunks)
 
+    # Orchestre la detection de categorie, la recuperation dense+BM25, la fusion RRF et les textes lies.
     def retrieve(
         self,
         *,

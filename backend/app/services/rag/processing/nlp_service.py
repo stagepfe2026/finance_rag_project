@@ -4,6 +4,7 @@ from app.services.rag.processing.chunking_service import ChunkingService
 
 
 class NLPService:
+    # Initialise le service NLP avec le fournisseur et la configuration de chunking.
     def __init__(self, provider: FrenchNlpProvider):
         self.provider = provider
         self.chunking_service = ChunkingService(
@@ -11,9 +12,11 @@ class NLPService:
             chunk_overlap=settings.chunk_overlap,
         )
 
+    # Nettoie et normalise un texte brut de document.
     def preprocess_document(self, text: str) -> str:
         return self.provider.clean_text(text)
 
+    # Decoupe un texte en chunks en preservant la structure par article.
     def prepare_chunks(self, text: str) -> list[str]:
         cleaned_text = self.preprocess_document(text)
         article_chunks = self.provider.chunk_by_article(cleaned_text)
@@ -32,8 +35,10 @@ class NLPService:
 
         return self.chunking_service.chunk_text(cleaned_text)
 
+    # Nettoie et normalise une requete utilisateur avant la recherche.
     def preprocess_query(self, text: str) -> str:
         return self.provider.clean_text(text)
 
+    # Tokenise un texte en tokens lemmatises pour la recherche lexicale.
     def tokenize_for_lexical_search(self, text: str) -> set[str]:
         return self.provider.tokenize_for_lexical_search(text)

@@ -13,6 +13,7 @@ class DashboardService:
     _SLA_MINUTES: dict[str, int] = {"URGENT": 240, "HIGH": 1440, "NORMAL": 4320, "LOW": 10080}
     _DUE_SOON_MINUTES: dict[str, int] = {"URGENT": 60, "HIGH": 360, "NORMAL": 1080, "LOW": 2520}
 
+    # Calcule le statut SLA d'une reclamation par rapport a la date limite.
     @staticmethod
     def _sla_status(rec: ReclamationModel, now: datetime) -> str:
         sla_min = DashboardService._SLA_MINUTES.get(rec.priority, 4320)
@@ -28,6 +29,7 @@ class DashboardService:
         due_soon = DashboardService._DUE_SOON_MINUTES.get(rec.priority, 1080)
         return "DUE_SOON" if remaining <= due_soon else "ON_TIME"
 
+    # Initialise le service avec les repositories et le service de notifications.
     def __init__(self, notification_service: NotificationService):
         self.documents_repository = DocumentRepository()
         self.reclamation_repository = ReclamationRepository()
@@ -35,6 +37,7 @@ class DashboardService:
         self.users_repository = UsersRepository()
         self.notification_service = notification_service
 
+    # Normalise un type MIME ou extension de fichier en libelle lisible.
     @staticmethod
     def _format_file_type(file_type: str) -> str:
         normalized = (file_type or "").strip().lower()
@@ -49,6 +52,7 @@ class DashboardService:
             return "Word"
         return file_type or "-"
 
+    # Construit le tableau de bord personnalise pour un utilisateur finance.
     def build_user_dashboard(self, current_user: dict) -> dict:
         prenom = str(current_user.get("prenom", "")).strip()
         nom = str(current_user.get("nom", "")).strip()
@@ -68,6 +72,7 @@ class DashboardService:
             "notifications": self.notification_service.list_notifications(current_user, limit=8)["items"],
         }
 
+    # Construit le tableau de bord administrateur avec toutes les statistiques.
     def build_admin_dashboard(self) -> dict:
         documents = self.documents_repository.latest_created(limit=500)
         indexed_documents = self.documents_repository.latest_indexed(limit=6)

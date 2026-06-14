@@ -48,12 +48,6 @@ class QdrantRepository:
         self._create_payload_indexes(collection_name)
 
     def _create_payload_indexes(self, collection_name: str) -> None:
-        """Create payload indexes for fields used in filters or score boosting.
-
-        Without indexes, every filter triggers a full collection scan.
-        Index creation is best-effort: errors are logged but not re-raised
-        because the indexes are an optimisation, not a correctness requirement.
-        """
         field_schemas: list[tuple[str, object]] = [
             ("document_id", PayloadSchemaType.KEYWORD),
             ("legal_status", PayloadSchemaType.KEYWORD),
@@ -134,24 +128,12 @@ class QdrantRepository:
 
     @staticmethod
     def _stable_point_id(document_id: str, chunk_index: int) -> int:
-        """Return a collision-resistant 63-bit integer ID.
-
-        Python's built-in hash() is randomised per process (PYTHONHASHSEED),
-        so the same document+index pair can produce a different ID after a
-        restart, potentially creating orphan or duplicate Qdrant points.
-        SHA-256 is deterministic across restarts and environments.
-        """
         raw = f"{document_id}:{chunk_index}".encode()
         return int(hashlib.sha256(raw).hexdigest()[:15], 16)  # 60-bit, always positive
 
     @staticmethod
     def _extract_article_fields(chunk_text: str) -> tuple[str | None, str | None]:
-        """Extract (article_number, article_title) from the first line of a chunk.
-
-        Handles both plain article headers ('Article 5 - Titre') and the
-        bracket-prefixed continuation format ('[Article 5 - Titre] ...').
-        Returns (None, None) when the chunk does not start with an article marker.
-        """
+        
         first_part = (
             chunk_text.lstrip("[").split("]", 1)[0]
             if chunk_text.startswith("[")
@@ -275,9 +257,7 @@ class QdrantRepository:
                 if query_mode != "current":
                     raise
                 self.logger.warning(
-                    "Qdrant scroll datetime filter FAILED for collection=%s (query_mode=current). "
-                    "Retrying without date filter — BM25 corpus may include future documents. "
-                    "Re-index the collection to fix the date_entree_vigueur payload index.",
+                    
                     collection_name,
                     exc_info=True,
                 )
@@ -328,8 +308,6 @@ class QdrantRepository:
     def _point_to_chunk(point: object, category: str) -> dict:
         payload = getattr(point, "payload", None) or {}
         chunk_text: str = payload.get("text", "")
-        # Compatibilite anciens index: si article_number/article_title n'existent pas,
-        # on les recalcule depuis le texte du chunk.
         article_number = payload.get("article_number") or QdrantRepository._extract_article_fields(chunk_text)[0]
         article_title = payload.get("article_title") or QdrantRepository._extract_article_fields(chunk_text)[1]
         return {

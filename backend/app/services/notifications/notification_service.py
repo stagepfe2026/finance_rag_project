@@ -15,13 +15,16 @@ from fastapi import WebSocket
 
 
 class NotificationConnectionManager:
+    # Initialise le gestionnaire avec un dictionnaire de connexions WebSocket par utilisateur.
     def __init__(self) -> None:
         self._connections: dict[str, set[WebSocket]] = defaultdict(set)
 
+    # Accepte une connexion WebSocket et l'enregistre pour l'utilisateur.
     async def connect(self, user_id: str, websocket: WebSocket) -> None:
         await websocket.accept()
         self._connections[user_id].add(websocket)
 
+    # Retire une connexion WebSocket fermee pour l'utilisateur.
     def disconnect(self, user_id: str, websocket: WebSocket) -> None:
         sockets = self._connections.get(user_id)
         if not sockets:
@@ -30,6 +33,7 @@ class NotificationConnectionManager:
         if not sockets:
             self._connections.pop(user_id, None)
 
+    # Envoie un payload JSON a toutes les connexions actives d'un utilisateur.
     async def broadcast_to_user(self, user_id: str, payload: dict) -> None:
         # Copie de la liste pour pouvoir retirer une websocket fermee pendant l'envoi.
         sockets = list(self._connections.get(user_id, set()))
@@ -41,6 +45,7 @@ class NotificationConnectionManager:
 
 
 class NotificationService:
+    # Initialise le service avec le gestionnaire WebSocket et les repositories necessaires.
     def __init__(self, manager: NotificationConnectionManager):
         self.manager = manager
         self.repository = NotificationRepository()
@@ -49,16 +54,19 @@ class NotificationService:
         self.sessions_repository = SessionsRepository()
         self.document_favorite_repository = DocumentFavoriteRepository()
 
+    # Cree les index MongoDB necessaires aux notifications et favoris.
     def ensure_indexes(self) -> None:
         self.repository.ensure_indexes()
         self.document_favorite_repository.ensure_indexes()
 
+    # Retourne les notifications de l'utilisateur courant avec le total.
     def list_notifications(self, current_user: dict, *, limit: int = 20) -> dict:
         user_id = str(current_user.get("id", "")).strip()
         items = self.repository.list_for_user(user_id, limit=limit)
         serialized = [self.serialize_notification(item) for item in items]
         return {"items": serialized, "total": len(serialized)}
 
+    # Marque une notification comme lue et retourne la notification mise a jour.
     def mark_as_read(self, current_user: dict, notification_id: str) -> dict:
         user_id = str(current_user.get("id", "")).strip()
         notification = self.repository.mark_read(notification_id, user_id)
@@ -66,6 +74,7 @@ class NotificationService:
             raise ValueError("NOTIFICATION_NOT_FOUND")
         return self.serialize_notification(notification)
 
+    # Notifie tous les utilisateurs finance qu'un nouveau document est disponible.
     async def alert_document_ready(self, document: DocumentModel) -> None:
         # Tous les utilisateurs finance sont informes quand un document devient consultable.
         users = self.users_repository.list_by_roles(["FINANCE_USER"])
@@ -85,6 +94,7 @@ class NotificationService:
         ]
         await self._store_and_emit(notifications)
 
+    # Notifie l'auteur d'une reclamation que son statut a ete mis a jour par un admin.
     async def notify_reclamation_updated(self, reclamation: ReclamationModel, admin_name: str) -> None:
         if not reclamation.user_id:
             return
@@ -109,6 +119,7 @@ class NotificationService:
         )
         await self._store_and_emit([notification])
 
+    # Notifie tous les administrateurs qu'une reclamation urgente a ete soumise.
     async def notify_urgent_reclamation(self, reclamation: "ReclamationModel") -> None:
         # Les reclamations urgentes sont poussees a tous les administrateurs connectes.
         admins = self.users_repository.list_by_roles(["ADMIN"])
@@ -142,6 +153,7 @@ class NotificationService:
             },
         )
 
+    # Notifie tous les administrateurs qu'une reclamation a depasse son delai SLA.
     async def alert_sla_breach(self, reclamation: "ReclamationModel") -> None:
         admins = self.users_repository.list_by_roles(["ADMIN"])
         now = datetime.now(UTC)
@@ -175,6 +187,7 @@ class NotificationService:
             },
         )
 
+    # Notifie les administrateurs qu'une indexation de document a echoue.
     async def notify_indexation_failed(self, document_title: str, error: str) -> None:
         admins = self.users_repository.list_by_roles(["ADMIN"])
         now = datetime.now(UTC)
@@ -206,6 +219,7 @@ class NotificationService:
             },
         )
 
+    # Notifie les utilisateurs ayant mis en favori un document remplace ou abroge.
     async def notify_document_deprecated_for_favorites(
         self, deprecated_document: "DocumentModel", new_document_title: str
     ) -> None:
@@ -247,6 +261,7 @@ class NotificationService:
             },
         )
 
+    # Authentifie un utilisateur a partir du cookie de session d'une connexion WebSocket.
     def authenticate_websocket_user(self, websocket: WebSocket) -> dict | None:
         raw_token = websocket.cookies.get(settings.auth_session_cookie_name)
         if not raw_token:
@@ -264,6 +279,7 @@ class NotificationService:
         user = self.users_repository.get_by_id(session.user_id)
         return user.to_public_dict() if user else None
 
+    # Serialise un objet NotificationModel en dictionnaire JSON.
     def serialize_notification(self, notification: NotificationModel) -> dict:
         return {
             "id": notification.id or "",
@@ -275,6 +291,7 @@ class NotificationService:
             "createdAt": notification.created_at.isoformat(),
         }
 
+    # Sauvegarde les notifications en base et les diffuse via WebSocket.
     async def _store_and_emit(self, notifications: list[NotificationModel]) -> None:
         created = self.repository.create(notifications)
         for item in created:
@@ -284,6 +301,7 @@ class NotificationService:
                     {"event": "notification.created", "data": self.serialize_notification(item)},
                 )
 
+    # Enregistre un evenement d'audit lie a l'envoi d'une notification.
     def _record_notification_audit(
         self,
         *,
@@ -298,9 +316,6 @@ class NotificationService:
         try:
             self.audit_event_repository.log_event(
                 user_id="system",
-                user_name="Systeme",
-                user_email="",
-                user_role="",
                 action_type=action_type,
                 action_label=action_label,
                 category="Notifications",

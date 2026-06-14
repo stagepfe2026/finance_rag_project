@@ -7,10 +7,12 @@ from app.repositories.chat_repository import ChatRepository
 
 
 class ChatStatsService:
+    # Initialise le service avec le repository de chat.
     def __init__(self, chat_repository: ChatRepository) -> None:
         self.chat_repo = chat_repository
         self.logger = logging.getLogger(__name__)
 
+    # Calcule et retourne les statistiques de feedback des messages du chat.
     def get_feedback_stats(self) -> dict[str, Any]:
         messages = self.chat_repo.list_with_feedback()
         likes = 0
@@ -169,6 +171,7 @@ class ChatStatsService:
             "recentDislikes": recent_dislikes[:8],
         }
 
+    # Tronque un texte a la longueur maximale specifiee en preservant les mots.
     @staticmethod
     def _truncate(content: str, max_length: int) -> str:
         compact = " ".join(content.split())

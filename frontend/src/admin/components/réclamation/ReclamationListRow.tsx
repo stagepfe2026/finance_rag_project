@@ -28,9 +28,6 @@ export default function ReclamationListRow({ item, isSelected, onSelect }: Recla
         <div className="max-w-[260px] truncate">{item.subject}</div>
       </td>
       <td className="border-b border-[#e5eaf2] px-4 py-3 text-xs text-[#5f6680]">
-        <div className="max-w-[220px] truncate">{item.userEmail}</div>
-      </td>
-      <td className="border-b border-[#e5eaf2] px-4 py-3 text-xs text-[#5f6680]">
         {item.priority === "URGENT" ? (
           <span className="inline-flex items-center gap-1 rounded bg-[#f5e6e7] px-2 py-0.5 text-[10px] font-semibold text-[#9d0208]">
             <AlertTriangle size={12} />

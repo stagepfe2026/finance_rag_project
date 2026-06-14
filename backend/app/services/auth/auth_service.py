@@ -2,15 +2,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from urllib.parse import urlencode
-
-import httpx
 from app.core.config import settings
 from app.core.security import (
     generate_csrf_token,
     generate_session_token,
-    generate_state_token,
-    hash_password,
     hash_session_token,
     verify_password,
 )
@@ -19,15 +14,17 @@ from app.repositories import SessionsRepository, UsersRepository
 
 
 class AuthService:
+    # Initialise le service avec les repositories d'utilisateurs et de sessions.
     def __init__(self) -> None:
         self.users_repo = UsersRepository()
         self.sessions_repo = SessionsRepository()
-        self._oidc_metadata_cache: dict[str, Any] | None = None
 
+    # Cree les index MongoDB necessaires aux repositories d'auth.
     def setup_indexes(self) -> None:
         self.users_repo.ensure_indexes()
         self.sessions_repo.ensure_indexes()
 
+    # Authentifie un utilisateur et ouvre une nouvelle session.
     def sign_in(self, *, email: str, password: str) -> dict[str, Any]:
         user = self.users_repo.get_by_email(email)
         if not user or not verify_password(password, user.password_hash):
@@ -44,78 +41,7 @@ class AuthService:
             "redirect_to": self._get_home_path(user.role.value),
         }
 
-    async def begin_sso_login(self) -> dict[str, str]:
-        metadata = await self._get_oidc_metadata()
-        # Le state protege le callback OIDC contre les reponses forgees.
-        state = generate_state_token()
-        params = {
-            "client_id": settings.auth_oidc_client_id,
-            "response_type": "code",
-            "scope": settings.auth_oidc_scope,
-            "redirect_uri": settings.auth_oidc_redirect_uri,
-            "state": state,
-        }
-        return {
-            "authorization_url": f"{metadata['authorization_endpoint']}?{urlencode(params)}",
-            "state": state,
-        }
-
-    async def complete_sso_login(self, *, code: str) -> dict[str, Any]:
-        metadata = await self._get_oidc_metadata()
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            token_response = await client.post(
-                metadata["token_endpoint"],
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": settings.auth_oidc_redirect_uri,
-                    "client_id": settings.auth_oidc_client_id,
-                    "client_secret": settings.auth_oidc_client_secret,
-                },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
-            token_response.raise_for_status()
-            token_data = token_response.json()
-
-            userinfo_response = await client.get(
-                metadata["userinfo_endpoint"],
-                headers={"Authorization": f"Bearer {token_data['access_token']}"},
-            )
-            userinfo_response.raise_for_status()
-            claims = userinfo_response.json()
-
-        role = self._extract_role_from_claims(claims)
-        email = str(claims.get("email", "")).strip().lower()
-        if not email:
-            raise ValueError("OIDC_EMAIL_REQUIRED")
-
-        # Les utilisateurs SSO sont synchronises a chaque connexion pour garder le profil a jour.
-        user_id = self.users_repo.save_oidc_user(
-            nom=str(claims.get("family_name", claims.get("name", "Utilisateur"))),
-            prenom=str(claims.get("given_name", "OIDC")),
-            email=email,
-            password_hash=hash_password(generate_state_token()),
-            role=role,
-            avatar_url=str(claims.get("picture", "")),
-        )
-
-        self.sessions_repo.close_all_for_user(user_id, reason="LOGIN_ROTATION")
-        session_payload = self._create_session(
-            user_id=user_id,
-            auth_method="oidc",
-            sso_subject=str(claims.get("sub", "")) or None,
-            sso_access_token=token_data.get("access_token"),
-            sso_refresh_token=token_data.get("refresh_token"),
-        )
-        user = self.users_repo.get_by_id(user_id)
-        return {
-            "user": user.to_public_dict() if user else None,
-            "session_token": session_payload["session_token"],
-            "csrf_token": session_payload["csrf_token"],
-            "session": session_payload["session"],
-            "redirect_to": self._get_home_path(role),
-        }
-
+    # Construit les informations de session pour l'endpoint /me.
     def build_session_info(self, *, current_user: dict | None, current_session: SessionModel | None) -> dict[str, Any]:
         if not current_user or not current_session:
             return {
@@ -136,6 +62,7 @@ class AuthService:
             "absolute_expires_at": current_session.absolute_expires_at.isoformat(),
         }
 
+    # Prolonge une session active en mettant a jour les dates d'expiration.
     def refresh_session(self, current_session: SessionModel) -> SessionModel:
         now = datetime.now(UTC)
         if current_session.refresh_expires_at <= now or current_session.absolute_expires_at <= now:
@@ -165,6 +92,7 @@ class AuthService:
         current_session.last_activity_at = now
         return current_session
 
+    # Ferme la session courante de l'utilisateur.
     async def logout(self, current_session: SessionModel | None) -> str | None:
         if not current_session:
             return None
@@ -175,33 +103,20 @@ class AuthService:
             is_early_closure=True,
         )
 
-        if current_session.auth_method != "oidc" or not current_session.sso_refresh_token:
-            return None
+        return None
 
-        metadata = await self._get_oidc_metadata()
-        end_session_endpoint = metadata.get("end_session_endpoint")
-        if not end_session_endpoint:
-            return None
-
-        params = {
-            "client_id": settings.auth_oidc_client_id,
-            "post_logout_redirect_uri": f"{settings.auth_frontend_base_url}/login",
-        }
-        return f"{end_session_endpoint}?{urlencode(params)}"
-
+    # Valide que le token CSRF du cookie correspond au token dans l'entete.
     def validate_csrf(self, *, cookie_token: str | None, header_token: str | None, current_session: SessionModel | None) -> bool:
         if not cookie_token or not header_token or not current_session:
             return False
         return cookie_token == header_token == current_session.csrf_token
 
+    # Cree une nouvelle session avec tous les tokens et dates d'expiration.
     def _create_session(
         self,
         *,
         user_id: str,
-        auth_method: str,
-        sso_subject: str | None = None,
-        sso_access_token: str | None = None,
-        sso_refresh_token: str | None = None,
+        auth_method: str = "local",
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
         absolute_expires_at = now + timedelta(hours=settings.auth_session_absolute_hours)
@@ -231,9 +146,6 @@ class AuthService:
             created_at=now,
             last_activity_at=now,
             auth_method=auth_method,
-            sso_subject=sso_subject,
-            sso_access_token=sso_access_token,
-            sso_refresh_token=sso_refresh_token,
         )
         session_id = self.sessions_repo.open_session(session)
         session.id = session_id
@@ -243,41 +155,12 @@ class AuthService:
             "session": session,
         }
 
-    async def _get_oidc_metadata(self) -> dict[str, Any]:
-        if self._oidc_metadata_cache is not None:
-            return self._oidc_metadata_cache
-
-        metadata_url = f"{settings.auth_oidc_issuer_url.rstrip('/')}/.well-known/openid-configuration"
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(metadata_url)
-            response.raise_for_status()
-            self._oidc_metadata_cache = response.json()
-        return self._oidc_metadata_cache
-
-    @staticmethod
-    def _extract_role_from_claims(claims: dict[str, Any]) -> str:
-        roles: list[str] = []
-        raw_roles = claims.get("roles")
-        if isinstance(raw_roles, list):
-            roles.extend(str(item) for item in raw_roles)
-
-        realm_access = claims.get("realm_access")
-        if isinstance(realm_access, dict) and isinstance(realm_access.get("roles"), list):
-            roles.extend(str(item) for item in realm_access["roles"])
-
-        direct_role = claims.get("role")
-        if isinstance(direct_role, str):
-            roles.append(direct_role)
-
-        lowered = {role.lower() for role in roles}
-        if "admin" in lowered or "rag_finance_admin" in lowered:
-            return UserRole.ADMIN.value
-        return UserRole.FINANCE_USER.value
-
+    # Retourne le chemin d'accueil selon le role de l'utilisateur.
     @staticmethod
     def _get_home_path(role: str) -> str:
         return "/admin/dashboard" if role == UserRole.ADMIN.value else "/user/accueil"
 
+    # Serialise un utilisateur en dictionnaire pour la reponse d'authentification.
     @staticmethod
     def _to_auth_user(user: dict[str, Any]) -> dict[str, Any]:
         return {

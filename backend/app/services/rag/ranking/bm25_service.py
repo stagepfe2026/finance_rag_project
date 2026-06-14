@@ -4,6 +4,7 @@ from rank_bm25 import BM25Okapi
 
 
 class BM25Service:
+    # Initialise le modele BM25 a partir d'un corpus de chunks.
     def __init__(self, chunks: list[dict], nlp_provider=None):
         self.chunks = chunks
         # nlp_provider est FrenchNlpProvider; typage souple pour eviter un import circulaire.
@@ -11,12 +12,9 @@ class BM25Service:
         corpus = [self._tokenize(chunk["text"]) for chunk in chunks]
         self.bm25 = BM25Okapi(corpus) if corpus else None
 
+    # Tokenise avec lemmatisation spaCy si disponible, sinon split simple.
     def _tokenize(self, text: str) -> list[str]:
-        """Tokenise avec lemmatisation spaCy si disponible, sinon split simple.
-
-        Les lemmes ameliorent le rappel sur les variantes morphologiques
-        francaises. Le fallback garantit le fonctionnement sans provider NLP.
-        """
+        
         if self._nlp_provider is not None:
             try:
                 return list(self._nlp_provider.tokenize_for_lexical_search(text))
@@ -24,6 +22,7 @@ class BM25Service:
                 pass
         return text.lower().split()
 
+    # Recherche les chunks les plus pertinents pour une question donnee via BM25.
     def search(self, question: str, top_k: int) -> list[dict]:
         if self.bm25 is None or not self.chunks:
             return []

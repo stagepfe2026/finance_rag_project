@@ -19,9 +19,11 @@ class ReclamationSlaService:
         "LOW": 2520,
     }
 
+    # Pas d'etat specifique necessaire, les seuils SLA sont des constantes de classe.
     def __init__(self) -> None:
         pass
 
+    # Calcule le statut SLA d'une reclamation selon sa priorite et sa date de creation.
     def compute_sla(self, reclamation: ReclamationModel) -> dict:
         sla_minutes = self.SLA_MINUTES.get(reclamation.priority, self.SLA_MINUTES["NORMAL"])
         due_soon_minutes = self.DUE_SOON_MINUTES.get(reclamation.priority, self.DUE_SOON_MINUTES["NORMAL"])

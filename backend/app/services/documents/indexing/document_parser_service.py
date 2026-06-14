@@ -4,10 +4,12 @@ from app.infrastructure.parsers.word_parser import WordParser
 
 
 class DocumentParserService:
+    # Initialise les parsers PDF et Word.
     def __init__(self):
         self.pdf_parser = PdfParser()
         self.word_parser = WordParser()
 
+    # Extrait le texte d'un fichier selon son extension (.pdf ou .docx).
     def parse_document(self, file_path: str, extension: str) -> str:
         ext = extension.lower()
 

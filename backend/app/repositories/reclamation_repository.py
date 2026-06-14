@@ -10,29 +10,35 @@ class ReclamationRepository:
     def __init__(self) -> None:
         self.collection = get_reclamations_collection()
 
+    # Crée les index MongoDB pour accélérer les requêtes par utilisateur, statut et date.
     def ensure_indexes(self) -> None:
         self.collection.create_index([("userId", 1), ("createdAt", -1)])
         self.collection.create_index([("deletedAt", 1), ("createdAt", -1)])
         self.collection.create_index([("status", 1), ("priority", 1), ("createdAt", -1)])
         create_partial_unique_string_index(self.collection, "referenceNumber")
 
+    # Insère une nouvelle réclamation en base et retourne l'objet avec son id généré.
     def create(self, reclamation: ReclamationModel) -> ReclamationModel:
         result = self.collection.insert_one(reclamation.to_mongo_insert())
         reclamation.id = str(result.inserted_id)
         return reclamation
 
+    # Retourne toutes les réclamations actives d'un utilisateur, triées du plus récent.
     def list_for_user(self, user_id: str) -> list[ReclamationModel]:
         cursor = self.collection.find({"userId": user_id, "deletedAt": None}).sort("createdAt", -1)
         return [ReclamationModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne toutes les réclamations actives de tous les utilisateurs (usage admin).
     def list_all(self) -> list[ReclamationModel]:
         cursor = self.collection.find({"deletedAt": None}).sort("createdAt", -1)
         return [ReclamationModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne les réclamations récentes toutes confondues y compris supprimées (usage audit).
     def list_for_audit(self, *, limit: int = 250) -> list[ReclamationModel]:
         cursor = self.collection.find({}).sort("createdAt", -1).limit(limit)
         return [ReclamationModel.from_mongo(raw) for raw in cursor]
 
+    # Récupère une réclamation par son identifiant sans restriction d'utilisateur.
     def get_by_id(self, reclamation_id: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
@@ -40,6 +46,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id)})
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    # Récupère une réclamation active en vérifiant qu'elle appartient à l'utilisateur demandeur.
     def get_for_user(self, reclamation_id: str, user_id: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
@@ -47,6 +54,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None})
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    # Marque la réponse admin d'une réclamation comme lue par l'utilisateur.
     def acknowledge_reply(self, reclamation_id: str, user_id: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
@@ -57,6 +65,7 @@ class ReclamationRepository:
         raw = self.collection.find_one(query)
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    # Passe une réclamation en statut FAILED et ajoute une entrée dans l'historique.
     def flag_as_failed(self, reclamation_id: str, user_id: str, description: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
@@ -78,6 +87,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id})
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    # Supprime logiquement une réclamation et ajoute une entrée dans l'historique.
     def delete_for_user(self, reclamation_id: str, user_id: str) -> bool:
         if not ObjectId.is_valid(reclamation_id):
             return False
@@ -102,6 +112,7 @@ class ReclamationRepository:
         )
         return result.modified_count > 0
 
+    # Modifie le contenu d'une réclamation en statut PENDING et trace la modification dans l'historique.
     def edit_for_user(
         self,
         reclamation_id: str,
@@ -155,6 +166,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id), "userId": user_id, "deletedAt": None})
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    # Assigne une réclamation à un admin, passe son statut en IN_PROGRESS et trace l'action.
     def assign_to_admin(self, reclamation_id: str, admin_id: str, admin_name: str) -> ReclamationModel | None:
         if not ObjectId.is_valid(reclamation_id):
             return None
@@ -184,6 +196,7 @@ class ReclamationRepository:
         raw = self.collection.find_one({"_id": ObjectId(reclamation_id)})
         return ReclamationModel.from_mongo(raw) if raw else None
 
+    # Enregistre la date d'envoi de l'alerte SLA pour éviter les notifications dupliquées.
     def record_sla_alert_sent(self, reclamation_id: str | None) -> None:
         if not reclamation_id or not ObjectId.is_valid(reclamation_id):
             return
@@ -192,6 +205,7 @@ class ReclamationRepository:
             {"$set": {"slaOverdueNotifiedAt": datetime.now(UTC)}},
         )
 
+    # Enregistre la réponse de l'admin sur une réclamation et met à jour son statut.
     def save_admin_reply(
         self,
         reclamation_id: str,
@@ -218,8 +232,6 @@ class ReclamationRepository:
                     "adminReply": admin_reply,
                     "adminReplyAt": now,
                     "repliedByAdminId": replied_by_admin_id,
-                    "lastAdminActionAt": now,
-                    "lastAdminActorName": replied_by_admin_id,
                     "replyAcknowledged": False,
                     "updatedAt": now,
                 },

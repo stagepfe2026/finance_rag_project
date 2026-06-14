@@ -6,6 +6,7 @@ from sentence_transformers import CrossEncoder
 
 
 class RerankerService:
+    # Initialise le service et charge le modele de reranking si active.
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.model = None
@@ -31,6 +32,7 @@ class RerankerService:
                 exc,
             )
 
+    # Reclasse les chunks par pertinence par rapport a la question via le modele CrossEncoder.
     def rerank(self, question: str, chunks: list[dict], top_k: int) -> list[dict]:
         if not chunks:
             return []
@@ -47,6 +49,7 @@ class RerankerService:
         reranked = sorted(chunks, key=lambda c: c["reranker_score"], reverse=True)
         return reranked[:top_k]
 
+    # Reclasse les chunks en utilisant les scores existants quand le modele est indisponible.
     def _fallback_rerank(self, chunks: list[dict], top_k: int) -> list[dict]:
         for chunk in chunks:
             fallback_score = max(

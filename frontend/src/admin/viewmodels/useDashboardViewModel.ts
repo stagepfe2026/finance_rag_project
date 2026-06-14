@@ -14,7 +14,6 @@ const EMPTY: AdminDashboard = {
   documentBreakdown:    { indexed: 0, processing: 0, failed: 0 },
   trend:                   [],
   recentIndexedDocuments:  [],
-  latestAccess:            [],
   urgentCases:             [],
 };
 

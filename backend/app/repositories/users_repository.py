@@ -8,6 +8,7 @@ from pymongo.errors import DuplicateKeyError
 
 
 class UsersRepository:
+    # Recherche un utilisateur actif par son adresse email (insensible à la casse).
     def get_by_email(self, email: str) -> UserModel | None:
         normalized = email.strip().lower()
         raw = get_users_collection().find_one({"email": normalized, "deletedAt": None})
@@ -15,6 +16,7 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
+    # Récupère un utilisateur actif par son identifiant MongoDB.
     def get_by_id(self, user_id: str) -> UserModel | None:
         object_id = self._parse_user_id(user_id)
         if not object_id:
@@ -25,6 +27,7 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
+    # Retourne tous les utilisateurs actifs correspondant à une liste de rôles donnés.
     def list_by_roles(self, roles: list[str]) -> list[UserModel]:
         normalized_roles = [role for role in roles if role]
         if not normalized_roles:
@@ -33,10 +36,12 @@ class UsersRepository:
         cursor = get_users_collection().find({"role": {"$in": normalized_roles}, "deletedAt": None})
         return [UserModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne tous les utilisateurs actifs sans filtre (usage admin).
     def list_all(self) -> list[UserModel]:
         cursor = get_users_collection().find({"deletedAt": None})
         return [UserModel.from_mongo(raw) for raw in cursor]
 
+    # Met à jour l'ensemble des informations de profil d'un utilisateur, lève ValueError si l'email est déjà pris.
     def update_profile(
         self,
         *,
@@ -106,6 +111,7 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
+    # Met à jour le hash du mot de passe d'un utilisateur et enregistre la date de changement.
     def change_password(self, *, user_id: str, password_hash: str) -> UserModel | None:
         object_id = self._parse_user_id(user_id)
         if not object_id:
@@ -128,7 +134,8 @@ class UsersRepository:
             return None
         return UserModel.from_mongo(raw)
 
-    def save_oidc_user(
+    # Crée ou met à jour un utilisateur par email (utilisé pour le seeding et la synchronisation).
+    def upsert_user(
         self,
         *,
         nom: str,
@@ -179,9 +186,11 @@ class UsersRepository:
         raw = collection.find_one({"email": normalized}, {"_id": 1})
         return str(raw["_id"])
 
+    # Crée l'index unique partiel sur l'email pour garantir l'unicité des comptes actifs.
     def ensure_indexes(self) -> None:
         create_partial_unique_string_index(get_users_collection(), "email")
 
+    # Convertit une chaîne en ObjectId MongoDB, retourne None si le format est invalide.
     @staticmethod
     def _parse_user_id(user_id: str) -> ObjectId | None:
         try:

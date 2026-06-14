@@ -75,8 +75,7 @@ export function useReclamationViewModel() {
       const matchesSearch =
         !normalizedSearch ||
         item.subject.toLowerCase().includes(normalizedSearch) ||
-        item.referenceNumber.toLowerCase().includes(normalizedSearch) ||
-        item.userEmail.toLowerCase().includes(normalizedSearch);
+        item.referenceNumber.toLowerCase().includes(normalizedSearch);
       const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
       const matchesCategory = categoryFilter === "ALL" || item.issueCategory === categoryFilter;
       const matchesPriority = priorityFilter === "ALL" || item.priority === priorityFilter;

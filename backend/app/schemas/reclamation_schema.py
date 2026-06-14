@@ -41,7 +41,6 @@ class ReclamationOut(BaseModel):
     _id: str
     referenceNumber: str
     userId: str
-    userEmail: str
     subject: str
     description: str
     issueCategory: ReclamationProblemType
@@ -56,8 +55,6 @@ class ReclamationOut(BaseModel):
     adminReply: str | None = None
     adminReplyAt: str | None = None
     repliedByAdminId: str | None = None
-    lastAdminActionAt: str | None = None
-    lastAdminActorName: str | None = None
     replyAcknowledged: bool
     createdAt: str
     updatedAt: str

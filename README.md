@@ -22,7 +22,7 @@ This project now starts on a protected login flow and uses a simple, readable se
 - MongoDB stores both users and sessions
 - Session expiration is enforced centrally in middleware
 
-## Current Auth Modes
+## Auth Mode
 
 ### Local mode
 - Works immediately with email/password
@@ -30,17 +30,8 @@ This project now starts on a protected login flow and uses a simple, readable se
 - Frontend posts credentials to backend login endpoint
 - Backend creates secure server-side session in MongoDB
 
-### OIDC-compatible mode
-- Backend includes OIDC-compatible endpoints for:
-  - login start
-  - callback
-  - logout redirect
-- Intended for Keycloak or another enterprise identity provider
-- Configure with backend environment variables
-
 ## Login Flow
 
-### Local login flow
 1. User opens the app.
 2. Router redirects to `/login` if there is no authenticated session.
 3. Login page submits credentials to `POST /api/auth/login`.
@@ -49,13 +40,6 @@ This project now starts on a protected login flow and uses a simple, readable se
    - HttpOnly session cookie
    - readable CSRF cookie
 6. Frontend stores only session state in memory and redirects by role.
-
-### OIDC flow
-1. Frontend triggers `GET /api/auth/oidc/login`.
-2. Backend builds the authorization URL and stores transient state in a cookie.
-3. User authenticates with the identity provider.
-4. Provider redirects to backend callback.
-5. Backend exchanges the code for tokens, loads user info, creates a local session, and redirects to the frontend.
 
 ## Session Storage in MongoDB
 
@@ -154,14 +138,6 @@ cd frontend
 npm install
 npm run dev
 ```
-
-## Notes for Real Keycloak Integration
-
-To connect a real provider:
-- set `AUTH_MODE=oidc`
-- set issuer URL, client ID, client secret, redirect URI
-- ensure the provider sends role information in claims or userinfo
-- switch the UI to trigger OIDC login as the main method if you do not want local password login anymore
 
 ## Validation Performed
 

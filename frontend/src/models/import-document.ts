@@ -21,6 +21,7 @@ export type PreviewItem = {
 
 type StepStatus = "todo" | "current" | "done" | "error";
 
+
 export type ProgressStep = {
   label: string;
   sub: string;

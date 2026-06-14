@@ -13,10 +13,8 @@ import {
   submitChatFeedback,
 } from "../../services/chat.service";
 
-// Intervalle court pour remplacer rapidement le message "en generation" par la reponse finale.
 const POLL_INTERVAL_MS = 2500;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 export type SnackbarState = {
   open: boolean;
   message: string;
@@ -29,7 +27,6 @@ export type ConversationModalState = {
   busy: boolean;
 };
 
-// Fonctions pures pour manipuler les conversations sans melanger avec l'etat React.
 function upsertConversation(list: Conversation[], nextConversation: Conversation) {
   const remaining = list.filter((item) => item._id !== nextConversation._id);
   return [nextConversation, ...remaining];
@@ -42,7 +39,6 @@ function buildTemporaryMessage(input: {
   content: string;
   pending?: boolean;
 }): ChatMessage {
-  // Message optimiste affiche immediatement avant la reponse definitive du backend.
   return {
     _id: input.id,
     conversationId: input.conversationId,
@@ -70,7 +66,6 @@ function getNextSelectedConversationId(
   return conversations.find((item) => !item.isArchived)?._id ?? conversations[0]?._id ?? null;
 }
 
-// ViewModel du chat: conversations, messages, feedback et synchronisation pendant la generation.
 export function useChatViewModel(
   registerGeneratingMessage: (messageId: string, conversationId: string) => void,
 ) {
@@ -96,7 +91,6 @@ export function useChatViewModel(
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [restoringConversationId, setRestoringConversationId] = useState<string | null>(null);
 
-  // Ref stable pour eviter qu'un polling async mette a jour une conversation qui n'est plus selectionnee.
   const selectedConversationIdRef = useRef(selectedConversationId);
   useEffect(() => { selectedConversationIdRef.current = selectedConversationId; }, [selectedConversationId]);
 
@@ -121,7 +115,6 @@ export function useChatViewModel(
     setConversationModal({ mode: null, conversation: null, busy: false });
   }
 
-  // Chargement initial des conversations.
   useEffect(() => {
     let cancelled = false;
 
@@ -147,7 +140,6 @@ export function useChatViewModel(
     return () => { cancelled = true; };
   }, []);
 
-  // Gestion des liens directs: nouvelle conversation ou conversation precise.
   useEffect(() => {
     if (isLoadingConversations || initialActionHandledRef.current) return;
 
@@ -171,7 +163,6 @@ export function useChatViewModel(
     setPageError("");
   }, [conversations, isLoadingConversations, searchParams, setSearchParams]);
 
-  // Recharge les messages quand l'utilisateur change de conversation.
   useEffect(() => {
     if (!selectedConversationId) {
       setMessages([]);
@@ -200,7 +191,6 @@ export function useChatViewModel(
     return () => { cancelled = true; };
   }, [selectedConversationId]);
 
-  // Polling local uniquement pendant la generation d'une reponse assistant.
   const hasGenerating = messages.some(
     (m) => m.role === "assistant" && (m.pending || m.status === "generating"),
   );
@@ -222,7 +212,6 @@ export function useChatViewModel(
           setMessages(fresh);
         }
       } catch {
-        // Erreur ignoree volontairement: le prochain polling resynchronisera.
       }
     }, POLL_INTERVAL_MS);
 
@@ -232,7 +221,6 @@ export function useChatViewModel(
     };
   }, [hasGenerating, selectedConversationId]);
 
-  // Etat derive
   const filteredConversations = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return conversations;
@@ -243,7 +231,6 @@ export function useChatViewModel(
   const archivedConversations = conversations.filter((c) => c.isArchived);
   const selectedConversation = conversations.find((item) => item._id === selectedConversationId) ?? null;
 
-  // Actions utilisateur
   function handleCreateConversation() {
     setPageError("");
     setSelectedConversationId(null);

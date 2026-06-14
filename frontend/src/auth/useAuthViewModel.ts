@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  beginOidcLogin,
   fetchSession,
   loginRequest,
   logoutRequest,
@@ -22,7 +21,6 @@ export type AuthContextValue = {
   login: (payload: { email: string; password: string }) => Promise<{ redirectTo: string; user: AuthUser | null }>;
   logout: () => Promise<void>;
   clearAuthMessage: () => void;
-  beginProviderLogin: () => Promise<void>;
   refreshSession: () => Promise<void>;
 };
 
@@ -121,8 +119,6 @@ export function useAuthViewModel(): AuthContextValue {
     }
   }
 
-  async function beginProviderLogin() { await beginOidcLogin(); }
-
   function clearAuthMessage() { setAuthMessage(null); }
 
   return useMemo<AuthContextValue>(
@@ -135,7 +131,6 @@ export function useAuthViewModel(): AuthContextValue {
       login,
       logout,
       clearAuthMessage,
-      beginProviderLogin,
       refreshSession: doRefreshSession,
     }),
      

@@ -23,9 +23,6 @@ class SessionModel:
     created_at: datetime
     last_activity_at: datetime
     auth_method: str = "local"
-    sso_subject: str | None = None
-    sso_access_token: str | None = None
-    sso_refresh_token: str | None = None
     closed_at: datetime | None = None
     closure_reason: str | None = None
     is_early_closure: bool | None = None
@@ -45,9 +42,6 @@ class SessionModel:
             created_at=_as_utc_datetime(raw.get("createdAt")),
             last_activity_at=_as_utc_datetime(raw.get("lastActivityAt")),
             auth_method=str(raw.get("authMethod", "local")),
-            sso_subject=raw.get("ssoSubject"),
-            sso_access_token=raw.get("ssoAccessToken"),
-            sso_refresh_token=raw.get("ssoRefreshToken"),
             closed_at=_as_utc_datetime(raw.get("closedAt")) if raw.get("closedAt") else None,
             closure_reason=raw.get("closureReason"),
             is_early_closure=raw.get("isEarlyClosure"),
@@ -65,9 +59,6 @@ class SessionModel:
             "createdAt": self.created_at,
             "lastActivityAt": self.last_activity_at,
             "authMethod": self.auth_method,
-            "ssoSubject": self.sso_subject,
-            "ssoAccessToken": self.sso_access_token,
-            "ssoRefreshToken": self.sso_refresh_token,
             "closedAt": self.closed_at,
             "closureReason": self.closure_reason,
             "isEarlyClosure": self.is_early_closure,

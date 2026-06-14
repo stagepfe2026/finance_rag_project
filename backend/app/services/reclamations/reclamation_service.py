@@ -19,15 +19,18 @@ class ReclamationService:
     allowed_priorities = {"LOW", "NORMAL", "HIGH", "URGENT"}
     allowed_admin_statuses = {"PENDING", "IN_PROGRESS", "RESOLVED"}
 
+    # Initialise le service avec les sous-services et le service de notifications.
     def __init__(self, notification_service: NotificationService | None = None) -> None:
         self.repository = ReclamationRepository()
         self.notification_service = notification_service
         self.attachment_service = ReclamationAttachmentService()
         self.sla_service = ReclamationSlaService()
 
+    # Cree les index MongoDB necessaires aux reclamations.
     def ensure_indexes(self) -> None:
         self.repository.ensure_indexes()
 
+    # Valide et cree une nouvelle reclamation avec piece jointe optionnelle.
     async def create_reclamation(
         self,
         *,
@@ -68,12 +71,10 @@ class ReclamationService:
 
         now = datetime.now(UTC)
         ticket_number = self._build_ticket_number(now)
-        user_email = str(current_user.get("email", "")).lower().strip()
         user_id = str(current_user.get("id", "")).strip()
 
         reclamation = ReclamationModel(
             user_id=user_id,
-            user_email=user_email,
             reference_number=ticket_number,
             subject=normalized_subject,
             description=normalized_description,
@@ -88,8 +89,6 @@ class ReclamationService:
             admin_reply=None,
             admin_reply_at=None,
             replied_by_admin_id=None,
-            last_admin_action_at=None,
-            last_admin_actor_name=None,
             reply_acknowledged=True,
             created_at=now,
             updated_at=now,
@@ -99,7 +98,7 @@ class ReclamationService:
                 {
                     "id": uuid4().hex,
                     "description": "Reclamation creee",
-                    "actorName": user_email,
+                    "actorName": str(current_user.get("email", user_id)).lower().strip(),
                     "createdAt": now,
                 }
             ],
@@ -112,6 +111,7 @@ class ReclamationService:
 
         return self._serialize_reclamation(created)
 
+    # Retourne la liste des reclamations selon le role de l'utilisateur courant.
     async def list_reclamations(self, current_user: dict) -> dict:
         if current_user.get("role") == "ADMIN":
             reclamations = self.repository.list_all()
@@ -130,6 +130,7 @@ class ReclamationService:
             "total": len(reclamations),
         }
 
+    # Retourne une reclamation par son ID apres verification des droits d'acces.
     def get_reclamation(self, current_user: dict, reclamation_id: str) -> dict:
         if current_user.get("role") == "ADMIN":
             reclamation = self.repository.get_by_id(reclamation_id)
@@ -142,6 +143,7 @@ class ReclamationService:
             raise ValueError("RECLAMATION_NOT_FOUND")
         return self._serialize_reclamation(reclamation)
 
+    # Marque la reponse admin d'une reclamation comme lue par l'utilisateur.
     def mark_reply_read(self, current_user: dict, reclamation_id: str) -> dict:
         if current_user.get("role") == "ADMIN":
             reclamation = self.repository.get_by_id(reclamation_id)
@@ -157,6 +159,7 @@ class ReclamationService:
             raise ValueError("RECLAMATION_NOT_FOUND")
         return self._serialize_reclamation(reclamation)
 
+    # Retourne le chemin et le type MIME de la piece jointe d'une reclamation.
     def get_reclamation_attachment_response_data(self, current_user: dict, reclamation_id: str) -> tuple:
         if current_user.get("role") == "ADMIN":
             reclamation = self.repository.get_by_id(reclamation_id)
@@ -173,6 +176,7 @@ class ReclamationService:
             reclamation.attachment_content_type,
         )
 
+    # Assigne une reclamation en attente a un administrateur.
     async def take_reclamation(self, admin_user: dict, reclamation_id: str) -> dict:
         admin_id = str(admin_user.get("id", "")).strip()
         admin_name = " ".join(
@@ -192,6 +196,7 @@ class ReclamationService:
             raise ValueError("RECLAMATION_NOT_FOUND")
         return self._serialize_reclamation(updated)
 
+    # Supprime une reclamation en attente appartenant a l'utilisateur courant.
     def delete_reclamation(self, current_user: dict, reclamation_id: str) -> None:
         user_id = str(current_user.get("id", "")).strip()
         reclamation = self.repository.get_for_user(reclamation_id, user_id)
@@ -205,6 +210,7 @@ class ReclamationService:
         if not deleted:
             raise ValueError("RECLAMATION_NOT_FOUND")
 
+    # Valide et met a jour une reclamation en attente de l'utilisateur courant.
     async def update_reclamation(
         self,
         *,
@@ -265,6 +271,7 @@ class ReclamationService:
             raise ValueError("RECLAMATION_UPDATE_NOT_ALLOWED")
         return self._serialize_reclamation(updated)
 
+    # Enregistre la reponse admin et change le statut d'une reclamation en cours.
     async def resolve_reclamation(self, reclamation_id: str, *, admin_user: dict, admin_reply: str, status: str) -> dict:
         normalized_reply = admin_reply.strip()
         normalized_status = status.strip().upper()
@@ -301,9 +308,11 @@ class ReclamationService:
 
         return self._serialize_reclamation(updated)
 
+    # Genere un numero de ticket unique base sur la date et un identifiant aleatoire.
     def _build_ticket_number(self, now: datetime) -> str:
         return f"REC-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
+    # Serialise un objet ReclamationModel en dictionnaire JSON avec le calcul SLA.
     def _serialize_reclamation(self, reclamation: ReclamationModel) -> dict:
         attachment = None
         if reclamation.attachment_name:
@@ -320,7 +329,6 @@ class ReclamationService:
             "_id": reclamation.id,
             "referenceNumber": reclamation.reference_number,
             "userId": reclamation.user_id,
-            "userEmail": reclamation.user_email,
             "subject": reclamation.subject,
             "description": reclamation.description,
             "issueCategory": reclamation.issue_category,
@@ -335,10 +343,6 @@ class ReclamationService:
             "adminReply": reclamation.admin_reply,
             "adminReplyAt": reclamation.admin_reply_at.isoformat() if reclamation.admin_reply_at else None,
             "repliedByAdminId": reclamation.replied_by_admin_id,
-            "lastAdminActionAt": (
-                reclamation.last_admin_action_at.isoformat() if reclamation.last_admin_action_at else None
-            ),
-            "lastAdminActorName": reclamation.last_admin_actor_name,
             "replyAcknowledged": reclamation.reply_acknowledged,
             "createdAt": reclamation.created_at.isoformat(),
             "updatedAt": reclamation.updated_at.isoformat(),
@@ -357,6 +361,7 @@ class ReclamationService:
             **sla,
         }
 
+    # Convertit une valeur en chaine ISO 8601 UTC, retourne l'heure courante si invalide.
     def _serialize_datetime(self, value: object) -> str:
         if isinstance(value, datetime):
             if value.tzinfo is None:

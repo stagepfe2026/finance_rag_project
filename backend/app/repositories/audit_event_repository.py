@@ -8,19 +8,18 @@ class AuditEventRepository:
     def __init__(self) -> None:
         self.collection = get_audit_events_collection()
 
+    # Crée les index MongoDB pour accélérer les requêtes de filtrage et de tri sur les événements.
     def ensure_indexes(self) -> None:
         self.collection.create_index([("occurredAt", -1)])
         self.collection.create_index([("category", 1), ("actionType", 1)])
         self.collection.create_index([("userId", 1), ("occurredAt", -1)])
 
+    # Enregistre un événement d'audit avec tous ses métadonnées dans la collection.
     def log_event(
         self,
         *,
         occurred_at: datetime | None = None,
         user_id: str,
-        user_name: str,
-        user_email: str,
-        user_role: str,
         action_type: str,
         action_label: str,
         category: str,
@@ -40,9 +39,6 @@ class AuditEventRepository:
             {
                 "occurredAt": now,
                 "userId": user_id,
-                "userName": user_name,
-                "userEmail": user_email,
-                "userRole": user_role,
                 "actionType": action_type,
                 "actionLabel": action_label,
                 "category": category,
@@ -54,21 +50,26 @@ class AuditEventRepository:
             }
         )
 
+    # Retourne les événements d'audit les plus récents toutes catégories confondues.
     def list_recent(self, *, limit: int = 250) -> list[dict[str, Any]]:
         cursor = self.collection.find({}).sort("occurredAt", -1).limit(limit)
         return [dict(raw) for raw in cursor]
 
+    # Retourne les événements d'audit correspondant à un filtre MongoDB donné.
     def list_filtered(self, *, query: dict[str, Any], limit: int = 250) -> list[dict[str, Any]]:
         cursor = self.collection.find(query).sort("occurredAt", -1).limit(limit)
         return [self._to_activity(raw) for raw in cursor]
 
+    # Compte le nombre d'événements correspondant à un filtre MongoDB donné.
     def count_filtered(self, *, query: dict[str, Any]) -> int:
         return self.collection.count_documents(query)
 
+    # Retourne une projection allégée des événements pour alimenter les listes de filtres UI.
     def list_for_filters(self, *, limit: int = 500) -> list[dict[str, Any]]:
-        cursor = self.collection.find({}, {"userId": 1, "userName": 1, "userEmail": 1, "actionType": 1, "actionLabel": 1}).sort("occurredAt", -1).limit(limit)
+        cursor = self.collection.find({}, {"userId": 1, "actionType": 1, "actionLabel": 1}).sort("occurredAt", -1).limit(limit)
         return [dict(raw) for raw in cursor]
 
+    # Convertit un document MongoDB brut en dictionnaire d'activité normalisé pour l'API.
     def _to_activity(self, raw: dict[str, Any]) -> dict[str, Any]:
         occurred_at = raw.get("occurredAt")
         if isinstance(occurred_at, datetime):
@@ -79,9 +80,9 @@ class AuditEventRepository:
             "id": str(raw.get("_id", "")),
             "occurredAt": occurred_at_str,
             "userId": str(raw.get("userId", "")),
-            "userName": str(raw.get("userName", "")),
-            "userEmail": str(raw.get("userEmail", "")),
-            "userRole": str(raw.get("userRole", "")),
+            "userName": "",
+            "userEmail": "",
+            "userRole": "",
             "actionType": str(raw.get("actionType", "")),
             "actionLabel": str(raw.get("actionLabel", "")),
             "category": str(raw.get("category", "")),

@@ -11,9 +11,11 @@ class LegalStatusService:
         LegalRelationType.abroge.value: LegalStatus.abroge.value,
     }
 
+    # Initialise le service avec le repository de documents.
     def __init__(self, document_repository: DocumentRepository | None = None) -> None:
         self.document_repository = document_repository or DocumentRepository()
 
+    # Determine le statut juridique effectif d'un document en tenant compte des relations.
     def resolve_status(self, document: DocumentModel) -> str:
         if document.deleted_at is not None and document.legal_status == LegalStatus.abroge.value:
             return LegalStatus.abroge.value
@@ -37,14 +39,17 @@ class LegalStatusService:
             LegalStatus.actif.value,
         )
 
+    # Infere le statut juridique en fonction de la date d'entree en vigueur.
     def infer_status_from_date(self, date_entree_vigueur: object) -> str:
         if self._is_future_date(date_entree_vigueur):
             return LegalStatus.futur.value
         return LegalStatus.actif.value
 
+    # Verifie si un document est programme pour entrer en vigueur a une date future.
     def is_scheduled(self, document: DocumentModel) -> bool:
         return self._is_future_date(document.date_entree_vigueur)
 
+    # Indique si le document source peut juridiquement remplacer le document cible.
     def source_may_supersede_target(
         self,
         source_document: DocumentModel,
@@ -52,6 +57,7 @@ class LegalStatusService:
     ) -> bool:
         return self._source_may_supersede_target_internal(source_document, target_document)
 
+    # Collecte les documents sources qui ont un effet juridique actif sur ce document.
     def _collect_effective_relation_sources(self, document: DocumentModel) -> list[DocumentModel]:
         relation_sources: list[DocumentModel] = []
         seen_ids: set[str] = set()
@@ -69,6 +75,7 @@ class LegalStatusService:
 
         return relation_sources
 
+    # Resout le document source direct lie par relation juridique declaree.
     def _resolve_direct_relation_source(self, document: DocumentModel) -> DocumentModel | None:
         if document.relation_to_target not in self.EFFECTIVE_RELATIONS or not document.target_document_id:
             return None
@@ -82,6 +89,7 @@ class LegalStatusService:
 
         return related_document
 
+    # Verifie les conditions internes de succession juridique entre deux documents.
     def _source_may_supersede_target_internal(
         self,
         source_document: DocumentModel,
@@ -97,6 +105,7 @@ class LegalStatusService:
             return False
         return True
 
+    # Verifie que la date de la source est posterieure ou egale a celle de la cible.
     def _source_is_not_older_than_target(
         self,
         source_document: DocumentModel,
@@ -106,6 +115,7 @@ class LegalStatusService:
         target_date = self._relation_sort_date(target_document)
         return source_date >= target_date
 
+    # Retourne la date la plus representative du document pour le tri de succession.
     def _relation_sort_date(self, document: DocumentModel) -> date:
         value = (
             document.date_entree_vigueur
@@ -115,12 +125,14 @@ class LegalStatusService:
         )
         return self._to_date(value) or date.min
 
+    # Retourne True si la valeur represente une date strictement future.
     def _is_future_date(self, value: object) -> bool:
         value_date = self._to_date(value)
         if value_date is None:
             return False
         return value_date > datetime.now(UTC).date()
 
+    # Convertit une valeur en objet date, retourne None si invalide.
     @staticmethod
     def _to_date(value: object) -> date | None:
         if value is None:

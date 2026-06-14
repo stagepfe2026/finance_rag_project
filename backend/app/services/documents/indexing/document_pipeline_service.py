@@ -7,6 +7,7 @@ from app.services.rag.processing.nlp_service import NLPService
 
 
 class DocumentPipelineService:
+    # Initialise le service avec tous les composants du pipeline d'indexation.
     def __init__(
         self,
         document_parser_service: DocumentParserService,
@@ -23,6 +24,7 @@ class DocumentPipelineService:
         self.document_repository = document_repository
         self.legal_status_service = legal_status_service
 
+    # Extrait le texte brut, le nettoie et le decoupe en chunks prets pour l'indexation.
     def parse_and_chunk(self, file_path: str, extension: str) -> tuple[str, list[str]]:
         # Pipeline texte: extraction brute, nettoyage NLP, puis decoupage en chunks RAG.
         raw_text = self.parser_service.parse_document(file_path, extension)
@@ -37,6 +39,7 @@ class DocumentPipelineService:
 
         return cleaned_text, chunks
 
+    # Genere les embeddings et insere les chunks dans Qdrant avec leurs metadonnees.
     def embed_and_upsert(
         self,
         *,
@@ -74,6 +77,7 @@ class DocumentPipelineService:
         )
         return inserted_count
 
+    # Orchestre le pipeline complet: extraction, nettoyage, decoupage, embeddings et insertion.
     def run_pipeline(
         self,
         *,

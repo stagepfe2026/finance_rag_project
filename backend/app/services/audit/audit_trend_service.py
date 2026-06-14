@@ -7,9 +7,11 @@ from app.repositories import AuditEventRepository
 
 
 class AuditTrendService:
+    # Initialise le service avec le repository d'evenements d'audit.
     def __init__(self, audit_event_repository: AuditEventRepository) -> None:
         self.audit_event_repository = audit_event_repository
 
+    # Calcule les statistiques globales a partir d'une liste d'activites.
     def build_stats(self, items: list[dict[str, Any]]) -> dict[str, int]:
         now = datetime.now(UTC)
         last_24_hours = now - timedelta(hours=24)
@@ -36,6 +38,7 @@ class AuditTrendService:
             ),
         }
 
+    # Construit la tendance d'activite par categorie sur les 7 derniers jours.
     def build_trend(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         now = datetime.now(UTC)
         buckets: dict[str, dict[str, int]] = {}
@@ -78,6 +81,7 @@ class AuditTrendService:
             )
         return trend
 
+    # Convertit une valeur en datetime UTC, retourne None si invalide.
     def _coerce_datetime(self, value: Any) -> datetime | None:
         if isinstance(value, datetime):
             if value.tzinfo is None:

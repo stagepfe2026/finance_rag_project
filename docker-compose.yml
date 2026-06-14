@@ -38,7 +38,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/storage:/app/storage
+      - backend_storage:/app/storage
     depends_on:
       - mongodb
       - qdrant
@@ -61,3 +61,4 @@ volumes:
   mongodb_data:
   qdrant_data:
   ollama_data:
+  backend_storage:

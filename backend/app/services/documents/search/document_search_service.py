@@ -10,6 +10,7 @@ from fastapi import HTTPException
 
 
 class DocumentSearchService:
+    # Initialise le service avec les repositories de documents et de favoris.
     def __init__(
         self,
         document_repository: DocumentRepository,
@@ -20,6 +21,7 @@ class DocumentSearchService:
         self.legal_status_service = legal_status_service
         self.favorite_repository = favorite_repository or DocumentFavoriteRepository()
 
+    # Recherche des documents avec filtres et pagination, en tenant compte des favoris.
     def search_documents(
         self,
         *,
@@ -63,6 +65,7 @@ class DocumentSearchService:
             total=total,
         )
 
+    # Liste tous les documents avec filtres optionnels et pagination.
     def list_documents(
         self,
         *,
@@ -96,6 +99,7 @@ class DocumentSearchService:
             total=total,
         )
 
+    # Ajoute ou retire un document des favoris de l'utilisateur courant.
     def set_document_favorite(
         self,
         document_id: str,
@@ -121,10 +125,12 @@ class DocumentSearchService:
             data=self._with_effective_legal_status(document).to_out_schema(is_favored=now_favored),
         )
 
+    # Resout et applique le statut juridique effectif au document.
     def _with_effective_legal_status(self, document: DocumentModel) -> DocumentModel:
         document.legal_status = self.legal_status_service.resolve_status(document)
         return document
 
+    # Retourne les IDs des documents favoris si le filtre favoris est actif.
     def _resolve_favorite_ids(
         self, favorites_only: bool, current_user_id: str | None
     ) -> list[str] | None:
@@ -134,11 +140,13 @@ class DocumentSearchService:
             return []
         return self.favorite_repository.get_document_ids_for_user(current_user_id)
 
+    # Retourne l'ensemble des IDs favoris de l'utilisateur courant.
     def _get_favorited_ids_set(self, current_user_id: str | None) -> set[str]:
         if not current_user_id:
             return set()
         return set(self.favorite_repository.get_document_ids_for_user(current_user_id))
 
+    # Convertit un document en element de resultats de recherche avec extraits.
     def _to_search_item(
         self,
         document: DocumentModel,
@@ -152,6 +160,7 @@ class DocumentSearchService:
             is_favored=bool(document.id and document.id in favorited_ids),
         )
 
+    # Extrait des extraits de texte pertinents en fonction des termes de la requete.
     def _build_snippets(self, document: DocumentModel, *, query: str | None) -> list[str]:
         source = (document.extracted_text or "").strip()
         if not source:

@@ -1,7 +1,5 @@
 import type { ApexOptions } from "apexcharts";
 
-// ── Palette ─────────────────────────────────────────────────────────────────
-
 export const LIGHT = {
   navy:  "#071f3d",
   red:   "#9d0208",
@@ -11,14 +9,13 @@ export const LIGHT = {
 } as const;
 
 export const DARK = {
-  navy:  "#93c5fd",   // brighter blue, readable on dark bg
-  red:   "#f87171",   // brighter red, WCAG-safe on dark
-  rose:  "#fb7185",   // lighter rose
-  black: "#e5e7eb",   // replaces near-black text with light slate
-  gray:  "#9ca3af",   // mid-gray, visible on dark
+  navy:  "#93c5fd",   
+  red:   "#f87171",   
+  rose:  "#fb7185",   
+  black: "#e5e7eb",   
+  gray:  "#9ca3af",   
 } as const;
 
-// ── Base chart options ───────────────────────────────────────────────────────
 
 export function buildChartTheme(isDark: boolean): Pick<
   ApexOptions,
@@ -84,9 +81,6 @@ export function buildChartTheme(isDark: boolean): Pick<
     },
   };
 }
-
-// ── Fill helper ──────────────────────────────────────────────────────────────
-
 export function buildFill(isDark: boolean): ApexOptions["fill"] {
   return {
     type: "gradient",
@@ -99,8 +93,6 @@ export function buildFill(isDark: boolean): ApexOptions["fill"] {
     },
   };
 }
-
-// ── Stroke helper ────────────────────────────────────────────────────────────
 
 export function buildStroke(isDark: boolean, width = 1): ApexOptions["stroke"] {
   return {

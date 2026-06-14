@@ -6,9 +6,11 @@ from app.repositories import AuditEventRepository
 
 
 class AuditLoggerService:
+    # Initialise le service avec le repository d'evenements d'audit.
     def __init__(self, audit_event_repository: AuditEventRepository) -> None:
         self.audit_event_repository = audit_event_repository
 
+    # Enregistre une action sur un document dans le journal d'audit.
     def log_document_action(
         self,
         *,
@@ -29,9 +31,6 @@ class AuditLoggerService:
         ).strip()
         self.audit_event_repository.log_event(
             user_id=str(current_user.get("id", "")),
-            user_name=full_name or str(current_user.get("email", "")) or "Utilisateur",
-            user_email=str(current_user.get("email", "")),
-            user_role=str(current_user.get("role", "")),
             action_type=action_type,
             action_label=action_label,
             category=category,
@@ -42,13 +41,11 @@ class AuditLoggerService:
             metadata=metadata,
         )
 
+    # Enregistre une tentative de connexion echouee dans le journal d'audit.
     def log_failed_login(self, *, email: str, reason: str = "INVALID_CREDENTIALS") -> None:
         normalized_email = email.strip().lower()
         self.audit_event_repository.log_event(
             user_id="",
-            user_name=normalized_email or "Utilisateur inconnu",
-            user_email=normalized_email,
-            user_role="",
             action_type="USER_LOGIN_FAILED",
             action_label="Connexion echouee",
             category="Authentification",
@@ -56,25 +53,23 @@ class AuditLoggerService:
             entity_id=normalized_email,
             entity_label="Tentative de connexion",
             summary=f"Tentative de connexion echouee pour {normalized_email or 'un email vide'}.",
-            metadata={"raison": reason},
+            metadata={"raison": reason, "email": normalized_email},
         )
 
-    def _extract_user_fields(self, current_user: dict[str, Any]) -> tuple[str, str, str, str]:
+    # Extrait l'ID et le nom complet d'un utilisateur depuis son dictionnaire.
+    def _extract_user_fields(self, current_user: dict[str, Any]) -> tuple[str, str]:
         prenom = str(current_user.get("prenom", "")).strip()
         nom = str(current_user.get("nom", "")).strip()
         full_name = " ".join(part for part in [prenom, nom] if part).strip()
         user_id = str(current_user.get("id", ""))
         email = str(current_user.get("email", ""))
-        role = str(current_user.get("role", ""))
-        return user_id, full_name or email or "Utilisateur", email, role
+        return user_id, full_name or email or "Utilisateur"
 
+    # Enregistre une connexion reussie dans le journal d'audit.
     def log_login_success(self, *, current_user: dict[str, Any]) -> None:
-        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        user_id, user_name = self._extract_user_fields(current_user)
         self.audit_event_repository.log_event(
             user_id=user_id,
-            user_name=user_name,
-            user_email=email,
-            user_role=role,
             action_type="USER_LOGIN",
             action_label="Connexion",
             category="Authentification",
@@ -85,13 +80,11 @@ class AuditLoggerService:
             metadata={"methode": "local"},
         )
 
+    # Enregistre une deconnexion utilisateur dans le journal d'audit.
     def log_logout(self, *, current_user: dict[str, Any]) -> None:
-        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        user_id, user_name = self._extract_user_fields(current_user)
         self.audit_event_repository.log_event(
             user_id=user_id,
-            user_name=user_name,
-            user_email=email,
-            user_role=role,
             action_type="USER_LOGOUT",
             action_label="Deconnexion",
             category="Authentification",
@@ -102,14 +95,12 @@ class AuditLoggerService:
             metadata={},
         )
 
+    # Enregistre l'envoi d'un message chat dans le journal d'audit.
     def log_chat_message(self, *, current_user: dict[str, Any], content: str, conversation_id: str) -> None:
-        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        user_id, user_name = self._extract_user_fields(current_user)
         label = (content[:80] + "...") if len(content) > 80 else content
         self.audit_event_repository.log_event(
             user_id=user_id,
-            user_name=user_name,
-            user_email=email,
-            user_role=role,
             action_type="CHAT_MESSAGE",
             action_label="Message envoye",
             category="Chat",
@@ -120,6 +111,7 @@ class AuditLoggerService:
             metadata={"conversationId": conversation_id or ""},
         )
 
+    # Enregistre une action sur une reclamation dans le journal d'audit.
     def log_reclamation_action(
         self,
         *,
@@ -129,12 +121,9 @@ class AuditLoggerService:
         reclamation_id: str,
         subject: str,
     ) -> None:
-        user_id, user_name, email, role = self._extract_user_fields(current_user)
+        user_id, user_name = self._extract_user_fields(current_user)
         self.audit_event_repository.log_event(
             user_id=user_id,
-            user_name=user_name,
-            user_email=email,
-            user_role=role,
             action_type=action_type,
             action_label=action_label,
             category="Reclamations",
@@ -145,6 +134,7 @@ class AuditLoggerService:
             metadata={"reclamationId": reclamation_id},
         )
 
+    # Enregistre un evenement systeme interne dans le journal d'audit.
     def log_system_event(
         self,
         *,
@@ -159,9 +149,6 @@ class AuditLoggerService:
     ) -> None:
         self.audit_event_repository.log_event(
             user_id="system",
-            user_name="Systeme",
-            user_email="",
-            user_role="",
             action_type=action_type,
             action_label=action_label,
             category=category,

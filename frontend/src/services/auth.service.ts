@@ -143,16 +143,4 @@ export async function logoutRequest(): Promise<AuthResponse> {
   return data as AuthResponse;
 }
 
-export async function beginOidcLogin(): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/auth/oidc/login`, {
-    credentials: "include",
-  });
-  const data = await parseJson(response);
-
-  if (!response.ok || !data || typeof data !== "object" || !("authorization_url" in data)) {
-    throw new Error(readErrorMessage(data, "Impossible de demarrer la connexion OIDC."));
-  }
-
-  window.location.assign(String((data as { authorization_url: string }).authorization_url));
-}
 

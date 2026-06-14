@@ -41,7 +41,6 @@ export default function DashboardUrgentCasesCard({ items }: { items: AdminDashbo
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-center justify-between text-[10px] text-[#8a96ad]">
-                  <span>{item.userEmail}</span>
                   <span>{formatRelative(item.createdAt)}</span>
                 </div>
               </div>

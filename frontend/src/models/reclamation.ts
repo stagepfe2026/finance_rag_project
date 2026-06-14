@@ -33,7 +33,6 @@ export type Reclamation = {
   _id: string;
   referenceNumber: string;
   userId: string;
-  userEmail: string;
   subject: string;
   description: string;
   issueCategory: ReclamationProblemType;
@@ -46,8 +45,6 @@ export type Reclamation = {
   adminReply: string | null;
   adminReplyAt: string | null;
   repliedByAdminId: string | null;
-  lastAdminActionAt: string | null;
-  lastAdminActorName: string | null;
   replyAcknowledged: boolean;
   createdAt: string;
   updatedAt: string;

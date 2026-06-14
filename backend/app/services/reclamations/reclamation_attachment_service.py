@@ -17,10 +17,12 @@ class ReclamationAttachmentService:
     }
     max_attachment_size = 5 * 1024 * 1024
 
+    # Initialise le service et cree le repertoire de stockage des pieces jointes.
     def __init__(self) -> None:
         self.storage_dir = Path(settings.reclamations_storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
+    # Valide et sauvegarde une piece jointe de reclamation sur le disque.
     async def store_attachment(self, attachment: UploadFile) -> dict:
         extension = Path(attachment.filename or "").suffix.lower()
         if extension not in self.allowed_attachment_types:
@@ -41,6 +43,7 @@ class ReclamationAttachmentService:
             "content_type": attachment.content_type or "application/octet-stream",
         }
 
+    # Retourne le chemin et le type MIME d'une piece jointe a partir de son chemin stocke.
     def get_attachment_file_data(self, attachment_path: str | None, attachment_content_type: str | None) -> tuple[Path, str]:
         if not attachment_path:
             raise ValueError("ATTACHMENT_NOT_FOUND")
@@ -52,6 +55,7 @@ class ReclamationAttachmentService:
         media_type = attachment_content_type or "application/octet-stream"
         return file_path, media_type
 
+    # Nettoie un nom de fichier pour le rendre compatible avec le systeme de fichiers.
     def _safe_stem(self, value: str) -> str:
         cleaned = re.sub(r"[^A-Za-z0-9_-]+", "-", value).strip("-_")
         return cleaned or "piece-jointe"

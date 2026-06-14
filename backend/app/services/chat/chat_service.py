@@ -11,6 +11,7 @@ from app.services.rag.pipeline.rag_service import RagService
 
 
 class ChatService:
+    # Initialise le service chat avec le service RAG et les sous-services de conversation et statistiques.
     def __init__(self, rag_service: RagService) -> None:
         self.rag_service = rag_service
         self.chat_repo = ChatRepository()
@@ -18,6 +19,7 @@ class ChatService:
         self.conversation_service = ConversationService(self.chat_repo)
         self.stats_service = ChatStatsService(self.chat_repo)
 
+    # Cree les index MongoDB necessaires au repository de chat.
     def ensure_indexes(self) -> None:
         self.chat_repo.ensure_indexes()
 
@@ -25,21 +27,27 @@ class ChatService:
     # Conversation delegates → ConversationService
     # ------------------------------------------------------------------
 
+    # Delegue la recuperation des conversations au ConversationService.
     def get_conversations(self, user_id: str) -> list[dict[str, Any]]:
         return self.conversation_service.get_conversations(user_id)
 
+    # Delegue la creation d'une conversation au ConversationService.
     def start_conversation(self, user_id: str) -> dict[str, Any]:
         return self.conversation_service.start_conversation(user_id)
 
+    # Delegue le renommage d'une conversation au ConversationService.
     def rename_conversation(self, user_id: str, conversation_id: str, summary: str) -> dict[str, Any]:
         return self.conversation_service.rename_conversation(user_id, conversation_id, summary)
 
+    # Delegue l'archivage d'une conversation au ConversationService.
     def archive_conversation(self, user_id: str, conversation_id: str) -> dict[str, Any]:
         return self.conversation_service.archive_conversation(user_id, conversation_id)
 
+    # Delegue la restauration d'une conversation au ConversationService.
     def restore_conversation(self, user_id: str, conversation_id: str) -> dict[str, Any]:
         return self.conversation_service.restore_conversation(user_id, conversation_id)
 
+    # Delegue la suppression d'une conversation au ConversationService.
     def delete_conversation(self, user_id: str, conversation_id: str) -> None:
         self.conversation_service.delete_conversation(user_id, conversation_id)
 
@@ -47,6 +55,7 @@ class ChatService:
     # Stats delegates → ChatStatsService
     # ------------------------------------------------------------------
 
+    # Delegue le calcul des statistiques de feedback au ChatStatsService.
     def get_feedback_stats(self) -> dict[str, Any]:
         return self.stats_service.get_feedback_stats()
 
@@ -54,6 +63,7 @@ class ChatService:
     # Message-level operations (owned by ChatService)
     # ------------------------------------------------------------------
 
+    # Retourne les messages d'une conversation apres verification des droits.
     def get_messages(self, user_id: str, conversation_id: str) -> list[dict[str, Any]]:
         conversation = self.chat_repo.get_conversation_for_user(conversation_id, user_id)
         if conversation is None:
@@ -61,6 +71,7 @@ class ChatService:
         messages = self.chat_repo.list_for_conversation(conversation_id)
         return [self._serialize_message(item) for item in messages]
 
+    # Enregistre le feedback d'un utilisateur sur un message assistant.
     def set_message_feedback(self, user_id: str, message_id: str, feedback: str | None) -> dict[str, Any]:
         if feedback not in {"like", "dislike", None}:
             raise ValueError("INVALID_FEEDBACK")
@@ -74,6 +85,7 @@ class ChatService:
             raise ValueError("MESSAGE_NOT_FOUND")
         return self._serialize_message(updated)
 
+    # Sauvegarde les messages utilisateur et assistant (en attente) et retourne immediatement.
     def ask_pending(
         self,
         *,
@@ -136,6 +148,7 @@ class ChatService:
             "queryMode": query_mode,
         }
 
+    # Execute le RAG en arriere-plan et met a jour le message assistant avec la reponse.
     def run_rag_background(
         self,
         *,
@@ -172,11 +185,13 @@ class ChatService:
                 status="failed",
             )
 
+    # Retourne tous les messages assistant en cours de generation pour un utilisateur.
     def get_generating_messages(self, user_id: str) -> list[dict[str, Any]]:
         """Return all assistant messages currently being generated for a user."""
         messages = self.chat_repo.list_in_progress_for_user(user_id)
         return [self._serialize_message(m) for m in messages]
 
+    # Interroge le service RAG et retourne la reponse avec les sources documentaires.
     def _ask_assistant(
         self,
         question: str,
@@ -203,6 +218,7 @@ class ChatService:
                 "sources": [],
             }
 
+    # Construit l'historique de conversation et les IDs de documents pour les questions de suivi.
     def _build_conversation_history(
         self, conversation_id: str, question: str
     ) -> tuple[str | None, list[str] | None]:
@@ -238,6 +254,7 @@ class ChatService:
 
         return history_text, previous_doc_ids
 
+    # Retourne True si la question fait reference a un echange precedent.
     @staticmethod
     def _is_followup_question(question: str) -> bool:
         """Return True when the question contains words that reference a previous exchange.
@@ -276,6 +293,7 @@ class ChatService:
 
         return any(re.search(p, q) for p in patterns)
 
+    # Normalise et deduplique la liste des sources d'une reponse RAG.
     @staticmethod
     def _normalize_sources(raw_sources: Any) -> list[dict[str, Any]]:
         if not isinstance(raw_sources, list):
@@ -316,6 +334,7 @@ class ChatService:
 
         return normalized_sources
 
+    # Tronque le contenu pour former un titre de conversation lisible.
     @staticmethod
     def _make_summary(content: str) -> str:
         compact = " ".join(content.split())
@@ -323,6 +342,7 @@ class ChatService:
             return compact
         return f"{compact[:69].rstrip()}..."
 
+    # Serialise un objet ChatMessageModel en dictionnaire JSON.
     @staticmethod
     def _serialize_message(message: ChatMessageModel) -> dict[str, Any]:
         return {

@@ -2,10 +2,7 @@ import re
 
 import spacy
 
-# Matches all article formats used in Tunisian and French legal documents:
-#   Article 5, Article 5bis, Article 5ter, Article Premier, Article 1er
-#   Art. 5, Art 5, ART. 5, ARTICLE 5
-#   Separators: dash, colon, em-dash, period (all optional)
+
 _ARTICLE_RE = re.compile(
     r"(?:Article|Art\.?)\s+"
     r"(?:Premier|1er|\d+(?:bis|ter|quater|quinquies)?)"
@@ -52,11 +49,7 @@ class FrenchNlpProvider:
         return articles
 
     def extract_article_header(self, text: str) -> str:
-        """Return the article identifier + title from the first line (max 100 chars).
-
-        Used to prefix continuation sub-chunks so the article identity is
-        preserved even when a long article is split into multiple word-level chunks.
-        """
+        
         first_line = text.split("\n", 1)[0].strip()
         if _ARTICLE_RE.match(first_line):
             return first_line[:100]

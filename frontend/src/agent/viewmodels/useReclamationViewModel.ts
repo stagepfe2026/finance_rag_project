@@ -17,12 +17,10 @@ import {
   updateReclamation,
 } from "../../services/reclamation.service";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const pageSize = 8;
 const allowedFileExtensions = ["pdf", "png", "jpg", "jpeg", "doc", "docx"];
 const maxFileSize = 5 * 1024 * 1024;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 export type FormValues = {
   subject: string;
   description: string;
@@ -54,7 +52,6 @@ const initialValues: FormValues = {
   attachment: null,
 };
 
-// ─── Pure helper functions ────────────────────────────────────────────────────
 function hasUnreadReply(reclamation: Reclamation) {
   return Boolean(reclamation.adminReply) && !reclamation.replyAcknowledged;
 }
@@ -67,7 +64,6 @@ function countWords(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
 }
 
-// ─── ViewModel ───────────────────────────────────────────────────────────────
 export function useReclamationViewModel() {
   const [searchParams, setSearchParams] = useSearchParams();
 

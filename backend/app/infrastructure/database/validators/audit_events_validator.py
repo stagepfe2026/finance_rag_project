@@ -4,9 +4,6 @@ AUDIT_EVENTS_VALIDATOR = {
         "required": [
             "occurredAt",
             "userId",
-            "userName",
-            "userEmail",
-            "userRole",
             "actionType",
             "actionLabel",
             "category",
@@ -17,9 +14,6 @@ AUDIT_EVENTS_VALIDATOR = {
         "properties": {
             "occurredAt": {"bsonType": "date"},
             "userId": {"bsonType": "string"},
-            "userName": {"bsonType": "string"},
-            "userEmail": {"bsonType": "string"},
-            "userRole": {"bsonType": "string"},
             "actionType": {"bsonType": "string", "minLength": 1},
             "actionLabel": {"bsonType": "string"},
             "category": {"bsonType": "string"},

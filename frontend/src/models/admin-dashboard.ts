@@ -40,15 +40,15 @@ export type AdminDashboardIndexedDocument = {
   chunksCount: number | null;
 };
 
-type AdminDashboardLatestAccess = {
-  userId: string;
-  userName: string;
-  email: string;
-  role: string;
-  lastActivityAt: string;
-  authMethod: string;
-  avat: string;
-};
+// type AdminDashboardLatestAccess = {
+//   userId: string;
+//   userName: string;
+//   email: string;
+//   role: string;
+//   lastActivityAt: string;
+//   authMethod: string;
+//   avat: string;
+// };
 
 export type AdminDashboardUrgentCase = {
   id: string;
@@ -56,7 +56,6 @@ export type AdminDashboardUrgentCase = {
   subject: string;
   priority: string;
   status: string;
-  userEmail: string;
   createdAt: string;
 };
 
@@ -74,7 +73,7 @@ export type AdminDashboard = {
   documentBreakdown: AdminDashboardDocumentBreakdown;
   trend: AdminDashboardTrendPoint[];
   recentIndexedDocuments: AdminDashboardIndexedDocument[];
-  latestAccess: AdminDashboardLatestAccess[];
+  // latestAccess: AdminDashboardLatestAccess[];
   urgentCases: AdminDashboardUrgentCase[];
   slaStats?: AdminDashboardSlaStats;
 };

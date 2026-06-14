@@ -4,6 +4,7 @@ class ChunkingService:
     # Nombre maximal de mots a remonter pour chercher une fin de phrase.
     _BOUNDARY_SCAN_WINDOW = 15
 
+    # Initialise le service avec la taille de chunk et le chevauchement souhaites.
     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -12,6 +13,7 @@ class ChunkingService:
     # API publique
     # ------------------------------------------------------------------
 
+    # Decoupe un texte en chunks de taille fixe avec chevauchement.
     def chunk_text(self, text: str) -> list[str]:
         words = text.split()
         if not words:
@@ -46,6 +48,7 @@ class ChunkingService:
     # Helpers prives
     # ------------------------------------------------------------------
 
+    # Retourne une position proche de ideal_end apres une fin de phrase.
     @classmethod
     def _find_sentence_boundary(cls, words: list[str], ideal_end: int) -> int:
         """Retourne une position proche de ideal_end apres une fin de phrase.
@@ -55,7 +58,7 @@ class ChunkingService:
         """
         search_from = max(0, ideal_end - cls._BOUNDARY_SCAN_WINDOW)
         for i in range(ideal_end - 1, search_from - 1, -1):
-            cleaned = words[i].rstrip("\"'»)”’")
+            cleaned = words[i].rstrip("\"'»)’”")
             if any(cleaned.endswith(t) for t in cls._SENTENCE_TERMINALS):
                 return i + 1
         return ideal_end

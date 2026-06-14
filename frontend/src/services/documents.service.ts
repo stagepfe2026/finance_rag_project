@@ -161,7 +161,7 @@ export async function fetchDocuments({
   search,
   category = "all",
   status = "all",
-  skip = 0,
+  skip = 0, //pagination skip
   limit = 100,
 }: FetchDocumentsInput): Promise<DocumentsListResponse> {
   const params = new URLSearchParams();

@@ -25,7 +25,6 @@ function formatTime(value: string) {
   }).format(date);
 }
 
-// ─── Colors ───────────────────────────────────────────────────────────────────
 const CIMF_RED:   [number, number, number] = [184, 47, 41];
 const DARK:       [number, number, number] = [22,  22,  22];
 const MUTED:      [number, number, number] = [115, 115, 115];
@@ -270,7 +269,7 @@ function drawBarChart(
   });
 }
 
-// ─── Header (48 pt tall) ──────────────────────────────────────────────────────
+// en tete de page
 function addPageHeader(
   doc: jsPDF,
   conversation: Conversation,
@@ -313,7 +312,7 @@ function addPageHeader(
   doc.line(0, headerH, pageWidth, headerH);
 }
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
+// footer de page
 function addPageFooter(
   doc: jsPDF,
   pageWidth: number,
@@ -334,8 +333,7 @@ function addPageFooter(
   doc.text(`Exporté le ${totalDate}`, margin, footerY);
   doc.text(`Page ${pageNumber}`, pageWidth - margin, footerY, { align: "right" });
 }
-
-// ─── Single message export ────────────────────────────────────────────────────
+// importation d'une seul reponse de l'assistant dans un fichier PDF
 export function exportMessageToPdf(content: string) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
@@ -524,8 +522,7 @@ export function exportMessageToPdf(content: string) {
   addPageFooter(doc, pageWidth, pageHeight, margin, pageNumber, exportedAt);
   doc.save("reponse-assistant.pdf");
 }
-
-// ─── Main export ──────────────────────────────────────────────────────────────
+// exportation de toute la conversation dans un fichier PDF
 export function exportConversationToPdf(
   conversation: Conversation | null,
   messages: ChatMessage[],
@@ -587,10 +584,8 @@ export function exportConversationToPdf(
     if (cursorY + h > bottomBound) newPage();
   };
 
-  // ── Render first page header ────────────────────────────────────────────────
   startPage();
 
-  // ── Messages ────────────────────────────────────────────────────────────────
   const LINE_H      = 11.5;
   const CARD_PAD_V  = 9;
   const CARD_PAD_H  = 11;

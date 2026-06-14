@@ -6,10 +6,12 @@ from fastapi import HTTPException
 
 
 class DocumentRelationService:
+    # Initialise le service avec le repository de documents et le service de statut juridique.
     def __init__(self, document_repository: DocumentRepository | None = None) -> None:
         self.document_repository = document_repository or DocumentRepository()
         self.legal_status_service = LegalStatusService(self.document_repository)
 
+    # Applique l'effet juridique d'un nouveau document sur son document cible.
     def apply_legal_succession(self, source_document: DocumentModel) -> None:
         # Applique l'effet juridique d'un nouveau document sur son document cible.
         relation_to_target = source_document.relation_to_target

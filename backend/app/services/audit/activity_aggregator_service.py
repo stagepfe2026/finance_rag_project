@@ -7,6 +7,7 @@ from app.repositories import AuditEventRepository, ChatRepository, ReclamationRe
 
 
 class ActivityAggregatorService:
+    # Initialise le service avec les repositories necessaires a l'agregation d'activites.
     def __init__(
         self,
         audit_event_repository: AuditEventRepository,
@@ -21,6 +22,7 @@ class ActivityAggregatorService:
         self.chat_repository = chat_repository
         self.users_repository = users_repository
 
+    # Collecte et filtre toutes les activites de la plateforme selon les criteres donnés.
     def collect(
         self,
         *,
@@ -38,7 +40,7 @@ class ActivityAggregatorService:
             *self._build_session_activities(users_map, limit=limit),
             *self._build_reclamation_activities(users_map, limit=limit),
             *self._build_chat_activities(users_map, limit=limit),
-            *self._build_document_search_activities(limit=limit),
+            *self._build_document_search_activities(users_map, limit=limit),
         ]
         activities.sort(key=lambda item: item["occurredAt"], reverse=True)
 
@@ -58,6 +60,7 @@ class ActivityAggregatorService:
             "filtered": filtered,
         }
 
+    # Construit un dictionnaire {user_id -> info utilisateur} pour tous les roles actifs.
     def _build_users_map(self) -> dict[str, dict[str, str]]:
         users = self.users_repository.list_by_roles(["ADMIN", "FINANCE_USER"])
         result: dict[str, dict[str, str]] = {}
@@ -73,6 +76,7 @@ class ActivityAggregatorService:
             }
         return result
 
+    # Construit les activites d'authentification (connexion et deconnexion) depuis les sessions.
     def _build_session_activities(self, users_map: dict[str, dict[str, str]], *, limit: int) -> list[dict[str, Any]]:
         sessions = self.sessions_repository.list_recent(limit=limit)
         items: list[dict[str, Any]] = []
@@ -125,6 +129,7 @@ class ActivityAggregatorService:
 
         return items
 
+    # Construit les activites de reclamation en parcourant l'historique de chaque ticket.
     def _build_reclamation_activities(
         self,
         users_map: dict[str, dict[str, str]],
@@ -138,8 +143,6 @@ class ActivityAggregatorService:
             default_user = self._resolve_user_info(
                 users_map,
                 user_id=reclamation.user_id,
-                fallback_name=reclamation.user_email,
-                fallback_email=reclamation.user_email,
                 fallback_role="FINANCE_USER",
             )
 
@@ -152,7 +155,7 @@ class ActivityAggregatorService:
                 user_info = (
                     self._resolve_actor_info(
                         users_map,
-                        actor_name=actor_name or reclamation.last_admin_actor_name or "Administrateur",
+                        actor_name=actor_name or "Administrateur",
                     )
                     if is_admin_action
                     else default_user
@@ -177,7 +180,7 @@ class ActivityAggregatorService:
                             "statut": reclamation.status,
                             "utilisateur": default_user["name"],
                             "emailUtilisateur": default_user["email"],
-                            "adminTraitant": reclamation.replied_by_admin_id or reclamation.last_admin_actor_name or "",
+                            "adminTraitant": reclamation.replied_by_admin_id or "",
                             "reponseAdmin": reclamation.admin_reply or "",
                             "supprimeeLe": self._serialize_datetime(reclamation.deleted_at),
                         },
@@ -186,6 +189,7 @@ class ActivityAggregatorService:
 
         return items
 
+    # Construit les activites de chat (conversations, questions et feedbacks).
     def _build_chat_activities(
         self,
         users_map: dict[str, dict[str, str]],
@@ -274,16 +278,18 @@ class ActivityAggregatorService:
 
         return items
 
-    def _build_document_search_activities(self, *, limit: int) -> list[dict[str, Any]]:
+    # Construit les activites de recherche documentaire depuis les evenements d'audit.
+    def _build_document_search_activities(self, users_map: dict[str, dict[str, str]], *, limit: int) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         for raw_event in self.audit_event_repository.list_recent(limit=limit):
             occurred_at = self._coerce_datetime(raw_event.get("occurredAt")) or datetime.now(UTC)
-            user_info = {
-                "id": str(raw_event.get("userId", "")),
-                "name": str(raw_event.get("userName", "")),
-                "email": str(raw_event.get("userEmail", "")),
-                "role": str(raw_event.get("userRole", "")),
-            }
+            uid = str(raw_event.get("userId", ""))
+            meta = dict(raw_event.get("metadata") or {})
+            user_info = self._resolve_user_info(
+                users_map,
+                user_id=uid,
+                fallback_email=str(meta.get("email", "")),
+            )
             items.append(
                 self._make_activity(
                     activity_id=f"event:{raw_event.get('_id')}",
@@ -302,6 +308,7 @@ class ActivityAggregatorService:
 
         return items
 
+    # Retourne True si une activite correspond aux filtres utilisateur, type d'action et texte.
     def _matches_filters(
         self,
         item: dict[str, Any],
@@ -335,6 +342,7 @@ class ActivityAggregatorService:
         haystack = " ".join(searchable_parts).lower()
         return search in haystack
 
+    # Construit la liste des filtres utilisateur disponibles a partir des activites.
     def _build_user_filters(self, items: list[dict[str, Any]]) -> list[dict[str, str]]:
         seen: dict[str, dict[str, str]] = {}
         for item in items:
@@ -349,6 +357,7 @@ class ActivityAggregatorService:
             }
         return sorted(seen.values(), key=lambda entry: entry["name"].lower())
 
+    # Construit la liste des filtres de type d'action disponibles a partir des activites.
     def _build_action_filters(self, items: list[dict[str, Any]]) -> list[dict[str, str]]:
         seen: dict[str, dict[str, str]] = {}
         for item in items:
@@ -361,6 +370,7 @@ class ActivityAggregatorService:
             }
         return sorted(seen.values(), key=lambda entry: entry["label"].lower())
 
+    # Retourne les informations d'un utilisateur par son ID ou des valeurs de fallback.
     def _resolve_user_info(
         self,
         users_map: dict[str, dict[str, str]],
@@ -379,6 +389,7 @@ class ActivityAggregatorService:
             "role": fallback_role,
         }
 
+    # Recherche un utilisateur par son nom ou email d'acteur dans la map des utilisateurs.
     def _resolve_actor_info(self, users_map: dict[str, dict[str, str]], *, actor_name: str) -> dict[str, str]:
         normalized_actor = actor_name.strip().lower()
         for user in users_map.values():
@@ -395,6 +406,7 @@ class ActivityAggregatorService:
             "role": "ADMIN",
         }
 
+    # Construit un dictionnaire d'activite normalise pour le retour API.
     def _make_activity(
         self,
         *,
@@ -427,6 +439,7 @@ class ActivityAggregatorService:
             "metadata": metadata,
         }
 
+    # Retourne le type et le libelle d'action correspondant a la raison de fermeture de session.
     def _map_session_close_reason(self, close_reason: str | None) -> tuple[str, str]:
         normalized = (close_reason or "").strip().upper()
         mapping = {
@@ -438,6 +451,7 @@ class ActivityAggregatorService:
         }
         return mapping.get(normalized, ("SESSION_CLOSED", "Fermeture de session"))
 
+    # Retourne le type et le libelle d'action correspondant a un evenement de reclamation.
     def _map_reclamation_activity(self, description: str, status: str) -> tuple[str, str]:
         normalized = description.lower()
         if "prise en charge" in normalized:
@@ -452,6 +466,7 @@ class ActivityAggregatorService:
             return "RECLAMATION_CREATED", "Creation reclamation"
         return "RECLAMATION_EVENT", "Activite reclamation"
 
+    # Convertit une date en chaine ISO 8601 UTC, retourne None si la valeur est absente.
     def _serialize_datetime(self, value: datetime | None) -> str | None:
         if value is None:
             return None
@@ -459,6 +474,7 @@ class ActivityAggregatorService:
             return value.replace(tzinfo=UTC).isoformat()
         return value.astimezone(UTC).isoformat()
 
+    # Convertit une valeur en objet datetime UTC, retourne None si la conversion echoue.
     def _coerce_datetime(self, value: Any) -> datetime | None:
         if isinstance(value, datetime):
             if value.tzinfo is None:

@@ -11,6 +11,7 @@ class DocumentRepository:
     def __init__(self):
         self.collection = get_documents_collection()
 
+    # Construit un filtre MongoDB acceptant l'id en string ou en ObjectId pour la compatibilité.
     @staticmethod
     def _id_filter(document_id: str) -> dict:
         if not ObjectId.is_valid(document_id):
@@ -18,12 +19,14 @@ class DocumentRepository:
 
         return {"$or": [{"_id": ObjectId(document_id)}, {"_id": document_id}]}
 
+    # Insère un nouveau document en base et retourne l'objet avec son id généré.
     def save(self, document: DocumentModel) -> DocumentModel:
         payload = document.to_mongo_insert()
         result = self.collection.insert_one(payload)
         document.id = str(result.inserted_id)
         return document
 
+    # Passe un document en statut "processing" et efface l'éventuelle erreur précédente.
     def set_as_processing(self, document_id: str) -> DocumentModel | None:
         self.collection.update_one(
             self._id_filter(document_id),
@@ -36,6 +39,7 @@ class DocumentRepository:
         )
         return self.get_by_id(document_id)
 
+    # Passe un document en statut "indexed" en enregistrant le nombre de chunks et le texte extrait.
     def set_as_indexed(
         self,
         document_id: str,
@@ -58,6 +62,7 @@ class DocumentRepository:
         )
         return self.get_by_id(document_id)
 
+    # Passe un document en statut "failed" en enregistrant le message d'erreur d'indexation.
     def set_as_failed(self, document_id: str, error_message: str) -> DocumentModel | None:
         self.collection.update_one(
             self._id_filter(document_id),
@@ -70,6 +75,7 @@ class DocumentRepository:
         )
         return self.get_by_id(document_id)
 
+    # Supprime logiquement un document en le marquant abrogé et en enregistrant l'admin responsable.
     def remove(self, document_id: str, deleted_by_admin_id: str | None = None) -> DocumentModel | None:
         now = datetime.now(UTC)
         self.collection.update_one(
@@ -85,6 +91,7 @@ class DocumentRepository:
         )
         return self.get_by_id(document_id)
 
+    # Récupère un document par son identifiant, retourne None si introuvable ou id vide.
     def get_by_id(self, document_id: str) -> DocumentModel | None:
         if not document_id.strip():
             return None
@@ -94,6 +101,7 @@ class DocumentRepository:
             return None
         return DocumentModel.from_mongo(raw)
 
+    # Récupère plusieurs documents par une liste d'identifiants en une seule requête.
     def get_many_by_ids(self, document_ids: list[str]) -> list[DocumentModel]:
         valid_ids = [document_id for document_id in document_ids if document_id.strip()]
         if not valid_ids:
@@ -108,6 +116,7 @@ class DocumentRepository:
         cursor = self.collection.find({"_id": {"$in": id_values}})
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Vérifie si un document avec le même titre, catégorie et type légal existe déjà (insensible à la casse).
     def already_exists(
         self,
         *,
@@ -124,6 +133,7 @@ class DocumentRepository:
         }
         return self.collection.count_documents(query, limit=1) > 0
 
+    # Retourne une liste paginée de documents avec filtres optionnels sur la recherche, catégorie et statut.
     def list_all(
         self,
         *,
@@ -137,6 +147,7 @@ class DocumentRepository:
         cursor = self.collection.find(query).sort("createdAt", -1).skip(skip).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne les N documents indexés les plus récents (utilisé pour l'affichage des nouveautés).
     def latest_indexed(self, *, limit: int = 6) -> list[DocumentModel]:
         cursor = (
             self.collection.find({"deletedAt": None, "status": DocumentStatus.indexed.value})
@@ -145,6 +156,7 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne les documents indexés après une date donnée (utilisé pour les notifications de mise à jour).
     def indexed_after(self, since: datetime, *, limit: int = 20) -> list[DocumentModel]:
         cursor = (
             self.collection.find({
@@ -157,10 +169,12 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne les N documents créés les plus récents toutes catégories confondues.
     def latest_created(self, *, limit: int = 8) -> list[DocumentModel]:
         cursor = self.collection.find({"deletedAt": None}).sort("createdAt", -1).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Retourne les documents en statut "futur" dont la date d'entrée en vigueur est dépassée.
     def pending_activation(self, *, now: datetime) -> list[DocumentModel]:
         cursor = self.collection.find(
             {
@@ -171,6 +185,7 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Compte le nombre total de documents correspondant aux filtres donnés (pour la pagination).
     def count_all(
         self,
         *,
@@ -181,6 +196,7 @@ class DocumentRepository:
         query = self._build_list_query(search=search, category=category, status=status)
         return self.collection.count_documents(query)
 
+    # Recherche des documents indexés avec filtres multiples (texte, titre, catégories, dates, favoris).
     def search(
         self,
         *,
@@ -206,6 +222,7 @@ class DocumentRepository:
         cursor = self.collection.find(mongo_query).sort(sort_config).skip(skip).limit(limit)
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Compte le nombre de résultats d'une recherche pour la pagination côté client.
     def count_search_results(
         self,
         *,
@@ -226,6 +243,7 @@ class DocumentRepository:
         )
         return self.collection.count_documents(mongo_query)
 
+    # Met à jour les métadonnées légales d'un document (statut, type, dates, relation) sans toucher au contenu.
     def update_metadata(
         self,
         document_id: str,
@@ -258,6 +276,7 @@ class DocumentRepository:
             self.collection.update_one(self._id_filter(document_id), {"$set": updates})
         return self.get_by_id(document_id)
 
+    # Met à jour le statut légal du document cible lors d'un remplacement ou abrogation.
     def register_as_target(
         self,
         target_document_id: str,
@@ -286,6 +305,7 @@ class DocumentRepository:
         )
         return self.get_by_id(target_document_id)
 
+    # Retourne les documents qui pointent vers un document cible via une relation de remplacement ou abrogation.
     def find_documents_pointing_to(self, target_document_id: str) -> list[DocumentModel]:
         if not target_document_id.strip():
             return []
@@ -304,6 +324,7 @@ class DocumentRepository:
         )
         return [DocumentModel.from_mongo(raw) for raw in cursor]
 
+    # Construit le filtre MongoDB pour la liste admin avec recherche textuelle, catégorie et statut.
     def _build_list_query(
         self,
         *,
@@ -327,6 +348,7 @@ class DocumentRepository:
 
         return query
 
+    # Construit le filtre MongoDB pour la recherche utilisateur avec tous les critères combinés.
     def _build_search_query(
         self,
         *,

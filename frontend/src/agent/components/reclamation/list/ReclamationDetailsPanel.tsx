@@ -84,7 +84,7 @@ function getHistoryItems(reclamation: Reclamation) {
     items.push({
       title: "Reclamation traitee",
       date: reclamation.adminReplyAt || reclamation.updatedAt,
-      actor: reclamation.repliedByAdminId || reclamation.lastAdminActorName || "Systeme Admin",
+      actor: reclamation.repliedByAdminId || "Systeme Admin",
       tone: "success" as const,
     });
   }
@@ -92,8 +92,8 @@ function getHistoryItems(reclamation: Reclamation) {
   if (reclamation.status === "IN_PROGRESS" || reclamation.status === "RESOLVED") {
     items.push({
       title: "En cours de traitement",
-      date: reclamation.lastAdminActionAt || reclamation.updatedAt,
-      actor: reclamation.lastAdminActorName || "Systeme Admin",
+      date: reclamation.takenAt || reclamation.updatedAt,
+      actor: reclamation.takenByAdminName || "Systeme Admin",
       tone: "info" as const,
     });
   }

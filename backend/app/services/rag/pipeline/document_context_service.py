@@ -4,6 +4,7 @@ from app.services.rag.generation.prompt_builder_service import PromptBuilderServ
 
 
 class DocumentContextService:
+    # Initialise le service avec les dependances de contexte documentaire.
     def __init__(
         self,
         document_repository: DocumentRepository,
@@ -14,6 +15,7 @@ class DocumentContextService:
         self.legal_status_service = legal_status_service
         self.prompt_builder_service = prompt_builder_service
 
+    # Enrichit les chunks recuperes avec les metadonnees juridiques de leur document.
     def _enrich_chunks_with_document_metadata(self, retrieved_chunks: list[dict]) -> list[dict]:
         document_ids = [str(chunk.get("document_id", "")).strip() for chunk in retrieved_chunks]
         documents = {
@@ -66,6 +68,7 @@ class DocumentContextService:
 
         return enriched_chunks
 
+    # Construit la liste des sources documentaires uniques a partir des chunks finaux.
     def _build_document_sources(self, chunks: list[dict]) -> list[dict]:
         documents: dict[str, dict] = {}
 
@@ -100,6 +103,7 @@ class DocumentContextService:
 
         return sorted(documents.values(), key=lambda item: item["final_score"], reverse=True)
 
+    # Ajoute les avertissements de documents futurs si absents de la reponse generee.
     def _ensure_future_warnings(self, answer: str, final_chunks: list[dict]) -> str:
         if "This legal document is not yet in force." in answer:
             return answer

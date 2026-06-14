@@ -88,12 +88,6 @@ class Settings(BaseSettings):
     auth_access_token_minutes: int = 15
     auth_refresh_token_hours: int = 8
     auth_frontend_base_url: str = "http://localhost:5173"
-    # Configuration OIDC/SSO; garde des valeurs locales par defaut pour le developpement.
-    auth_oidc_issuer_url: str = "http://localhost:8080/realms/rag-finance"
-    auth_oidc_client_id: str = "rag-finance-web"
-    auth_oidc_client_secret: str = "change-me"
-    auth_oidc_redirect_uri: str = "http://localhost:8000/api/auth/callback"
-    auth_oidc_scope: str = "openid profile email"
     model_config = SettingsConfigDict(
         # En local, Pydantic charge .env; en Docker, docker-compose injecte .env.docker.
         env_file=".env",

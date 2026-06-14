@@ -4,6 +4,7 @@ from app.core.rag_messages import MSG_UNRELIABLE
 
 
 class PromptBuilderService:
+    # Formate les chunks en bloc de contexte structure pour le prompt LLM.
     def format_context(self, chunks: list[dict]) -> str:
         # Regroupe les chunks d'un meme document/article tout en conservant
         # l'ordre global de pertinence du premier chunk du groupe.
@@ -32,6 +33,7 @@ class PromptBuilderService:
 
         return "\n\n---\n\n".join(context_parts)
 
+    # Reordonne les chunks pour regrouper ceux du meme document ou article.
     @staticmethod
     def _group_by_document_article(chunks: list[dict]) -> list[dict]:
         """Reordonne les chunks pour rapprocher ceux du meme document/article.
@@ -57,6 +59,7 @@ class PromptBuilderService:
             result.extend(groups[key])
         return result
 
+    # Compose le prompt complet envoye au LLM avec le contexte et les instructions.
     def compose_prompt(
         self,
         *,
@@ -96,13 +99,13 @@ class PromptBuilderService:
             "future_preview": (
                 "Mode future_preview: tu peux expliquer les textes futurs. "
                 "Si tu utilises un document futur, ajoute l avertissement suivant en remplacant [date] par sa date d entree en vigueur: "
-                "⚠️ This legal document is not yet in force. It will be applicable from [date]."
+                "This legal document is not yet in force. It will be applicable from [date]."
             ),
             "comparison": (
                 "Mode comparison: compare le document selectionne et son document lie lorsque les deux sont fournis. "
                 "Structure toujours la comparaison dans un tableau Markdown clair. "
                 "Si un document futur est utilise, ajoute l avertissement suivant en remplacant [date] par sa date d entree en vigueur: "
-                "⚠️ This legal document is not yet in force. It will be applicable from [date]."
+                "This legal document is not yet in force. It will be applicable from [date]."
             ),
         }.get(query_mode, "")
 
@@ -180,12 +183,14 @@ Question:
 Reponse:
 """.strip()
 
+    # Formate une valeur en chaine lisible, retourne "-" si vide ou None.
     @staticmethod
     def _format_value(value: object) -> str:
         if value is None:
             return "-"
         return str(value) if str(value).strip() else "-"
 
+    # Construit le libelle de relation juridique d'un chunk pour le contexte LLM.
     @staticmethod
     def _build_relation_label(chunk: dict) -> str:
         relation_type = str(chunk.get("relation_type", "none")).strip()
@@ -209,6 +214,7 @@ Reponse:
 
         return f"{relation_type} -> {related_part}"
 
+    # Construit le libelle de priorite d'application d'un chunk selon son statut juridique.
     @staticmethod
     def _build_applicability_label(chunk: dict) -> str:
         legal_status = str(chunk.get("legal_status", "actif")).strip()
@@ -222,6 +228,7 @@ Reponse:
             return "Texte futur; ne pas utiliser comme regle actuelle avant sa date d entree en vigueur."
         return "Statut a verifier avant utilisation."
 
+    # Construit l'avertissement de document futur a inclure dans le contexte LLM.
     @classmethod
     def _build_future_warning(cls, chunk: dict) -> str:
         if str(chunk.get("legal_status", "")).strip() != "futur":

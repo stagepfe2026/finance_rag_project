@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 
 class DocumentFileService:
+    # Initialise le service avec le repository et les chemins de stockage.
     def __init__(self, document_repository: DocumentRepository) -> None:
         self.document_repository = document_repository
         self.storage_dir = Path(settings.documents_storage_dir)
@@ -14,6 +15,7 @@ class DocumentFileService:
         self.backend_dir = Path(__file__).resolve().parents[4]
         self.project_root = Path(__file__).resolve().parents[5]
 
+    # Sauvegarde un fichier uploade dans le repertoire de stockage avec un nom unique.
     def store_uploaded_file(self, original_name: str, extension: str, content: bytes) -> Path:
         safe_stem = Path(original_name).stem or "document"
         normalized_stem = "".join(
@@ -25,6 +27,7 @@ class DocumentFileService:
         target_path.write_bytes(content)
         return target_path
 
+    # Recherche le chemin reel d'un fichier a partir de sa valeur stockee en base.
     def resolve_existing_file_path(self, stored_file_path: str) -> Path | None:
         normalized_value = (stored_file_path or "").strip()
         if not normalized_value:
@@ -68,6 +71,7 @@ class DocumentFileService:
 
         return None
 
+    # Retourne le chemin et le type MIME du fichier d'un document a partir de son ID.
     def get_file_response_data(self, document_id: str) -> tuple[Path, str]:
         document = self.document_repository.get_by_id(document_id)
         if document is None or document.deleted_at is not None:

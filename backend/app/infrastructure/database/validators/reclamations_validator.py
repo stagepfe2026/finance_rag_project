@@ -3,7 +3,6 @@ RECLAMATIONS_VALIDATOR = {
         "bsonType": "object",
         "required": [
             "userId",
-            "userEmail",
             "referenceNumber",
             "subject",
             "description",
@@ -16,7 +15,6 @@ RECLAMATIONS_VALIDATOR = {
         ],
         "properties": {
             "userId": {"bsonType": "string", "minLength": 1},
-            "userEmail": {"bsonType": "string", "pattern": "^.+@.+\\..+$"},
             "referenceNumber": {"bsonType": "string", "pattern": "^REC-"},
             "subject": {"bsonType": "string", "minLength": 3, "maxLength": 160},
             "description": {"bsonType": "string", "minLength": 10, "maxLength": 3000},
@@ -33,8 +31,6 @@ RECLAMATIONS_VALIDATOR = {
             "adminReply": {"bsonType": ["string", "null"]},
             "adminReplyAt": {"bsonType": ["date", "null"]},
             "repliedByAdminId": {"bsonType": ["string", "null"]},
-            "lastAdminActionAt": {"bsonType": ["date", "null"]},
-            "lastAdminActorName": {"bsonType": ["string", "null"]},
             "replyAcknowledged": {"bsonType": "bool"},
             "history": {"bsonType": "array"},
             "createdAt": {"bsonType": "date"},
